@@ -1,6 +1,7 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, MapPin, Users, MessageCircle, Loader2, ChevronRight } from 'lucide-react'
 import { siteConfig } from '@/lib/config'
@@ -8,6 +9,7 @@ import { fmtBRL, WHATSAPP_NUMBER } from '@/lib/types'
 
 export default function PropertyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const searchParams = useSearchParams()
   const property = siteConfig.properties.find(p => p.code === id)
 
   const [checkin, setCheckin] = useState('')
@@ -17,20 +19,28 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  if (!property) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg font-display">Imóvel não encontrado</p>
-          <Link href="/" className="text-gold text-sm mt-2 inline-block">Voltar</Link>
-        </div>
-      </div>
-    )
-  }
+  // Pre-fill from search params (coming from home page search)
+  useEffect(() => {
+    const ci = searchParams.get('checkin')
+    const co = searchParams.get('checkout')
+    const g = searchParams.get('guests')
+    if (ci) setCheckin(ci)
+    if (co) setCheckout(co)
+    if (g) setGuests(Number(g))
+    // Auto-fetch quote if dates are pre-filled
+    if (ci && co) {
+      setTimeout(() => {
+        fetchQuote(ci, co, g ? Number(g) : 1)
+      }, 300)
+    }
+  }, [searchParams])
 
-  const discountPct = Math.round(siteConfig.pricing.discount_pct * 100)
+  async function fetchQuote(ci?: string, co?: string, g?: number) {
+    const useCheckin = ci || checkin
+    const useCheckout = co || checkout
+    const useGuests = g || guests
+    if (!useCheckin || !useCheckout) return
 
-  async function handleQuote() {
     setLoading(true)
     setError('')
     setQuote(null)
@@ -38,7 +48,7 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
       const res = await fetch('/api/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ propertyCode: id, checkin, checkout, guests }),
+        body: JSON.stringify({ propertyCode: id, checkin: useCheckin, checkout: useCheckout, guests: useGuests }),
       })
       const data = await res.json()
       if (!data.ok && data.message) {
@@ -52,6 +62,19 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
       setLoading(false)
     }
   }
+
+  if (!property) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg font-display">Imóvel não encontrado</p>
+          <Link href="/" className="text-gold text-sm mt-2 inline-block">Voltar</Link>
+        </div>
+      </div>
+    )
+  }
+
+  const discountPct = Math.round(siteConfig.pricing.discount_pct * 100)
 
   const whatsappMsg = quote
     ? `Olá! Quero reservar o ${property.title} de ${checkin} a ${checkout} para ${guests} hóspede(s). Total: ${fmtBRL(quote.grandTotal)}`
@@ -139,7 +162,7 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
                 </div>
 
                 <button
-                  onClick={handleQuote}
+                  onClick={() => fetchQuote()}
                   disabled={!checkin || !checkout || loading}
                   className="w-full bg-gold text-gold-foreground py-3 rounded-xl font-semibold text-sm hover:bg-gold-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
