@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { MapPin, Users, ChevronRight, MessageCircle, Shield, Star, Percent, Loader2, Search, Calendar } from 'lucide-react'
+import Image from 'next/image'
+import { MapPin, Users, ChevronRight, MessageCircle, Shield, Star, Percent, Loader2, Search, Calendar, CreditCard } from 'lucide-react'
 import { siteConfig } from '@/lib/config'
 import { fmtBRL, WHATSAPP_NUMBER } from '@/lib/types'
 import type { Property } from '@/lib/types'
@@ -92,13 +93,11 @@ export default function Home() {
       <header className="sticky top-0 z-50 bg-[var(--color-bg)]/90 backdrop-blur-md border-b border-[var(--color-border)]">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gold flex items-center justify-center">
-              <span className="text-white font-display text-sm font-bold">SC</span>
-            </div>
-            <span className="font-display text-lg text-[var(--color-text)]">{brand.name}</span>
+            <Image src="/images/logo.png" alt="Sua Casa Leblon" width={36} height={36} className="rounded-lg" />
+            <span className="font-display text-lg text-[var(--color-text)]">Sua Casa Leblon</span>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm text-[var(--color-text-secondary)]">
-            <Link href="/proprietarios" className="hover:text-gold transition-colors">Proprietários</Link>
+            <Link href="/proprietarios" className="hover:text-gold transition-colors">Cadastre seu imóvel</Link>
             <a href={`https://wa.me/${brand.whatsapp}?text=Olá! Quero reservar no Leblon.`} target="_blank" rel="noopener" className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-full text-xs font-semibold hover:bg-green-700 transition-colors">
               <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
             </a>
@@ -113,13 +112,13 @@ export default function Home() {
           <div className="max-w-2xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-4 py-1.5 mb-5 animate-fade-in">
               <Percent className="h-3.5 w-3.5 text-gold" />
-              <span className="text-xs font-semibold text-gold">{discountPct}% mais barato que Airbnb — reserve direto</span>
+              <span className="text-xs font-bold text-gold tracking-wide">{discountPct}% mais barato que Airbnb — reserve direto</span>
             </div>
             <h1 className="font-display text-3xl md:text-5xl text-[var(--color-text)] leading-tight animate-fade-in animate-fade-in-delay-1">
-              Sua casa no <span className="text-gold">Leblon</span>
+              Sua Casa <span className="text-gold">Leblon</span>
             </h1>
             <p className="mt-4 text-base text-[var(--color-text-secondary)] max-w-lg mx-auto animate-fade-in animate-fade-in-delay-2">
-              Escolha suas datas e veja quais apartamentos estão disponíveis. Pagamento direto via Pix.
+              Escolha suas datas e veja quais apartamentos estão disponíveis. Pagamento direto via Pix ou cartão.
             </p>
           </div>
 
@@ -173,6 +172,7 @@ export default function Home() {
                 {results.map(({ property, quote }) => (
                   <Link key={property.code} href={`/property/${property.code}?checkin=${checkin}&checkout=${checkout}&guests=${guests}`} className="group bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)]/60 overflow-hidden hover:border-gold/30 hover:shadow-lg hover:shadow-gold/5 transition-all duration-300">
                     <div className="aspect-[4/3] bg-brand-100 relative overflow-hidden">
+                      <Image src={`/images/${property.code}/main.jpeg`} alt={property.title} fill className="object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                       <div className="absolute bottom-3 left-3 flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-white/90" /><span className="text-xs text-white/90 font-medium">Leblon</span></div>
                       <div className="absolute top-3 right-3 bg-gold text-gold-foreground text-xs font-bold px-3 py-1.5 rounded-lg">{fmtBRL(quote.grandTotal)}</div>
@@ -226,6 +226,7 @@ export default function Home() {
               {properties.map(property => (
                 <Link key={property.code} href={`/property/${property.code}`} className="group bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)]/60 overflow-hidden hover:border-gold/30 hover:shadow-lg hover:shadow-gold/5 transition-all duration-300">
                   <div className="aspect-[4/3] bg-brand-100 relative overflow-hidden">
+                    <Image src={`/images/${property.code}/main.jpeg`} alt={property.title} fill className="object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                     <div className="absolute bottom-3 left-3 flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-white/90" /><span className="text-xs text-white/90 font-medium">Leblon, Rio de Janeiro</span></div>
                   </div>
@@ -259,7 +260,7 @@ export default function Home() {
       <footer className="bg-[var(--color-surface)] border-t border-[var(--color-border)]">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2"><div className="w-6 h-6 rounded bg-gold flex items-center justify-center"><span className="text-white text-[10px] font-bold">SC</span></div><span className="font-display text-sm text-[var(--color-text)]">{brand.name}</span></div>
+            <div className="flex items-center gap-2"><Image src="/images/logo.png" alt="Sua Casa Leblon" width={24} height={24} className="rounded" /><span className="font-display text-sm text-[var(--color-text)]">Sua Casa Leblon</span></div>
             <p className="text-xs text-[var(--color-text-secondary)]">© {new Date().getFullYear()} AL Gestão — Temporada.</p>
             <a href={`https://wa.me/${brand.whatsapp}`} target="_blank" rel="noopener" className="text-xs text-green-600 font-medium hover:text-green-700">WhatsApp: +55 21 99536-0322</a>
           </div>
