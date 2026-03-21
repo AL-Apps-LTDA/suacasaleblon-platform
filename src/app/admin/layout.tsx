@@ -1,10 +1,12 @@
 import Link from 'next/link'
-import { LayoutDashboard, CalendarDays, FileText, Settings, Activity } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, FileText, Settings, Activity, Upload, Search } from 'lucide-react'
 
 const navItems = [
   { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
   { name: 'Reservas Diretas', path: '/admin/reservas-diretas', icon: CalendarDays },
+  { name: 'Importar CSV', path: '/admin/importar', icon: Upload },
   { name: 'Relatórios', path: '/admin/relatorios', icon: FileText },
+  { name: 'Prospecção', path: '/admin/prospeccao', icon: Search },
   { name: 'Integrações', path: '/admin/integracoes', icon: Settings },
 ]
 
