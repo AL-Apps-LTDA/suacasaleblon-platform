@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, CalendarDays, FileText, Settings, Activity, Upload, Search, DollarSign, Lock, LogOut } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, FileText, Settings, Activity, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag } from 'lucide-react'
 
 const ADMIN_PASSWORD = 'suacasa2026'
 
 const navItems = [
   { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
   { name: 'Despesas', path: '/admin/despesas', icon: DollarSign },
+  { name: 'Limpezas', path: '/admin/limpezas', icon: Sparkles },
   { name: 'Reservas Diretas', path: '/admin/reservas-diretas', icon: CalendarDays },
   { name: 'Importar CSV', path: '/admin/importar', icon: Upload },
   { name: 'Relatórios', path: '/admin/relatorios', icon: FileText },
   { name: 'Prospecção', path: '/admin/prospeccao', icon: Search },
+  { name: 'Cupons', path: '/admin/cupons', icon: Tag },
   { name: 'Integrações', path: '/admin/integracoes', icon: Settings },
 ]
 
