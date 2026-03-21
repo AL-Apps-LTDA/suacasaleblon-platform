@@ -75,7 +75,18 @@ export default function Home() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="max-w-6xl mx-auto px-4 pt-10 pb-6 md:pt-16 md:pb-10 relative">
+        {/* Mobile: apartment thumbnails strip */}
+        <div className="md:hidden flex gap-2 px-4 pt-4 overflow-x-auto no-scrollbar">
+          {properties.map(p => (
+            <a key={p.code} href="#apartamentos" className="shrink-0 w-28 h-20 rounded-xl overflow-hidden relative">
+              <Image src={`/images/${p.code}/main.jpeg`} alt={p.title} fill className="object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+              <span className="absolute bottom-1.5 left-2 text-[10px] text-white font-bold drop-shadow">{p.title}</span>
+            </a>
+          ))}
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 pt-6 pb-6 md:pt-16 md:pb-10 relative">
           <div className="max-w-2xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-4 py-1.5 mb-5 animate-fade-in">
               <Percent className="h-3.5 w-3.5 text-gold" />
