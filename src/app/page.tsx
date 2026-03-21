@@ -75,10 +75,6 @@ export default function Home() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <Image src="/images/hero-bg.jpg" alt="" fill className="object-cover object-left opacity-10" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[var(--color-bg)]/70 via-[var(--color-bg)]/85 to-[var(--color-bg)]" />
-        </div>
         <div className="max-w-6xl mx-auto px-4 pt-10 pb-6 md:pt-16 md:pb-10 relative">
           <div className="max-w-2xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-4 py-1.5 mb-5 animate-fade-in">
