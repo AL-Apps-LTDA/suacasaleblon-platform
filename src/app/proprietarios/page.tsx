@@ -15,7 +15,7 @@ const CALCULATOR_PRESETS = [
 export default function ProprietariosPage() {
   const [selectedType, setSelectedType] = useState(0)
   const preset = CALCULATOR_PRESETS[selectedType]
-  const commissionPct = 0.20
+  const commissionPct = 0.15
 
   const daysInMonth = 30
   const occupiedNights = Math.round(daysInMonth * preset.occupancy)

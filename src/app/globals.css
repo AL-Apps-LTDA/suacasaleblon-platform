@@ -62,3 +62,7 @@ body {
 .animate-fade-in-delay-1 { animation-delay: 0.1s; opacity: 0; }
 .animate-fade-in-delay-2 { animation-delay: 0.2s; opacity: 0; }
 .animate-fade-in-delay-3 { animation-delay: 0.3s; opacity: 0; }
+
+/* Hide scrollbar for mobile thumbnail strip */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

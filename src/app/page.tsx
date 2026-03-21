@@ -107,8 +107,24 @@ export default function Home() {
 
       {/* Hero + Search */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-brand-100/50 to-transparent pointer-events-none" />
-        <div className="max-w-6xl mx-auto px-4 pt-12 pb-8 md:pt-20 md:pb-12 relative">
+        {/* Hero background image */}
+        <div className="absolute inset-0">
+          <Image src="/images/hero-bg.jpg" alt="" fill className="object-cover object-left opacity-15" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[var(--color-bg)]/60 via-[var(--color-bg)]/80 to-[var(--color-bg)]" />
+        </div>
+
+        {/* Mobile: show apartment thumbnails strip before search */}
+        <div className="md:hidden flex gap-2 px-4 pt-4 overflow-x-auto no-scrollbar relative">
+          {properties.slice(0, 4).map(p => (
+            <div key={p.code} className="shrink-0 w-28 h-20 rounded-xl overflow-hidden relative">
+              <Image src={`/images/${p.code}/main.jpeg`} alt={p.title} fill className="object-cover" />
+              <div className="absolute inset-0 bg-black/20" />
+              <span className="absolute bottom-1 left-2 text-[10px] text-white font-bold">{p.title}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 pt-8 pb-8 md:pt-20 md:pb-12 relative">
           <div className="max-w-2xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-4 py-1.5 mb-5 animate-fade-in">
               <Percent className="h-3.5 w-3.5 text-gold" />
