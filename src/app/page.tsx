@@ -109,7 +109,7 @@ export default function Home() {
       {/* Prova social */}
       <section className="max-w-6xl mx-auto px-4 pb-6">
         <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10 text-center">
-          {[{ val: '200+', label: 'hóspedes atendidos' },{ val: '4.8', label: 'avaliação média' },{ val: 'Superhost', label: 'desde 2023' },{ val: `${discountPct}%`, label: 'mais barato que Airbnb' }].map(s => (
+          {[{ val: '2.000+', label: 'hóspedes atendidos' },{ val: '4.9', label: 'avaliação média' },{ val: 'Superhost', label: 'desde 2018' },{ val: `${discountPct}%`, label: 'mais barato que Airbnb' }].map(s => (
             <div key={s.label} className="flex items-center gap-2">
               <span className="text-lg font-bold text-gold font-mono">{s.val}</span>
               <span className="text-xs text-[var(--color-text-secondary)]">{s.label}</span>
