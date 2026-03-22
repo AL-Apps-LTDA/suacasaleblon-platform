@@ -132,18 +132,45 @@ export default function AdminDashboard() {
   const [err, setErr] = useState('')
   const [filter, setFilter] = useState<'all'|'ytd'|'month'>('all')
   const [sel, setSel] = useState(new Date().getMonth())
+  const [syncing, setSyncing] = useState(false)
+  const [lastSync, setLastSync] = useState('')
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true)
-      try {
-        const [a, o] = await Promise.all([fetch('/api/apartments'), fetch('/api/apartments/operacao')])
-        if (a.ok) { const d = await a.json(); if (Array.isArray(d)) setApts(d) }
-        if (o.ok) setOp(await o.json())
-      } catch (e:any) { setErr(e.message) }
-      finally { setLoading(false) }
-    })()
-  }, [])
+  async function loadData() {
+    setLoading(true)
+    try {
+      const [a, o] = await Promise.all([fetch('/api/apartments'), fetch('/api/apartments/operacao')])
+      if (a.ok) { const d = await a.json(); if (Array.isArray(d)) setApts(d) }
+      if (o.ok) setOp(await o.json())
+    } catch (e:any) { setErr(e.message) }
+    finally { setLoading(false) }
+  }
+
+  async function loadLastSync() {
+    try {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
+      const { data } = await sb.from('sync_logs').select('created_at, status').order('created_at', { ascending: false }).limit(1)
+      if (data?.[0]) {
+        const d = new Date(data[0].created_at)
+        setLastSync(d.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }))
+      }
+    } catch {}
+  }
+
+  async function triggerSync() {
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/cron/sync-all')
+      const data = await res.json()
+      if (data.ok) {
+        await loadLastSync()
+        await loadData() // Refresh dashboard data
+      }
+    } catch {}
+    finally { setSyncing(false) }
+  }
+
+  useEffect(() => { loadData(); loadLastSync() }, [])
 
   const valid = apts.filter(a => !a.error)
   const totals = useMemo(() => {
@@ -165,7 +192,10 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h1 className="text-xl font-bold tracking-tight text-[#f0eee8]">Dashboard</h1><p className="text-xs text-[#94918a] mt-0.5">Sua Casa Leblon — Gestão Completa 2026</p></div>
         <div className="flex items-center gap-2">
-          <button onClick={()=>window.location.reload()} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs border border-[#2a2a30] text-[#94918a] hover:text-[#f0eee8] hover:border-[#c9a96e]/30"><RefreshCw className="h-3.5 w-3.5"/>Atualizar</button>
+          <button onClick={triggerSync} disabled={syncing} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${syncing ? 'bg-[#c9a96e]/20 text-[#c9a96e]' : 'bg-[#c9a96e] text-[#1a1207] hover:bg-[#dbc192]'}`}>
+            <RefreshCw className={`h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`}/>{syncing ? 'Sincronizando...' : 'Sincronizar'}
+          </button>
+          {lastSync && <span className="text-[9px] text-[#94918a]">Último sync: {lastSync}</span>}
           <a href="https://docs.google.com/spreadsheets/d/1gSJBIJGlqgSezhtM22kDJ-zl2E0ELKB3rjDRqmN0Vsk/edit" target="_blank" rel="noopener" className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs border border-[#2a2a30] text-[#94918a] hover:text-[#f0eee8]"><ExternalLink className="h-3.5 w-3.5"/>Planilha</a>
         </div>
       </div>

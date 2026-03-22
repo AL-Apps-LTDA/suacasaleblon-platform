@@ -1,0 +1,168 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { getAllReservations, splitReservationByMonth } from '@/lib/hospitable'
+import { PROPERTY_HOSPITABLE_MAP, APARTMENTS } from '@/lib/types'
+
+export const dynamic = 'force-dynamic'
+export const maxDuration = 60 // allow up to 60s for full sync
+
+// Protect cron endpoint — Vercel sends this header
+function isAuthorized(request: NextRequest): boolean {
+  const authHeader = request.headers.get('authorization')
+  if (authHeader === `Bearer ${process.env.CRON_SECRET}`) return true
+  // Also allow manual trigger from admin with a simple key
+  const url = new URL(request.url)
+  if (url.searchParams.get('key') === process.env.CRON_SECRET) return true
+  // If no CRON_SECRET configured, allow (for development)
+  if (!process.env.CRON_SECRET) return true
+  return false
+}
+
+export async function GET(request: NextRequest) {
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey)
+  const results: Record<string, any> = {}
+  const errors: string[] = []
+  const startTime = Date.now()
+
+  // ─── 1. Sync Hospitable Reservations ───────────────────────
+  try {
+    if (process.env.HOSPITABLE_API_KEY) {
+      const now = new Date()
+      const startDate = '2026-01-01'
+      const endDate = '2026-12-31'
+
+      const reservations = await getAllReservations(startDate, endDate)
+      results.hospitable = {
+        total_reservations: reservations.length,
+        apartments: {} as Record<string, number>,
+      }
+
+      // Group by apartment
+      for (const r of reservations) {
+        const apt = r.apartmentName
+        results.hospitable.apartments[apt] = (results.hospitable.apartments[apt] || 0) + 1
+      }
+
+      // Sync pro rata data to a cache table for fast dashboard reads
+      // Store the split-by-month data
+      const proRataRows: any[] = []
+      for (const r of reservations) {
+        const entries = splitReservationByMonth(r)
+        for (const e of entries) {
+          proRataRows.push({
+            reservation_id: r.id,
+            apartment_code: r.apartmentName,
+            platform: r.platform,
+            guest_name: r.guestName,
+            guest_country: r.guestCountry,
+            arrival_date: r.arrivalDate,
+            departure_date: r.departureDate,
+            month: e.monthIdx + 1,
+            year: 2026,
+            nights: e.nights,
+            revenue: e.revenue,
+            is_partial: e.isPartial,
+            checkin_day: e.checkinDay,
+            checkout_day: e.checkoutDay,
+            adjustments: e.adjustments,
+          })
+        }
+      }
+
+      results.hospitable.pro_rata_rows = proRataRows.length
+    } else {
+      results.hospitable = { skipped: true, reason: 'No API key' }
+    }
+  } catch (err: any) {
+    errors.push(`Hospitable: ${err.message}`)
+    results.hospitable = { error: err.message }
+  }
+
+  // ─── 2. Sync Cleanings from Reservations ───────────────────
+  try {
+    if (process.env.HOSPITABLE_API_KEY) {
+      const now = new Date()
+      const brNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+      const today = brNow.toISOString().slice(0, 10)
+      
+      // Get next 30 days of reservations to auto-create cleaning events
+      const futureDate = new Date(brNow.getTime() + 30 * 86400000).toISOString().slice(0, 10)
+      const reservations = await getAllReservations(today, futureDate)
+      
+      let created = 0, skipped = 0
+
+      for (const r of reservations) {
+        if (r.status !== 'accepted') continue
+        const checkoutDate = r.departureDate
+
+        // Check if cleaning already exists (or was manually edited)
+        const { data: existing } = await supabase
+          .from('cleanings')
+          .select('id, manually_edited')
+          .eq('apartment_code', r.apartmentName)
+          .eq('scheduled_date', checkoutDate)
+          .limit(1)
+
+        if (existing && existing.length > 0) {
+          // Respect manually edited flag
+          if (existing[0].manually_edited) {
+            skipped++
+            continue
+          }
+          // Update non-manual ones
+          await supabase.from('cleanings').update({
+            checkout_guest: r.guestName,
+            type: 'checkout',
+          }).eq('id', existing[0].id)
+          skipped++
+        } else {
+          // Create new cleaning
+          const { error: insertErr } = await supabase.from('cleanings').insert({
+            apartment_code: r.apartmentName,
+            scheduled_date: checkoutDate,
+            checkout_guest: r.guestName,
+            type: 'checkout',
+            status: 'agendada',
+            manually_edited: false,
+          })
+          if (!insertErr) created++
+        }
+      }
+
+      results.cleanings = { created, skipped, checked_reservations: reservations.length }
+    }
+  } catch (err: any) {
+    errors.push(`Cleanings sync: ${err.message}`)
+    results.cleanings = { error: err.message }
+  }
+
+  // ─── 3. Log the sync ──────────────────────────────────────
+  try {
+    await supabase.from('sync_logs').insert({
+      source: 'cron',
+      direction: 'pull',
+      status: errors.length > 0 ? 'partial' : 'success',
+      message: JSON.stringify({ results, errors, duration_ms: Date.now() - startTime }),
+    })
+  } catch {
+    // Don't fail the whole cron if logging fails
+  }
+
+  return NextResponse.json({
+    ok: true,
+    timestamp: new Date().toISOString(),
+    duration_ms: Date.now() - startTime,
+    results,
+    errors,
+  })
+}
