@@ -2,13 +2,30 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://suacasaleblon.com'),
   title: 'Sua Casa Leblon — Aluguel por Temporada no Leblon',
   description: 'Studios e apartamentos reformados no coração do Leblon, a poucos passos da praia. Reserve direto com até 14% de desconto.',
   openGraph: {
     title: 'Sua Casa Leblon',
     description: 'Aluguel por temporada no Leblon — studios e apartamentos reformados, a passos da praia.',
+    url: 'https://suacasaleblon.com',
+    siteName: 'Sua Casa Leblon',
     type: 'website',
     locale: 'pt_BR',
+    images: [
+      {
+        url: '/images/og-cover.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Sua Casa Leblon — Apartamentos por temporada no Leblon, Rio de Janeiro',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Sua Casa Leblon',
+    description: 'Aluguel por temporada no Leblon — studios e apartamentos reformados, a passos da praia.',
+    images: ['/images/og-cover.jpg'],
   },
 }
 
