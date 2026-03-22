@@ -1,0 +1,21 @@
+{
+  "name": "Sua Casa Leblon",
+  "short_name": "Sua Casa",
+  "description": "Aluguel por temporada no Leblon — studios e apartamentos reformados, a passos da praia.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e0e10",
+  "theme_color": "#c9a96e",
+  "icons": [
+    {
+      "src": "/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
