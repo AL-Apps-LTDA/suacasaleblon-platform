@@ -155,7 +155,26 @@ export default function ImportarPage() {
       const importId = importLog.id
 
       if (fileType === 'airbnb') {
+        // First, get all confirmation codes that are manually edited (protected)
+        const confirmationCodes = parsed.map(r => r.confirmation).filter(Boolean)
+        let protectedCodes = new Set<string>()
+        if (confirmationCodes.length > 0) {
+          const { data: protected_ } = await supabase
+            .from('airbnb_transactions')
+            .select('confirmation_code, type')
+            .eq('manually_edited', true)
+            .in('confirmation_code', [...new Set(confirmationCodes)])
+          if (protected_) {
+            protectedCodes = new Set(protected_.map(p => `${p.confirmation_code}|${p.type}`))
+          }
+        }
+
+        let skipped = 0
         const txRows = parsed.map((r, i) => {
+          // Skip rows that are manually edited in the DB
+          const key = `${r.confirmation}|${r.type}`
+          if (r.confirmation && protectedCodes.has(key)) { skipped++; return null }
+
           const ds = parseDate(r.date); const dt = ds ? new Date(ds + 'T12:00:00') : null
           return {
             import_id: importId, transaction_date: ds || '1970-01-01', type: r.type,
@@ -163,12 +182,17 @@ export default function ImportarPage() {
             listing_name: r.listing || null, apartment_code: editCodes[i] || r.apartmentCode || null,
             amount: r.amount, currency: r.currency, details: r.details || null,
             month: dt ? dt.getMonth() + 1 : null, year: dt ? dt.getFullYear() : null,
-            is_adjustment: r.isAdjustment,
+            is_adjustment: r.isAdjustment, manually_edited: false,
           }
-        })
+        }).filter(Boolean)
+
         for (let i = 0; i < txRows.length; i += 50) {
           const { error: te } = await supabase.from('airbnb_transactions').insert(txRows.slice(i, i + 50))
           if (te) throw te
+        }
+
+        if (skipped > 0) {
+          setError(`Importado! ${skipped} linha(s) protegida(s) por edição manual foram preservadas.`)
         }
       } else {
         const txRows = parsed.map((r, i) => ({

@@ -3,7 +3,7 @@
 import { use, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, MapPin, Users, MessageCircle, Loader2, ChevronRight } from 'lucide-react'
+import { ArrowLeft, MapPin, Users, MessageCircle, Loader2, ChevronRight, Tag } from 'lucide-react'
 import { siteConfig } from '@/lib/config'
 import { fmtBRL, WHATSAPP_NUMBER } from '@/lib/types'
 
@@ -18,6 +18,10 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
   const [quote, setQuote] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [couponCode, setCouponCode] = useState('')
+  const [couponResult, setCouponResult] = useState<any>(null)
+  const [couponError, setCouponError] = useState('')
+  const [couponLoading, setCouponLoading] = useState(false)
 
   // Pre-fill from search params (coming from home page search)
   useEffect(() => {
@@ -76,8 +80,27 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
 
   const discountPct = Math.round(siteConfig.pricing.discount_pct * 100)
 
+  async function validateCoupon() {
+    if (!couponCode.trim() || !quote) return
+    setCouponLoading(true); setCouponError(''); setCouponResult(null)
+    try {
+      const res = await fetch('/api/coupon/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode.trim(), grandTotal: quote.grandTotal }),
+      })
+      const data = await res.json()
+      if (!data.ok) { setCouponError(data.message) }
+      else { setCouponResult(data) }
+    } catch { setCouponError('Erro ao validar cupom.') }
+    finally { setCouponLoading(false) }
+  }
+
+  const finalTotal = couponResult ? couponResult.newTotal : quote?.grandTotal
+  const couponDiscount = couponResult?.coupon?.discount_amount || 0
+
   const whatsappMsg = quote
-    ? `Olá! Quero reservar o ${property.title} de ${checkin} a ${checkout} para ${guests} hóspede(s). Total: ${fmtBRL(quote.grandTotal)}`
+    ? `Olá! Quero reservar o ${property.title} de ${checkin} a ${checkout} para ${guests} hóspede(s). Total: ${fmtBRL(finalTotal)}${couponResult ? ` (cupom ${couponResult.coupon.code} aplicado: -${fmtBRL(couponDiscount)})` : ''}`
     : `Olá! Tenho interesse no ${property.title}.`
 
   return (
@@ -198,7 +221,38 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
                     )}
                     <div className="flex justify-between text-sm font-bold text-[var(--color-text)] pt-2 border-t border-[var(--color-border)]">
                       <span>Total</span>
-                      <span className="font-mono text-gold">{fmtBRL(quote.grandTotal)}</span>
+                      <span className="font-mono text-gold">{fmtBRL(finalTotal)}</span>
+                    </div>
+
+                    {/* Coupon field */}
+                    <div className="pt-2">
+                      <label className="text-xs text-[var(--color-text-secondary)] block mb-1">Tem cupom de desconto?</label>
+                      <div className="flex gap-1.5">
+                        <div className="relative flex-1">
+                          <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--color-text-secondary)]" />
+                          <input
+                            type="text"
+                            value={couponCode}
+                            onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponError(''); setCouponResult(null) }}
+                            placeholder="Ex: CUPOM50"
+                            className="w-full border border-[var(--color-border)] rounded-lg pl-8 pr-3 py-2 text-sm bg-[var(--color-bg)] text-[var(--color-text)] font-mono"
+                          />
+                        </div>
+                        <button
+                          onClick={validateCoupon}
+                          disabled={!couponCode.trim() || couponLoading}
+                          className="bg-[var(--color-text)] text-[var(--color-bg)] px-3 py-2 rounded-lg text-xs font-semibold hover:opacity-90 disabled:opacity-40 shrink-0"
+                        >
+                          {couponLoading ? '...' : 'Aplicar'}
+                        </button>
+                      </div>
+                      {couponError && <p className="text-[10px] text-red-500 mt-1">{couponError}</p>}
+                      {couponResult && (
+                        <div className="flex justify-between items-center text-xs text-green-600 mt-1.5 bg-green-50 dark:bg-green-900/10 px-2 py-1.5 rounded-lg">
+                          <span>Cupom {couponResult.coupon.code} aplicado</span>
+                          <span className="font-mono font-semibold">-{fmtBRL(couponDiscount)}</span>
+                        </div>
+                      )}
                     </div>
 
                     <a

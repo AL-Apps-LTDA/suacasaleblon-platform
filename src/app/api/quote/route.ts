@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { siteConfig } from '@/lib/config'
+import { PROPERTY_HOSPITABLE_MAP } from '@/lib/types'
 
 function nightsBetween(ci: string, co: string): number | null {
   const a = new Date(`${ci}T00:00:00`)
@@ -8,7 +9,8 @@ function nightsBetween(ci: string, co: string): number | null {
   return Math.round((b.getTime() - a.getTime()) / 86400000)
 }
 
-function minNightsFor(checkInStr: string): number {
+// Static fallback only — used when Hospitable is unavailable
+function minNightsFallback(checkInStr: string): number {
   const { rules } = siteConfig
   for (const o of (rules.overrides || [])) {
     if (checkInStr >= o.start && checkInStr <= o.end) return o.min_nights
@@ -17,6 +19,39 @@ function minNightsFor(checkInStr: string): number {
   if (isNaN(d.getTime())) return rules.min_nights_default
   const dow = d.getDay()
   return (dow === 5 || dow === 6) ? rules.min_nights_fri_sat : rules.min_nights_default
+}
+
+// Pull min_nights from Hospitable calendar — respects Beyond Pricing overrides
+async function getMinNightsFromHospitable(propertyCode: string, checkIn: string): Promise<number | null> {
+  try {
+    const apiKey = process.env.HOSPITABLE_API_KEY
+    if (!apiKey) return null
+
+    const uuid = PROPERTY_HOSPITABLE_MAP[propertyCode]
+    if (!uuid) return null
+
+    const url = `https://public.api.hospitable.com/v2/properties/${uuid}/calendar?start_date=${checkIn}&end_date=${checkIn}`
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'application/json',
+      },
+      next: { revalidate: 300 },
+    })
+
+    if (!res.ok) return null
+
+    const data = await res.json()
+    const days = data?.data?.days || data?.days || []
+    const entry = days.find((d: any) => d.date === checkIn)
+
+    if (entry?.min_nights != null) return entry.min_nights
+    if (entry?.minimum_stay != null) return entry.minimum_stay
+
+    return null
+  } catch {
+    return null
+  }
 }
 
 function getProperty(code: string) {
@@ -47,8 +82,11 @@ export async function POST(request: NextRequest) {
     if (!Number.isFinite(g) || g < 1) return NextResponse.json({ ok: false, message: 'Hóspedes inválidos.' }, { status: 400 })
     if (g > p.max_guests) return NextResponse.json({ ok: false, message: `Máx. ${p.max_guests} hóspedes.` }, { status: 400 })
 
-    const minN = minNightsFor(checkin)
-    if (n < minN) return NextResponse.json({ ok: false, message: `Mínimo de ${minN} noite(s).` }, { status: 400 })
+    // Get min nights from Hospitable (respects Beyond Pricing overrides)
+    // Falls back to static rules only if Hospitable is unavailable
+    const hospitableMinN = await getMinNightsFromHospitable(propertyCode, checkin)
+    const minN = hospitableMinN ?? minNightsFallback(checkin)
+    if (n < minN) return NextResponse.json({ ok: false, message: `Mínimo de ${minN} noite(s) para esta data.` }, { status: 400 })
 
     // Try Hospitable live rates, fallback to demo
     let dailyRates: number[]
