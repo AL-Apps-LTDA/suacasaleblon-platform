@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       success_url: `${origin}/confirmacao?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/property/${propertyCode}?checkin=${checkin}&checkout=${checkout}&guests=${guests}`,
       locale: 'pt-BR' as any,
-      expires_after: paymentMethod === 'pix' ? 1800 : 3600, // PIX: 30min, Card: 1h
+      expires_at: Math.floor(Date.now() / 1000) + (paymentMethod === 'pix' ? 1800 : 3600), // Unix timestamp
     }
 
     // PIX specific: set expiration

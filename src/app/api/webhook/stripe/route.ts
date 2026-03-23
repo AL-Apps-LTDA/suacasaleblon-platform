@@ -24,7 +24,22 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object
+        // For card payments, payment_status is 'paid' immediately.
+        // For PIX, payment_status is 'unpaid' here (QR code just generated).
         await handleCompletedCheckout(session)
+        break
+      }
+      case 'checkout.session.async_payment_succeeded': {
+        // PIX payment confirmed — customer scanned QR and paid
+        const session = event.data.object
+        console.log(`PIX payment succeeded for session: ${session.id}`)
+        await handleCompletedCheckout(session)
+        break
+      }
+      case 'checkout.session.async_payment_failed': {
+        // PIX expired or payment failed
+        const session = event.data.object
+        console.log(`PIX payment failed/expired for session: ${session.id}`)
         break
       }
       case 'checkout.session.expired': {
