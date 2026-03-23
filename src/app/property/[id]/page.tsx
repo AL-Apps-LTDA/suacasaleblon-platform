@@ -283,12 +283,12 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
                           placeholder="WhatsApp (opcional)"
                           className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-[var(--color-bg)] text-[var(--color-text)]" />
 
-                        {/* PIX Button */}
-                        <button onClick={() => startCheckout('pix')} disabled={!guestFormValid || !!checkoutLoading}
-                          className="flex items-center justify-center gap-2 w-full bg-[#00A868] text-white py-3 rounded-xl font-semibold text-sm hover:bg-[#008F58] transition-colors disabled:opacity-50">
-                          {checkoutLoading === 'pix' ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
+                        {/* PIX via WhatsApp (PIX Stripe pendente ativação) */}
+                        <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMsg + ' Gostaria de pagar via PIX.')}`} target="_blank" rel="noopener"
+                          className="flex items-center justify-center gap-2 w-full bg-[#00A868] text-white py-3 rounded-xl font-semibold text-sm hover:bg-[#008F58] transition-colors">
+                          <QrCode className="h-4 w-4" />
                           Pagar com PIX
-                        </button>
+                        </a>
 
                         {/* Card Button */}
                         <button onClick={() => startCheckout('card')} disabled={!guestFormValid || !!checkoutLoading}
