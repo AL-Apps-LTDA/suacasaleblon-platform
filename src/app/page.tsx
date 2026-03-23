@@ -63,7 +63,7 @@ export default function Home() {
           </Link>
           <nav className="hidden md:flex items-center gap-3">
             <a href="#apartamentos" className="bg-gold text-gold-foreground px-5 py-2 rounded-full text-sm font-semibold hover:bg-gold-dark transition-colors">Ver apartamentos</a>
-            <Link href="/proprietarios" className="border border-[var(--color-text)]/20 text-[var(--color-text)] px-5 py-2 rounded-full text-sm font-semibold hover:border-gold hover:text-gold transition-colors">Tenho um imóvel</Link>
+            <Link href="/proprietarios" className="bg-gold/15 border border-gold/40 text-gold px-5 py-2 rounded-full text-sm font-semibold hover:bg-gold hover:text-gold-foreground transition-all">Tenho um imóvel</Link>
             <a href={`https://wa.me/${brand.whatsapp}?text=Olá!`} target="_blank" rel="noopener" className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-full text-xs font-semibold hover:bg-green-700 transition-colors ml-1"><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</a>
           </nav>
           <div className="flex md:hidden items-center gap-2">
@@ -79,7 +79,8 @@ export default function Home() {
         <div className="md:hidden flex gap-2 px-4 pt-4 overflow-x-auto no-scrollbar">
           {properties.map(p => (
             <a key={p.code} href="#apartamentos" className="shrink-0 w-28 h-20 rounded-xl overflow-hidden relative">
-              <Image src={`/images/${p.code}/main.jpeg`} alt={p.title} fill className="object-cover" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.images[0]} alt={p.title} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
               <span className="absolute bottom-1.5 left-2 text-[10px] text-white font-bold drop-shadow">{p.title}</span>
             </a>
@@ -141,7 +142,7 @@ export default function Home() {
             <p className="text-xs text-[var(--color-text-secondary)] text-center mb-6">{checkin} → {checkout} • {guests} hóspede{guests>1?'s':''}</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl mx-auto">
               {results.map(({property,quote})=>(<Link key={property.code} href={`/property/${property.code}?checkin=${checkin}&checkout=${checkout}&guests=${guests}`} className="group bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)]/60 overflow-hidden hover:border-gold/30 hover:shadow-lg hover:shadow-gold/5 transition-all duration-300">
-                <div className="aspect-[4/3] bg-brand-100 relative overflow-hidden"><Image src={`/images/${property.code}/main.jpeg`} alt={property.title} fill className="object-cover"/><div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"/><div className="absolute bottom-3 left-3 flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-white/90"/><span className="text-xs text-white/90 font-medium">Leblon</span></div><div className="absolute top-3 right-3 bg-gold text-gold-foreground text-xs font-bold px-3 py-1.5 rounded-lg">{fmtBRL(quote.grandTotal)}</div></div>
+                <div className="aspect-[4/3] bg-brand-100 relative overflow-hidden">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={property.images[0]} alt={property.title} className="w-full h-full object-cover"/><div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"/><div className="absolute bottom-3 left-3 flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-white/90"/><span className="text-xs text-white/90 font-medium">Leblon</span></div><div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm text-[var(--color-text)] text-xs font-bold px-3 py-2 rounded-xl shadow-lg"><span className="text-base font-mono">{fmtBRL(quote.grandTotal)}</span><span className="block text-[9px] font-normal text-[var(--color-text-secondary)] mt-0.5">Valor Final</span></div></div>
                 <div className="p-4"><div className="flex items-center justify-between"><h3 className="font-display text-lg text-[var(--color-text)] group-hover:text-gold transition-colors">{property.title}</h3><ChevronRight className="h-4 w-4 text-[var(--color-text-secondary)] group-hover:text-gold transition-colors"/></div><p className="text-xs text-[var(--color-text-secondary)] mt-1">{property.subtitle}</p><div className="mt-3 flex items-center justify-between"><div className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)]"><Users className="h-3.5 w-3.5"/> Até {property.max_guests}</div><div className="text-right"><span className="text-sm font-bold text-gold font-mono">{fmtBRL(quote.grandTotal)}</span><span className="text-[10px] text-[var(--color-text-secondary)] block">{quote.nights} noite{quote.nights>1?'s':''} total</span></div></div>{quote.savings>0&&(<div className="mt-2 bg-green-50 rounded-lg px-3 py-1.5 text-center"><span className="text-[10px] text-green-700 font-semibold">Economia de {fmtBRL(quote.savings)} vs Airbnb</span></div>)}</div>
               </Link>))}
             </div>
@@ -156,7 +157,7 @@ export default function Home() {
           <p className="text-sm text-[var(--color-text-secondary)] mb-6">Escolha suas datas acima para ver preços e disponibilidade</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {properties.map(property=>(<Link key={property.code} href={`/property/${property.code}`} className="group bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)]/60 overflow-hidden hover:border-gold/30 hover:shadow-lg hover:shadow-gold/5 transition-all duration-300">
-              <div className="aspect-[4/3] bg-brand-100 relative overflow-hidden"><Image src={`/images/${property.code}/main.jpeg`} alt={property.title} fill className="object-cover"/><div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"/><div className="absolute bottom-3 left-3 flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-white/90"/><span className="text-xs text-white/90 font-medium">Leblon, Rio de Janeiro</span></div></div>
+              <div className="aspect-[4/3] bg-brand-100 relative overflow-hidden">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={property.images[0]} alt={property.title} className="w-full h-full object-cover"/><div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"/><div className="absolute bottom-3 left-3 flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-white/90"/><span className="text-xs text-white/90 font-medium">Leblon, Rio de Janeiro</span></div></div>
               <div className="p-4"><h3 className="font-display text-lg text-[var(--color-text)] group-hover:text-gold transition-colors">{property.title}</h3><p className="text-xs text-[var(--color-text-secondary)] mt-1">{property.subtitle}</p><div className="mt-3 flex items-center gap-3"><div className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)]"><Users className="h-3.5 w-3.5"/> Até {property.max_guests}</div><span className="text-xs text-gold font-semibold">{discountPct}% OFF direto</span></div></div>
             </Link>))}
           </div>
