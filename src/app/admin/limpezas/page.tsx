@@ -40,16 +40,18 @@ export default function LimpezasPage() {
   }, [filterApt])
 
   const loadExtras = useCallback(async () => {
-    const [expRes, payRes, maintRes, repRes] = await Promise.all([
-      supabase.from('expenses').select('*').order('created_at', { ascending: false }).limit(50),
-      supabase.from('cleaner_payments').select('*').order('created_at', { ascending: false }).limit(50),
-      supabase.from('maintenance_items').select('*').order('created_at', { ascending: false }).limit(30),
-      supabase.from('reports').select('*').order('created_at', { ascending: false }).limit(30),
-    ])
-    if (expRes.data) setExpenses(expRes.data)
-    if (payRes.data) setPayments(payRes.data)
-    if (maintRes.data) setMaintenance(maintRes.data)
-    if (repRes.data) setReports(repRes.data)
+    try {
+      const results = await Promise.allSettled([
+        supabase.from('expenses').select('*').order('created_at', { ascending: false }).limit(50),
+        supabase.from('cleaner_payments').select('*').order('created_at', { ascending: false }).limit(50),
+        supabase.from('maintenance_items').select('*').order('created_at', { ascending: false }).limit(30),
+        supabase.from('reports').select('*').order('created_at', { ascending: false }).limit(30),
+      ])
+      if (results[0].status === 'fulfilled' && results[0].value.data) setExpenses(results[0].value.data)
+      if (results[1].status === 'fulfilled' && results[1].value.data) setPayments(results[1].value.data)
+      if (results[2].status === 'fulfilled' && results[2].value.data) setMaintenance(results[2].value.data)
+      if (results[3].status === 'fulfilled' && results[3].value.data) setReports(results[3].value.data)
+    } catch (e) { console.warn('Erro ao carregar dados extras de limpezas:', e) }
   }, [])
 
   useEffect(() => { loadCleanings() }, [loadCleanings])

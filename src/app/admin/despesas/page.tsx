@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, DollarSign, Building2, Calendar, Loader2, Save, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Trash2, DollarSign, Building2, Calendar, Loader2, Save, ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
 import { fmtBRL, MONTHS_FULL } from '@/lib/types'
 import { createClient } from '@supabase/supabase-js'
 
@@ -195,8 +195,9 @@ export default function DespesasPage() {
                   </td>
                   <td className="py-2.5 px-4 text-[#94918a]">{CATEGORY_LABELS[e.category] || e.category}</td>
                   <td className="py-2.5 px-4 text-right font-mono font-medium text-red-400">{fmtBRL(Number(e.amount))}</td>
-                  <td className="py-2.5 px-4 text-right">
-                    <button onClick={() => handleDelete(e.id!)} className="text-[#94918a] hover:text-red-400 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
+                  <td className="py-2.5 px-4 text-right flex items-center justify-end gap-1">
+                    <button onClick={() => { setForm({ ...e, amount: Number(e.amount) }); setShowForm(true) }} className="text-[#94918a] hover:text-[#c9a96e] transition-colors" title="Editar"><Pencil className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => handleDelete(e.id!)} className="text-[#94918a] hover:text-red-400 transition-colors" title="Excluir"><Trash2 className="h-3.5 w-3.5" /></button>
                   </td>
                 </tr>
               ))}

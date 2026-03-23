@@ -37,106 +37,179 @@ export default function RelatoriosPage() {
 
       const doc = new jsPDF()
       const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      const margin = 15
+      const contentWidth = pageWidth - margin * 2
 
-      // Header
-      doc.setFillColor(51, 65, 85)
-      doc.rect(0, 0, pageWidth, 45, 'F')
+      // ─── HEADER ───
+      // Dark bar
+      doc.setFillColor(26, 18, 7) // brand-dark
+      doc.rect(0, 0, pageWidth, 50, 'F')
+      // Gold accent line
       doc.setFillColor(201, 169, 110) // gold
-      doc.rect(0, 45, pageWidth, 3, 'F')
-      doc.setFontSize(8)
+      doc.rect(0, 50, pageWidth, 2, 'F')
+
+      // Logo text
+      doc.setFontSize(9)
+      doc.setTextColor(201, 169, 110)
+      doc.text('SUA CASA LEBLON', margin, 14)
+      doc.setFontSize(7)
+      doc.setTextColor(160, 155, 145)
+      doc.text('Gestão Completa de Temporada', margin, 20)
+
+      // Title
+      doc.setFontSize(22)
       doc.setTextColor(255, 255, 255)
-      doc.text('SUA CASA LEBLON — GESTÃO COMPLETA', 15, 12)
-      doc.setFontSize(20)
-      doc.text(`Relatório Mensal — Apt ${aptName}`, pageWidth / 2, 28, { align: 'center' })
-      doc.setFontSize(11)
-      doc.setTextColor(200, 200, 200)
-      doc.text(`${MONTHS_FULL[selectedMonth]} / 2026`, pageWidth / 2, 38, { align: 'center' })
+      doc.text(`Relatório Mensal`, margin, 35)
+      doc.setFontSize(13)
+      doc.setTextColor(201, 169, 110)
+      doc.text(`Apartamento ${aptName}  •  ${MONTHS_FULL[selectedMonth]} 2026`, margin, 44)
 
-      let y = 55
+      let y = 62
 
-      // Summary box
+      // ─── SUMMARY CARDS ───
       const receita = parseBRL(md.receitaTotal)
       const despesa = parseBRL(md.despesaTotal)
       const resultado = parseBRL(md.resultado)
       const commission = parseBRL(md.managerCommission)
       const repassar = parseBRL(md.repassar)
       const owner = ownerPart(md)
+      const nReservas = md.reservations.filter(r => r.source !== 'adjustment').length
+      const adjustments = md.reservations.filter(r => r.source === 'adjustment')
 
-      doc.setFillColor(248, 250, 252)
-      doc.roundedRect(15, y, pageWidth - 30, 30, 3, 3, 'F')
-      doc.setFontSize(9)
-      doc.setTextColor(100, 116, 139)
-
-      const cols = [
-        { label: 'Receita', value: fmtBRL(receita), color: [22, 163, 74] },
-        { label: 'Despesas', value: fmtBRL(despesa), color: [220, 38, 38] },
-        { label: 'Comissão', value: fmtBRL(commission), color: [201, 169, 110] },
-        { label: 'Proprietário', value: fmtBRL(owner), color: [22, 163, 74] },
+      const cards = [
+        { label: 'RECEITA BRUTA', value: fmtBRL(receita), color: [22, 163, 74] as [number, number, number], bg: [240, 253, 244] as [number, number, number] },
+        { label: 'DESPESAS', value: fmtBRL(despesa), color: [220, 38, 38] as [number, number, number], bg: [254, 242, 242] as [number, number, number] },
+        { label: 'COMISSÃO GESTÃO', value: fmtBRL(commission), color: [161, 129, 70] as [number, number, number], bg: [253, 249, 237] as [number, number, number] },
+        { label: 'REPASSE PROPRIETÁRIO', value: fmtBRL(owner), color: [22, 163, 74] as [number, number, number], bg: [240, 253, 244] as [number, number, number] },
       ]
 
-      const colWidth = (pageWidth - 40) / cols.length
-      cols.forEach((col, i) => {
-        const x = 20 + i * colWidth
-        doc.setTextColor(100, 116, 139)
-        doc.setFontSize(8)
-        doc.text(col.label, x, y + 10)
-        doc.setTextColor(col.color[0], col.color[1], col.color[2])
+      const cardWidth = (contentWidth - 9) / 4
+      cards.forEach((card, i) => {
+        const x = margin + i * (cardWidth + 3)
+        doc.setFillColor(card.bg[0], card.bg[1], card.bg[2])
+        doc.roundedRect(x, y, cardWidth, 24, 2, 2, 'F')
+        doc.setFontSize(6.5)
+        doc.setTextColor(120, 120, 120)
+        doc.text(card.label, x + 4, y + 8)
         doc.setFontSize(12)
-        doc.text(col.value, x, y + 20)
+        doc.setTextColor(card.color[0], card.color[1], card.color[2])
+        doc.text(card.value, x + 4, y + 18)
       })
 
-      y += 40
+      y += 32
 
-      // Reservations table
-      if (md.reservations.length > 0) {
+      // Result highlight
+      doc.setFillColor(resultado >= 0 ? 240 : 254, resultado >= 0 ? 253 : 242, resultado >= 0 ? 244 : 242)
+      doc.roundedRect(margin, y, contentWidth, 16, 2, 2, 'F')
+      doc.setDrawColor(resultado >= 0 ? 22 : 220, resultado >= 0 ? 163 : 38, resultado >= 0 ? 74 : 38)
+      doc.roundedRect(margin, y, contentWidth, 16, 2, 2, 'S')
+      doc.setFontSize(9)
+      doc.setTextColor(80, 80, 80)
+      doc.text('RESULTADO LÍQUIDO DO MÊS', margin + 6, y + 7)
+      doc.setFontSize(14)
+      doc.setTextColor(resultado >= 0 ? 22 : 220, resultado >= 0 ? 163 : 38, resultado >= 0 ? 74 : 38)
+      doc.text(fmtBRL(resultado), pageWidth - margin - 6, y + 12, { align: 'right' })
+      doc.setFontSize(8)
+      doc.setTextColor(120, 120, 120)
+      doc.text(`${nReservas} reserva${nReservas !== 1 ? 's' : ''}`, margin + 6, y + 13)
+
+      y += 24
+
+      // ─── RESERVATIONS TABLE ───
+      const realReservations = md.reservations.filter(r => r.source !== 'adjustment')
+      if (realReservations.length > 0) {
         doc.setFontSize(11)
         doc.setTextColor(30, 41, 59)
-        doc.text('Reservas', 15, y)
-        y += 5
+        doc.text('Reservas', margin, y)
+        y += 2
 
         autoTable(doc, {
           startY: y,
           head: [['Check-in', 'Check-out', 'Hóspede', 'Origem', 'Valor']],
-          body: md.reservations.filter(r => r.source !== 'adjustment').map(r => [
+          body: realReservations.map(r => [
             r.checkin, r.checkout, r.guest || '—', r.guestOrigin || '—', r.revenue
           ]),
-          styles: { fontSize: 8, cellPadding: 3 },
-          headStyles: { fillColor: [51, 65, 85], textColor: 255 },
-          alternateRowStyles: { fillColor: [248, 250, 252] },
-          margin: { left: 15, right: 15 },
+          styles: { fontSize: 8, cellPadding: 3.5, lineColor: [230, 230, 230], lineWidth: 0.2 },
+          headStyles: { fillColor: [26, 18, 7], textColor: [201, 169, 110], fontStyle: 'bold', fontSize: 7.5 },
+          alternateRowStyles: { fillColor: [250, 248, 243] },
+          columnStyles: { 4: { halign: 'right', fontStyle: 'bold' } },
+          margin: { left: margin, right: margin },
         })
+        y = (doc as any).lastAutoTable.finalY + 4
 
-        y = (doc as any).lastAutoTable.finalY + 10
+        // Adjustments sub-table
+        if (adjustments.length > 0) {
+          doc.setFontSize(8)
+          doc.setTextColor(180, 120, 40)
+          doc.text('Ajustes (débitos/créditos Airbnb)', margin + 2, y + 4)
+          y += 5
+          autoTable(doc, {
+            startY: y,
+            head: [['Descrição', 'Valor']],
+            body: adjustments.map(a => [a.guest || 'Ajuste', a.revenue]),
+            styles: { fontSize: 7.5, cellPadding: 2.5 },
+            headStyles: { fillColor: [180, 120, 40], textColor: 255, fontSize: 7 },
+            columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } },
+            margin: { left: margin, right: margin },
+          })
+          y = (doc as any).lastAutoTable.finalY + 4
+        }
+
+        // Subtotal
+        doc.setFillColor(240, 253, 244)
+        doc.roundedRect(margin, y, contentWidth, 10, 1, 1, 'F')
+        doc.setFontSize(8)
+        doc.setTextColor(80, 80, 80)
+        doc.text('Receita Total', margin + 4, y + 7)
+        doc.setTextColor(22, 163, 74)
+        doc.setFontSize(10)
+        doc.text(md.receitaTotal, pageWidth - margin - 4, y + 7, { align: 'right' })
+        y += 16
       }
 
-      // Expenses table
+      // ─── EXPENSES TABLE ───
       if (md.expenses.length > 0) {
         doc.setFontSize(11)
         doc.setTextColor(30, 41, 59)
-        doc.text('Despesas', 15, y)
-        y += 5
+        doc.text('Despesas', margin, y)
+        y += 2
 
         autoTable(doc, {
           startY: y,
-          head: [['Data', 'Descrição', 'Valor']],
-          body: md.expenses.map(e => [e.date, e.label, e.value]),
-          styles: { fontSize: 8, cellPadding: 3 },
-          headStyles: { fillColor: [220, 38, 38], textColor: 255 },
-          alternateRowStyles: { fillColor: [254, 242, 242] },
-          margin: { left: 15, right: 15 },
+          head: [['Descrição', 'Obs.', 'Valor']],
+          body: md.expenses.map(e => [e.label, e.obs || '', e.value]),
+          styles: { fontSize: 8, cellPadding: 3.5, lineColor: [230, 230, 230], lineWidth: 0.2 },
+          headStyles: { fillColor: [180, 40, 40], textColor: 255, fontStyle: 'bold', fontSize: 7.5 },
+          alternateRowStyles: { fillColor: [255, 248, 248] },
+          columnStyles: { 2: { halign: 'right', fontStyle: 'bold' } },
+          margin: { left: margin, right: margin },
         })
+        y = (doc as any).lastAutoTable.finalY + 4
 
-        y = (doc as any).lastAutoTable.finalY + 10
+        // Subtotal
+        doc.setFillColor(254, 242, 242)
+        doc.roundedRect(margin, y, contentWidth, 10, 1, 1, 'F')
+        doc.setFontSize(8)
+        doc.setTextColor(80, 80, 80)
+        doc.text('Despesa Total', margin + 4, y + 7)
+        doc.setTextColor(220, 38, 38)
+        doc.setFontSize(10)
+        doc.text(md.despesaTotal, pageWidth - margin - 4, y + 7, { align: 'right' })
+        y += 16
       }
 
-      // Footer
-      const pageHeight = doc.internal.pageSize.getHeight()
-      doc.setDrawColor(226, 232, 240)
-      doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15)
+      // ─── FOOTER ───
+      doc.setDrawColor(201, 169, 110)
+      doc.setLineWidth(0.5)
+      doc.line(margin, pageHeight - 18, pageWidth - margin, pageHeight - 18)
       doc.setFontSize(7)
-      doc.setTextColor(100, 116, 139)
-      doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')}`, 15, pageHeight - 8)
-      doc.text('Sua Casa Leblon — AL Gestão Completa', pageWidth - 15, pageHeight - 8, { align: 'right' })
+      doc.setTextColor(140, 140, 140)
+      doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, margin, pageHeight - 12)
+      doc.text('Sua Casa Leblon — AL Gestão Completa de Temporada', pageWidth - margin, pageHeight - 12, { align: 'right' })
+      doc.setFontSize(6)
+      doc.setTextColor(180, 180, 180)
+      doc.text('Este relatório é gerado automaticamente. Em caso de dúvidas, entre em contato pelo WhatsApp.', margin, pageHeight - 7)
 
       doc.save(`Relatorio_Apt${aptName}_${MONTHS_FULL[selectedMonth]}_2026.pdf`)
     } catch (e: any) {
