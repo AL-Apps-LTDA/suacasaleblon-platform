@@ -1,0 +1,114 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { stripe } from '@/lib/stripe'
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.text()
+    const sig = request.headers.get('stripe-signature')
+
+    let event
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+
+    if (webhookSecret && sig) {
+      try {
+        event = stripe.webhooks.constructEvent(body, sig, webhookSecret)
+      } catch (err: any) {
+        console.error('Webhook signature verification failed:', err.message)
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+      }
+    } else {
+      // In dev/test mode without webhook secret, parse directly
+      event = JSON.parse(body)
+    }
+
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object
+        await handleCompletedCheckout(session)
+        break
+      }
+      case 'checkout.session.expired': {
+        console.log('Checkout session expired:', event.data.object.id)
+        break
+      }
+      default:
+        console.log(`Unhandled event type: ${event.type}`)
+    }
+
+    return NextResponse.json({ received: true })
+  } catch (err: any) {
+    console.error('Webhook error:', err)
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
+async function handleCompletedCheckout(session: any) {
+  const meta = session.metadata || {}
+
+  // Only process if payment is complete
+  if (session.payment_status !== 'paid') {
+    console.log(`Session ${session.id} not paid yet (status: ${session.payment_status})`)
+    return
+  }
+
+  const { createServerClient } = await import('@/lib/supabase')
+  const sb = createServerClient()
+
+  // Check if reservation already exists for this session
+  const { data: existing } = await sb
+    .from('direct_reservations')
+    .select('id')
+    .eq('stripe_session_id', session.id)
+    .single()
+
+  if (existing) {
+    console.log(`Reservation already exists for session ${session.id}`)
+    return
+  }
+
+  const totalValue = parseFloat(meta.grandTotal || '0')
+  const couponDiscount = parseFloat(meta.couponDiscount || '0')
+  const paidAmount = (session.amount_total || 0) / 100 // cents to BRL
+
+  // Insert direct reservation
+  const { data, error } = await sb.from('direct_reservations').insert({
+    apartment: meta.propertyCode,
+    guest_name: meta.guestName,
+    checkin: meta.checkin,
+    checkout: meta.checkout,
+    total_value: totalValue,
+    paid: paidAmount,
+    obs: [
+      `Reserva online via ${meta.paymentMethod === 'pix' ? 'PIX' : 'Cartão'}`,
+      meta.couponCode ? `Cupom: ${meta.couponCode} (-R$${couponDiscount.toFixed(2)})` : null,
+      `Email: ${meta.guestEmail}`,
+      meta.guestPhone ? `Tel: ${meta.guestPhone}` : null,
+      `Stripe: ${session.id}`,
+    ].filter(Boolean).join(' | '),
+    source: 'site',
+    stripe_session_id: session.id,
+    payment_method: meta.paymentMethod || 'card',
+    coupon_code: meta.couponCode || null,
+    coupon_discount: couponDiscount || null,
+    guest_email: meta.guestEmail,
+    guest_phone: meta.guestPhone || null,
+  }).select().single()
+
+  if (error) {
+    console.error('Failed to save reservation:', error)
+    throw error
+  }
+
+  // Increment coupon usage if used
+  if (meta.couponCode) {
+    try {
+      await sb.rpc('increment_coupon_usage', { coupon_code: meta.couponCode })
+    } catch (e: any) {
+      console.error('Failed to increment coupon usage:', e)
+    }
+  }
+
+  console.log(`✅ Reservation saved: ${data?.id} for ${meta.guestName} at ${meta.propertyCode}`)
+
+  // TODO: Send confirmation email / WhatsApp notification to Diego
+}

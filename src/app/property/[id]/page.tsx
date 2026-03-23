@@ -3,7 +3,7 @@
 import { use, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, MapPin, Users, MessageCircle, Loader2, Tag, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, MapPin, Users, MessageCircle, Loader2, Tag, ChevronLeft, ChevronRight, CreditCard, QrCode } from 'lucide-react'
 import { siteConfig } from '@/lib/config'
 import { fmtBRL, WHATSAPP_NUMBER } from '@/lib/types'
 
@@ -57,6 +57,11 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
   const [couponResult, setCouponResult] = useState<any>(null)
   const [couponError, setCouponError] = useState('')
   const [couponLoading, setCouponLoading] = useState(false)
+  const [guestName, setGuestName] = useState('')
+  const [guestEmail, setGuestEmail] = useState('')
+  const [guestPhone, setGuestPhone] = useState('')
+  const [checkoutLoading, setCheckoutLoading] = useState<'pix' | 'card' | null>(null)
+  const [showGuestForm, setShowGuestForm] = useState(false)
 
   useEffect(() => {
     const ci = searchParams.get('checkin')
@@ -100,6 +105,37 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
     } catch { setCouponError('Erro ao validar cupom.') }
     finally { setCouponLoading(false) }
   }
+
+  async function startCheckout(method: 'pix' | 'card') {
+    if (!guestName.trim() || !guestEmail.trim()) return
+    setCheckoutLoading(method)
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          propertyCode: id,
+          checkin, checkout, guests,
+          guestName: guestName.trim(),
+          guestEmail: guestEmail.trim(),
+          guestPhone: guestPhone.trim(),
+          grandTotal: quote.grandTotal,
+          couponCode: couponResult?.coupon?.code || null,
+          couponDiscount: couponResult?.coupon?.discount_amount || 0,
+          paymentMethod: method,
+        }),
+      })
+      const data = await res.json()
+      if (data.ok && data.url) {
+        window.location.href = data.url
+      } else {
+        alert(data.message || 'Erro ao iniciar pagamento.')
+      }
+    } catch { alert('Erro de conexão. Tente novamente.') }
+    finally { setCheckoutLoading(null) }
+  }
+
+  const guestFormValid = guestName.trim().length >= 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)
 
   const finalTotal = couponResult ? couponResult.newTotal : quote?.grandTotal
   const couponDiscount = couponResult?.coupon?.discount_amount || 0
@@ -228,15 +264,56 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
                       )}
                     </div>
 
-                    {/* CTA Buttons */}
-                    <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMsg)}`} target="_blank" rel="noopener"
-                      className="flex items-center justify-center gap-2 w-full bg-green-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-green-700 transition-colors mt-2">
-                      <MessageCircle className="h-4 w-4" />Reservar via WhatsApp
-                    </a>
+                    {/* Guest info + Payment */}
+                    {!showGuestForm ? (
+                      <button onClick={() => setShowGuestForm(true)}
+                        className="w-full bg-gold text-gold-foreground py-3 rounded-xl font-semibold text-sm hover:bg-gold-dark transition-colors mt-2">
+                        Reservar agora
+                      </button>
+                    ) : (
+                      <div className="space-y-2 mt-3 pt-3 border-t border-[var(--color-border)]">
+                        <p className="text-xs font-semibold text-[var(--color-text)]">Seus dados</p>
+                        <input type="text" value={guestName} onChange={e => setGuestName(e.target.value)}
+                          placeholder="Nome completo *"
+                          className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-[var(--color-bg)] text-[var(--color-text)]" />
+                        <input type="email" value={guestEmail} onChange={e => setGuestEmail(e.target.value)}
+                          placeholder="Email *"
+                          className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-[var(--color-bg)] text-[var(--color-text)]" />
+                        <input type="tel" value={guestPhone} onChange={e => setGuestPhone(e.target.value)}
+                          placeholder="WhatsApp (opcional)"
+                          className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-[var(--color-bg)] text-[var(--color-text)]" />
 
-                    <p className="text-[10px] text-[var(--color-text-secondary)] text-center mt-1">
-                      Pagamento via Pix com {discountPct}% de desconto
-                    </p>
+                        {/* PIX Button */}
+                        <button onClick={() => startCheckout('pix')} disabled={!guestFormValid || !!checkoutLoading}
+                          className="flex items-center justify-center gap-2 w-full bg-[#00A868] text-white py-3 rounded-xl font-semibold text-sm hover:bg-[#008F58] transition-colors disabled:opacity-50">
+                          {checkoutLoading === 'pix' ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
+                          Pagar com PIX
+                        </button>
+
+                        {/* Card Button */}
+                        <button onClick={() => startCheckout('card')} disabled={!guestFormValid || !!checkoutLoading}
+                          className="flex items-center justify-center gap-2 w-full bg-[var(--color-text)] text-[var(--color-bg)] py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50">
+                          {checkoutLoading === 'card' ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                          Pagar com Cartão
+                        </button>
+
+                        <div className="flex items-center gap-2 my-1">
+                          <div className="flex-1 h-px bg-[var(--color-border)]" />
+                          <span className="text-[10px] text-[var(--color-text-secondary)]">ou</span>
+                          <div className="flex-1 h-px bg-[var(--color-border)]" />
+                        </div>
+
+                        {/* WhatsApp fallback */}
+                        <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMsg)}`} target="_blank" rel="noopener"
+                          className="flex items-center justify-center gap-2 w-full border border-green-600 text-green-700 py-2.5 rounded-xl font-semibold text-xs hover:bg-green-50 transition-colors">
+                          <MessageCircle className="h-3.5 w-3.5" /> Reservar via WhatsApp
+                        </a>
+
+                        <p className="text-[10px] text-[var(--color-text-secondary)] text-center">
+                          🔒 Pagamento seguro via Stripe
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
