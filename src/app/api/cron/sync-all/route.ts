@@ -80,6 +80,37 @@ export async function GET(request: NextRequest) {
       }
 
       results.hospitable.pro_rata_rows = proRataRows.length
+
+      // ─── Upsert reservations to Supabase ───
+      const upsertRows = reservations.map(r => ({
+        id: r.id,
+        apartment_code: r.apartmentName,
+        guest_name: r.guestName,
+        guest_country: r.guestCountry,
+        checkin: r.arrivalDate,
+        checkout: r.departureDate,
+        nights: r.nights,
+        guests: r.guests,
+        source: 'hospitable',
+        platform: r.platform,
+        status: r.status,
+        payout: r.payout,
+        host_service_fee: r.hostServiceFee,
+        cleaning_fee: r.cleaningFee,
+        total_price: r.totalPrice,
+        currency: r.currency,
+        updated_at: new Date().toISOString(),
+      }))
+
+      if (upsertRows.length > 0) {
+        const { error: upsertErr } = await supabase
+          .from('reservations')
+          .upsert(upsertRows, { onConflict: 'id' })
+        if (upsertErr) {
+          errors.push(`Reservations upsert: ${upsertErr.message}`)
+        }
+        results.hospitable.upserted_reservations = upsertRows.length
+      }
     } else {
       results.hospitable = { skipped: true, reason: 'No API key' }
     }
