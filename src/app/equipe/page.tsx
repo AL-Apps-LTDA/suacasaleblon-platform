@@ -2,12 +2,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Loader2, KeyRound, ChevronLeft, ChevronRight } from 'lucide-react'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-)
 
 const APARTMENTS = ['103', '403', '102', '303', '334A']
 const EQUIPE_PIN = 'giro2026'
@@ -80,24 +74,17 @@ export default function EquipePage() {
   const loadReservations = useCallback(async () => {
     if (!auth) return
     setLoading(true)
-    const startDate = dateStr(days[0])
-    const endD = new Date(days[days.length - 1])
-    endD.setDate(endD.getDate() + 1)
-    const endDate = dateStr(endD)
-
-    const [resResult, directResult] = await Promise.allSettled([
-      supabase.from('reservations').select('apartment_code,guest_name,checkin,checkout,source')
-        .lt('checkin', endDate).gt('checkout', startDate).order('checkin'),
-      supabase.from('direct_reservations').select('apartment_code,guest_name,checkin,checkout,source')
-        .lt('checkin', endDate).gt('checkout', startDate).order('checkin'),
-    ])
-
-    const all: Reservation[] = []
-    if (resResult.status === 'fulfilled' && resResult.value.data) all.push(...resResult.value.data)
-    if (directResult.status === 'fulfilled' && directResult.value.data) all.push(...directResult.value.data)
-    setReservations(all)
+    try {
+      const res = await fetch('/api/equipe')
+      const data = await res.json()
+      if (data.ok && data.reservations) {
+        setReservations(data.reservations)
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar reservas:', e)
+    }
     setLoading(false)
-  }, [auth, days])
+  }, [auth])
 
   useEffect(() => { loadReservations() }, [loadReservations])
 
