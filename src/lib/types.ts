@@ -20,7 +20,6 @@ export interface Property {
 export const PROPERTY_HOSPITABLE_MAP: Record<string, string> = {
   '103': '2bf9fa5a-0c40-4d79-9905-99d83b6ba5c2',
   '403': 'e438f8b5-095a-45b8-b2b7-adf9c21bceb7',
-  'S-102': '23e27636-efcf-4a02-84c2-90a26f03c723',
   '102': '23e27636-efcf-4a02-84c2-90a26f03c723',
   '303': '7eba4fb5-0a14-40b9-b510-0588fe5a9247',
   'BZ02': '51948efe-5925-4e6a-ac2c-f4079986b0c4',
