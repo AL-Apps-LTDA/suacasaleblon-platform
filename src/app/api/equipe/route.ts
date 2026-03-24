@@ -31,6 +31,8 @@ export async function GET() {
         guest_name: r.guestName,
         checkin: r.arrivalDate,
         checkout: r.departureDate,
+        nights: r.nights || 0,
+        guests: r.guests || 0,
         source: r.platform || 'hospitable',
       }))
 
