@@ -11,10 +11,23 @@ const supabase = createClient(
 )
 
 const APARTMENTS = ['103', '403', '102', '303', '334A']
-const CATEGORIES = ['condominio', 'iptu', 'luz', 'internet', 'limpeza', 'manutencao', 'enxoval', 'outros']
+const CATEGORIES = [
+  'condominio', 'iptu', 'luz', 'agua', 'gas', 'internet',
+  'limpeza', 'produtos_limpeza', 'lavanderia',
+  'manutencao', 'enxoval', 'amenities',
+  'seguro', 'plataformas', 'comissao',
+  'marketing', 'contabilidade', 'juridico',
+  'mobilia', 'eletrodomesticos', 'decoracao',
+  'outros'
+]
 const CATEGORY_LABELS: Record<string, string> = {
-  condominio: 'Condomínio', iptu: 'IPTU', luz: 'Luz/Energia', internet: 'Internet/TV',
-  limpeza: 'Limpeza', manutencao: 'Manutenção', enxoval: 'Enxoval', outros: 'Outros'
+  condominio: 'Condomínio', iptu: 'IPTU', luz: 'Luz/Energia', agua: 'Água', gas: 'Gás',
+  internet: 'Internet/TV', limpeza: 'Limpeza (serviço)', produtos_limpeza: 'Produtos de limpeza',
+  lavanderia: 'Lavanderia', manutencao: 'Manutenção/Reparos', enxoval: 'Enxoval (cama/banho)',
+  amenities: 'Amenities (café, sabonete...)', seguro: 'Seguro', plataformas: 'Taxa plataformas (Airbnb/Booking)',
+  comissao: 'Comissão gestão', marketing: 'Marketing/Fotos', contabilidade: 'Contabilidade',
+  juridico: 'Jurídico/Cartório', mobilia: 'Mobília', eletrodomesticos: 'Eletrodomésticos',
+  decoracao: 'Decoração', outros: 'Outros'
 }
 
 interface Expense {
