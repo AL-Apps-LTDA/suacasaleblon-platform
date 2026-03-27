@@ -15,7 +15,6 @@ interface AvailableResult {
 
 export default function Home() {
   const { properties, brand, pricing } = siteConfig
-  const discountPct = Math.round(pricing.discount_pct * 100)
   const [checkin, setCheckin] = useState('')
   const [checkout, setCheckout] = useState('')
   const [guests, setGuests] = useState(2)
@@ -95,7 +94,7 @@ export default function Home() {
             </h1>
             <p className="mt-4 text-base text-[var(--color-text-secondary)] max-w-lg mx-auto animate-fade-in animate-fade-in-delay-2">
               Praia, bares e restaurantes. Tudo a poucos passos.</p>
-            <p className="mt-2 text-sm text-[var(--color-text-secondary)]/70 animate-fade-in animate-fade-in-delay-2">Pague menos que no Airbnb e Booking. Pagamento via Pix ou cartão.
+            <p className="mt-2 text-sm text-[var(--color-text-secondary)]/70 animate-fade-in animate-fade-in-delay-2">Pague Menos Que no Airbnb e Booking.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6 animate-fade-in animate-fade-in-delay-3">
               <a href="#apartamentos" className="flex items-center gap-2 bg-gold text-gold-foreground px-6 py-3 rounded-xl font-semibold text-sm hover:bg-gold-dark transition-colors"><Search className="h-4 w-4" /> Ver apartamentos disponíveis</a>
@@ -108,7 +107,7 @@ export default function Home() {
       {/* Prova social */}
       <section className="max-w-6xl mx-auto px-4 pb-6">
         <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10 text-center">
-          {[{ val: '2.000+', label: 'hóspedes atendidos' },{ val: '4.9', label: 'avaliação média' },{ val: 'Superhost', label: 'desde 2018' },{ val: `${discountPct}%`, label: 'mais barato que Airbnb e Booking' }].map(s => (
+          {[{ val: '1.9K+', label: 'reservas' },{ val: '4.9', label: 'avaliação média' },{ val: 'Superhost', label: 'desde 2018' }].map(s => (
             <div key={s.label} className="flex items-center gap-2">
               <span className="text-lg font-bold text-gold font-mono">{s.val}</span>
               <span className="text-xs text-[var(--color-text-secondary)]">{s.label}</span>
@@ -156,7 +155,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {properties.map(property=>(<Link key={property.code} href={`/property/${property.code}`} className="group bg-white rounded-2xl border border-[var(--color-border)]/60 overflow-hidden hover:border-gold/30 hover:shadow-lg hover:shadow-gold/5 transition-all duration-300">
               <div className="aspect-[4/3] bg-brand-100 relative overflow-hidden">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={property.images[0]} alt={property.title} className="w-full h-full object-cover"/><div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"/><div className="absolute bottom-3 left-3 flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-white/90"/><span className="text-xs text-white/90 font-medium">Leblon, Rio de Janeiro</span></div></div>
-              <div className="p-4"><h3 className="font-display text-lg text-[var(--color-text)] group-hover:text-gold transition-colors">{property.title}</h3><p className="text-xs text-[var(--color-text-secondary)] mt-1">{property.subtitle}</p><div className="mt-3 flex items-center gap-3"><div className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)]"><Users className="h-3.5 w-3.5"/> Até {property.max_guests}</div><span className="text-xs text-gold font-semibold">Pague menos que no Airbnb e Booking</span></div></div>
+              <div className="p-4"><h3 className="font-display text-lg text-[var(--color-text)] group-hover:text-gold transition-colors">{property.title}</h3><p className="text-xs text-[var(--color-text-secondary)] mt-1">{property.subtitle}</p><div className="mt-3 flex items-center gap-3"><div className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)]"><Users className="h-3.5 w-3.5"/> Até {property.max_guests}</div><span className="text-xs text-gold font-semibold">Pague Menos Que no Airbnb e Booking.</span></div></div>
             </Link>))}
           </div>
         </section>
