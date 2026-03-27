@@ -74,8 +74,15 @@ export default function Home() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
+        <div className="hidden md:block absolute inset-0">
+          <div
+            className="absolute inset-0 bg-center bg-cover bg-no-repeat"
+            style={{ backgroundImage: "url('/images/hero-bg.jpg')" }}
+          />
+          <div className="absolute inset-0 bg-black/35" />
+        </div>
         {/* Mobile: apartment thumbnails strip */}
-        <div className="md:hidden flex gap-2 px-4 pt-4 overflow-x-auto no-scrollbar">
+        <div className="relative z-10 md:hidden flex gap-2 px-4 pt-4 overflow-x-auto no-scrollbar">
           {properties.map(p => (
             <a key={p.code} href="#apartamentos" className="shrink-0 w-28 h-20 rounded-xl overflow-hidden relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -86,7 +93,7 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 pt-6 pb-6 md:pt-16 md:pb-10 relative">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 pt-6 pb-6 md:pt-16 md:pb-10">
           <div className="max-w-2xl mx-auto text-center">
 
             <h1 className="font-display text-3xl md:text-5xl text-[var(--color-text)] leading-tight animate-fade-in animate-fade-in-delay-1">
