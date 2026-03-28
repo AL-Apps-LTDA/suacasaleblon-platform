@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
         checkin: r.arrivalDate,
         checkout: r.departureDate,
         nights: r.nights,
-        guests: typeof r.guests === "object" && r.guests !== null ? (r.guests?.total ?? r.guests?.adult_count ?? 1) : (r.guests || 1),
+        guests: (r.guests && typeof r.guests === "object") ? ((r.guests as any).total ?? (r.guests as any).adult_count ?? 1) : (Number(r.guests) || 1),
         source: 'hospitable',
         platform: r.platform,
         status: r.status,
