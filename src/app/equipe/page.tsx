@@ -1,281 +1,467 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
-import {
-  Loader2,
-  KeyRound,
-  RefreshCw,
-  CheckCircle2,
-  Sun,
-  Moon,
-  Eye,
-  EyeOff,
-} from 'lucide-react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { Loader2, KeyRound, RefreshCw, Eye, EyeOff, X, Camera, Trash2, Plus, Edit3, ChevronDown } from 'lucide-react'
 
-const APARTMENTS_ORDER = ['103', '102', '403', '334A', '303']
-const DAYS_LABEL = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
-const CHECKIN_HOUR = 15
+// ─── CONSTANTS ─────────────────────────────────────────
+const APTS = ['103', '102', '403', '334A', '303']
+const DAYS_L = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
+const CHECKIN_H = 15
 
-const LIGHT = {
-  bg: '#faf8f5', cardBg: '#f3efe8', border: '#c9b99a', borderInner: '#ddd4c4',
-  textPrimary: '#2e221c', textSecondary: '#5e5040', labelColor: '#4a3e30',
-  gold: '#b08a40', goldBg: '#b08a4018',
-  green: '#16a34a', greenBg: '#16a34a22', greenBorder: '#16a34a55',
-  yellow: '#a8864a', yellowBg: '#a8864a12', yellowBorder: '#a8864a50',
-  red: '#dc2626', redBg: '#dc262612', redBorder: '#dc262650', warnIcon: '#eab308',
-  hachStroke: '#a09890', hachText: '#706860', dot: '#beb5a5', hachId: 'hL',
-  shadow: '0 0 4px rgba(250,248,245,0.95), 0 0 2px rgba(250,248,245,0.95)',
-  btnBg: '#ebe5d8', btnBorder: '#c9b99a', btnText: '#5e5040',
-  inputBg: '#f3efe8', inputBorder: '#ddd4c4', inputFocus: '#c9a96e',
+// ─── THEMES ────────────────────────────────────────────
+const LT = {
+  bg:'#faf8f5',cardBg:'#f3efe8',border:'#c9b99a',borderInner:'#ddd4c4',
+  textPrimary:'#2e221c',textSecondary:'#5e5040',labelColor:'#4a3e30',
+  gold:'#b08a40',goldBg:'#b08a4018',
+  green:'#16a34a',greenBg:'#16a34a22',greenBorder:'#16a34a55',
+  yellow:'#a8864a',yellowBg:'#a8864a12',yellowBorder:'#a8864a50',
+  red:'#dc2626',redBg:'#dc262612',redBorder:'#dc262650',warnIcon:'#eab308',
+  hachStroke:'#a09890',hachText:'#706860',dot:'#beb5a5',hachId:'hL',
+  shadow:'0 0 4px rgba(250,248,245,0.95)',
+  btnBg:'#ebe5d8',btnBorder:'#c9b99a',btnText:'#5e5040',
+  inputBg:'#f3efe8',inputBorder:'#ddd4c4',inputFocus:'#c9a96e',
+  overlay:'rgba(0,0,0,0.4)',modalBg:'#faf8f5',
 }
-
-const DARK = {
-  bg: '#1a1a22', cardBg: '#222230', border: '#444455', borderInner: '#333340',
-  textPrimary: '#e8e6e0', textSecondary: '#a09a90', labelColor: '#c0b8a8',
-  gold: '#c9a96e', goldBg: '#c9a96e14',
-  green: '#22c55e', greenBg: '#22c55e22', greenBorder: '#22c55e55',
-  yellow: '#eab308', yellowBg: '#eab30812', yellowBorder: '#eab30850',
-  red: '#ef4444', redBg: '#ef444412', redBorder: '#ef444450', warnIcon: '#eab308',
-  hachStroke: '#55556a', hachText: '#8888a0', dot: '#44445a', hachId: 'hD',
-  shadow: '0 0 4px rgba(26,26,34,0.95), 0 0 2px rgba(26,26,34,0.95)',
-  btnBg: '#2a2a38', btnBorder: '#444455', btnText: '#a09a90',
-  inputBg: '#222230', inputBorder: '#333340', inputFocus: '#c9a96e',
+const DK = {
+  bg:'#1a1a22',cardBg:'#222230',border:'#444455',borderInner:'#333340',
+  textPrimary:'#e8e6e0',textSecondary:'#a09a90',labelColor:'#c0b8a8',
+  gold:'#c9a96e',goldBg:'#c9a96e14',
+  green:'#22c55e',greenBg:'#22c55e22',greenBorder:'#22c55e55',
+  yellow:'#eab308',yellowBg:'#eab30812',yellowBorder:'#eab30850',
+  red:'#ef4444',redBg:'#ef444412',redBorder:'#ef444450',warnIcon:'#eab308',
+  hachStroke:'#55556a',hachText:'#8888a0',dot:'#44445a',hachId:'hD',
+  shadow:'0 0 4px rgba(26,26,34,0.95)',
+  btnBg:'#2a2a38',btnBorder:'#444455',btnText:'#a09a90',
+  inputBg:'#222230',inputBorder:'#333340',inputFocus:'#c9a96e',
+  overlay:'rgba(0,0,0,0.6)',modalBg:'#1e1e28',
 }
+type T = typeof LT
 
-type Theme = typeof LIGHT
+// ─── TYPES ─────────────────────────────────────────────
+interface Res { apartment_code:string; guest_name:string; checkin:string; checkout:string }
+interface Cln { id?:string; apartment_code:string; scheduled_date:string; cleaning_date?:string; status?:string; completed?:boolean; manually_edited?:boolean; cleaner_name?:string; cleaner_id?:string; cleaning_cost?:number; cost?:number; photos?:string[]; notes?:string; guests_count?:number; sort_order?:number }
+interface DayCell { type:'empty'|'pending'|'done'|'late'|'occupied'; apt:string; cleaning?:Cln; date:string }
+interface AppUser { id:string; username:string; display_name:string; role:string; pix_key?:string }
 
-interface Reservation { apartment_code: string; guest_name: string; checkin: string; checkout: string }
-interface Cleaning { id?: string; apartment_code: string; scheduled_date: string; cleaning_date?: string; status?: string; completed?: boolean; manually_edited?: boolean; cleaner_name?: string; cleaning_cost?: number; photos?: string[] }
-interface DayCell { type: 'empty' | 'pending' | 'done' | 'late' | 'occupied'; apt: string; cleaning?: Cleaning }
-
-function getWeekDates(offset: number): Date[] {
-  const now = new Date(); const day = now.getDay()
-  const monday = new Date(now); monday.setDate(now.getDate() - ((day + 6) % 7) + offset * 7); monday.setHours(0,0,0,0)
-  return Array.from({ length: 7 }, (_, i) => { const d = new Date(monday); d.setDate(monday.getDate() + i); return d })
+// ─── HELPERS ───────────────────────────────────────────
+function weekDates(off:number):Date[] {
+  const n=new Date(),d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-((d+6)%7)+off*7);m.setHours(0,0,0,0)
+  return Array.from({length:7},(_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return x})
 }
-function ds(d: Date): string { return d.toISOString().slice(0, 10) }
-function isToday(d: Date): boolean { return ds(d) === ds(new Date()) }
-function fmt(d: Date): string { return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}` }
-function isLate(scheduledDate: string): boolean {
-  const now = new Date(); const brNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
-  const today = ds(brNow); if (scheduledDate > today) return false; if (scheduledDate < today) return true; return brNow.getHours() >= CHECKIN_HOUR
+function ds(d:Date){return d.toISOString().slice(0,10)}
+function isToday(d:Date){return ds(d)===ds(new Date())}
+function fmt(d:Date){return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`}
+function fmtFull(s:string){const d=new Date(s+'T12:00:00');return `${DAYS_L[d.getDay()]} ${fmt(d)}`}
+function isLate(sd:string){
+  const n=new Date(),br=new Date(n.toLocaleString('en-US',{timeZone:'America/Sao_Paulo'})),t=ds(br)
+  if(sd>t)return false;if(sd<t)return true;return br.getHours()>=CHECKIN_H
 }
+function apiH(token:string){return {'Authorization':`Basic ${token}`,'Content-Type':'application/json'}}
 
-function HachPatterns() {
-  return (<svg width="0" height="0" style={{ position: 'absolute' }}><defs>
-    <pattern id="hL" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#a09890" strokeWidth="0.9" /></pattern>
-    <pattern id="hD" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#55556a" strokeWidth="0.9" /></pattern>
-  </defs></svg>)
-}
+// ─── HACH PATTERNS ─────────────────────────────────────
+function Hach(){return(<svg width="0" height="0" style={{position:'absolute'}}><defs>
+  <pattern id="hL" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#a09890" strokeWidth="0.9"/></pattern>
+  <pattern id="hD" patternUnits="userSpaceOnUse" width="5" height="5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#55556a" strokeWidth="0.9"/></pattern>
+</defs></svg>)}
 
-function StatusCell({ cell, t }: { cell: DayCell; t: Theme }) {
-  if (cell.type === 'empty') return <div style={{ width: 3.5, height: 3.5, borderRadius: '50%', background: t.dot }} />
-  if (cell.type === 'occupied') return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}><rect width="100%" height="100%" fill={`url(#${t.hachId})`} /></svg>
-      <span style={{ fontSize: 9, fontWeight: 700, color: t.hachText, position: 'relative', zIndex: 1, textShadow: t.shadow }}>{cell.apt}</span>
-    </div>
-  )
-  const isDone = cell.type === 'done'; const isLateSt = cell.type === 'late'
-  const color = isDone ? t.green : isLateSt ? t.red : t.yellow
-  const bg = isDone ? t.greenBg : isLateSt ? t.redBg : t.yellowBg
-  const border = isDone ? t.greenBorder : isLateSt ? t.redBorder : t.yellowBorder
-  return (
-    <div style={{ width: 38, height: 28, borderRadius: 6, display: 'flex', flexDirection: 'column', alignItems: 'stretch', justifyContent: 'space-between', padding: '3px 5px', cursor: 'pointer', background: isDone ? bg : 'transparent', border: `1.5px solid ${border}` }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
-        {isDone && <span style={{ fontSize: 11, color, lineHeight: '1' }}>✓</span>}
-        {isLateSt && <span style={{ fontSize: 9, lineHeight: '1', color: t.warnIcon }}>⚠</span>}
-        {!isDone && !isLateSt && <span style={{ fontSize: 8, lineHeight: '1', color, opacity: 0.8 }}>◷</span>}
+// ─── STATUS CELL ───────────────────────────────────────
+function Cell({cell,t,onClick}:{cell:DayCell;t:T;onClick?:()=>void}){
+  if(cell.type==='empty')return<div style={{width:3.5,height:3.5,borderRadius:'50%',background:t.dot}}/>
+  if(cell.type==='occupied')return(
+    <div style={{position:'relative',width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <svg width="100%" height="100%" style={{position:'absolute',top:0,left:0}}><rect width="100%" height="100%" fill={`url(#${t.hachId})`}/></svg>
+      <span style={{fontSize:9,fontWeight:700,color:t.hachText,position:'relative',zIndex:1,textShadow:t.shadow}}>{cell.apt}</span>
+    </div>)
+  const done=cell.type==='done',late=cell.type==='late'
+  const c=done?t.green:late?t.red:t.yellow, bg=done?t.greenBg:late?t.redBg:t.yellowBg, bd=done?t.greenBorder:late?t.redBorder:t.yellowBorder
+  return(
+    <div onClick={onClick} style={{width:38,height:28,borderRadius:6,display:'flex',flexDirection:'column',alignItems:'stretch',justifyContent:'space-between',padding:'3px 5px',cursor:'pointer',background:done?bg:'transparent',border:`1.5px solid ${bd}`,transition:'transform 0.1s'}}
+      onPointerDown={e=>(e.currentTarget.style.transform='scale(0.92)')} onPointerUp={e=>(e.currentTarget.style.transform='scale(1)')} onPointerLeave={e=>(e.currentTarget.style.transform='scale(1)')}>
+      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'flex-start'}}>
+        {done&&<span style={{fontSize:11,color:c,lineHeight:'1'}}>✓</span>}
+        {late&&<span style={{fontSize:9,lineHeight:'1',color:t.warnIcon}}>⚠</span>}
+        {!done&&!late&&<span style={{fontSize:8,lineHeight:'1',color:c,opacity:0.8}}>◷</span>}
       </div>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-        <span style={{ fontSize: cell.apt.length > 3 ? 7 : 8, fontWeight: 700, color, lineHeight: '1' }}>{cell.apt}</span>
+      <div style={{display:'flex',alignItems:'flex-end',justifyContent:'flex-end'}}>
+        <span style={{fontSize:cell.apt.length>3?7:8,fontWeight:700,color:c,lineHeight:'1'}}>{cell.apt}</span>
       </div>
-    </div>
-  )
+    </div>)
 }
 
-function WeekGrid({ dates, label, reservations, cleanings, t }: { dates: Date[]; label: string; reservations: Reservation[]; cleanings: Cleaning[]; t: Theme }) {
-  const grid = useMemo(() => {
-    return APARTMENTS_ORDER.map((apt) => dates.map((day): DayCell => {
-      const d = ds(day)
-      const cleaning = cleanings.find(c => c.apartment_code === apt && (c.scheduled_date === d || c.cleaning_date === d))
-      if (cleaning) {
-        if (cleaning.completed || cleaning.status === 'concluida') return { type: 'done', apt, cleaning }
-        if (isLate(d)) return { type: 'late', apt, cleaning }
-        return { type: 'pending', apt, cleaning }
-      }
-      const occupied = reservations.some(r => r.apartment_code === apt && d >= r.checkin && d < r.checkout)
-      if (occupied) return { type: 'occupied', apt }
-      return { type: 'empty', apt }
-    }))
-  }, [dates, reservations, cleanings])
-  return (
-    <div style={{ background: t.cardBg, borderRadius: 12, border: `2px solid ${t.border}`, overflow: 'hidden', marginBottom: 14 }}>
-      <div style={{ padding: '8px 12px', borderBottom: `1.5px solid ${t.border}` }}>
-        <span style={{ fontSize: 12, fontWeight: 800, color: t.labelColor, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: `1.5px solid ${t.border}` }}>
-        {dates.map((day, i) => { const today = isToday(day); return (
-          <div key={i} style={{ textAlign: 'center', padding: '6px 2px', background: today ? t.goldBg : 'transparent', borderRight: i < 6 ? `1px solid ${t.borderInner}` : 'none' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: today ? t.gold : t.textSecondary }}>{DAYS_LABEL[day.getDay()]}</div>
-            <div style={{ fontSize: 11, fontWeight: 800, color: today ? t.gold : t.textPrimary }}>{fmt(day)}</div>
-          </div>
-        )})}
-      </div>
-      {grid.map((row, rowIdx) => (
-        <div key={rowIdx} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: rowIdx < grid.length - 1 ? `1.5px solid ${t.borderInner}` : 'none', minHeight: 44 }}>
-          {row.map((cell, colIdx) => (
-            <div key={colIdx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 44, borderRight: colIdx < 6 ? `1px solid ${t.borderInner}40` : 'none', position: 'relative', overflow: 'hidden' }}>
-              <StatusCell cell={cell} t={t} />
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  )
-}
+// ─── CLEANING MODAL ────────────────────────────────────
+function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCell;t:T;token:string;user:AppUser;cleaners:AppUser[];onClose:()=>void;onSaved:()=>void}){
+  const cl=cell.cleaning!
+  const isAdm=user.role==='admin'
+  const [cost,setCost]=useState(cl.cleaning_cost?.toString()??cl.cost?.toString()??'')
+  const [assignee,setAssignee]=useState(cl.cleaner_id||'')
+  const [assigneeName,setAssigneeName]=useState(cl.cleaner_name||'')
+  const [notes,setNotes]=useState(cl.notes||'')
+  const [guests,setGuests]=useState(cl.guests_count?.toString()||'')
+  const [photos,setPhotos]=useState<string[]>(cl.photos||[])
+  const [saving,setSaving]=useState(false)
+  const [error,setError]=useState('')
+  const [deleteConfirm,setDeleteConfirm]=useState(false)
+  const fileRef=useRef<HTMLInputElement>(null)
 
-function Legend({ t }: { t: Theme }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', padding: '6px 2px' }}>
-      {[
-        { label: 'Pendente', border: t.yellowBorder, color: t.yellow, icon: '◷', bg: 'transparent' },
-        { label: 'Concluída', border: t.greenBorder, color: t.green, icon: '✓', bg: t.greenBg },
-        { label: 'Atrasada', border: t.redBorder, color: t.warnIcon, icon: '⚠', bg: 'transparent' },
-      ].map(item => (
-        <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: t.textSecondary }}>
-          <div style={{ width: 22, height: 15, borderRadius: 4, background: item.bg, border: `1.5px solid ${item.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: item.color }}>{item.icon}</div>
-          {item.label}
-        </div>
-      ))}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: t.textSecondary }}>
-        <div style={{ width: 22, height: 15, borderRadius: 4, overflow: 'hidden', border: `1.5px solid ${t.borderInner}` }}>
-          <svg width="22" height="15" style={{ display: 'block' }}><rect width="22" height="15" fill={`url(#${t.hachId})`} /></svg>
-        </div>
-        Ocupado
-      </div>
-    </div>
-  )
-}
+  // Permission: if admin already set cleaner/cost, cleaner can't change
+  const cleanerLocked=!isAdm&&!!cl.cleaner_id&&cl.cleaner_id!==user.id
+  const costLocked=!isAdm&&cl.cleaning_cost!=null&&cl.cleaning_cost>0
 
-function LoginScreen({ onLogin, t }: { onLogin: (u: string, p: string) => void; t: Theme }) {
-  const [user, setUser] = useState(''); const [pass, setPass] = useState('')
-  const [showPass, setShowPass] = useState(false); const [error, setError] = useState(''); const [loading, setLoading] = useState(false)
-  const handleSubmit = async () => {
-    if (!user || !pass) { setError('Preencha usuário e senha'); return }
-    setLoading(true); setError('')
-    try {
-      const res = await fetch('/api/limpezas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'login', username: user, password: pass }) })
-      const data = await res.json()
-      if (!res.ok || data.error) { setError(data.error || 'Credenciais inválidas'); setLoading(false); return }
-      localStorage.setItem('equipe_auth', btoa(`${user}:${pass}`))
-      localStorage.setItem('equipe_user', JSON.stringify(data))
-      onLogin(user, pass)
-    } catch { setError('Erro de conexão') }
-    setLoading(false)
+  // Available cleaners for dropdown
+  const cleanerOpts=isAdm?cleaners.filter(u=>u.role==='cleaner'):[{id:user.id,display_name:user.display_name,username:user.username,role:user.role}]
+
+  const canComplete=cost!==''&&photos.length>=2
+  const isDone=cl.completed||cl.status==='concluida'
+
+  const handlePhoto=async(e:React.ChangeEvent<HTMLInputElement>)=>{
+    const files=e.target.files;if(!files)return
+    for(let i=0;i<files.length&&photos.length+i<6;i++){
+      const f=files[i]
+      const reader=new FileReader()
+      reader.onload=()=>{setPhotos(p=>[...p,reader.result as string].slice(0,6))}
+      reader.readAsDataURL(f)
+    }
+    e.target.value=''
   }
-  return (
-    <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div style={{ width: '100%', maxWidth: 320, textAlign: 'center' }}>
-        <div style={{ width: 56, height: 56, borderRadius: 16, margin: '0 auto 16px', background: t.goldBg, border: `1.5px solid ${t.gold}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <KeyRound size={28} style={{ color: t.gold }} />
+
+  const handleSave=async(complete:boolean)=>{
+    setSaving(true);setError('')
+    const h=apiH(token)
+    try{
+      // Assign cleaner if changed
+      if(assignee&&assignee!==cl.cleaner_id){
+        const aName=cleanerOpts.find(c=>c.id===assignee)?.display_name||assigneeName
+        const r=await fetch('/api/limpezas',{method:'POST',headers:h,body:JSON.stringify({action:'assign-cleaner',cleaning_id:cl.id,cleaner_id:assignee,cleaner_name:aName})})
+        if(!r.ok){const d=await r.json();setError(d.error||'Erro ao atribuir');setSaving(false);return}
+      }
+      // Update fields via upsert (admin) or complete
+      if(complete){
+        const r=await fetch('/api/limpezas',{method:'POST',headers:h,body:JSON.stringify({action:'complete-cleaning',cleaning_id:cl.id,cost:parseFloat(cost)||0,photos,notes,guests_count:parseInt(guests)||0})})
+        if(!r.ok){const d=await r.json();setError(d.error||'Erro ao concluir');setSaving(false);return}
+      }else if(isAdm){
+        // Admin can update any field without completing
+        const r=await fetch('/api/limpezas',{method:'POST',headers:h,body:JSON.stringify({action:'upsert-cleaning',cleaning:{id:cl.id,cleaning_cost:parseFloat(cost)||0,cost:parseFloat(cost)||0,notes,guests_count:parseInt(guests)||0,photos}})})
+        if(!r.ok){const d=await r.json();setError(d.error||'Erro ao salvar');setSaving(false);return}
+      }
+      onSaved();onClose()
+    }catch{setError('Erro de conexão')}
+    setSaving(false)
+  }
+
+  const handleDelete=async()=>{
+    setSaving(true)
+    try{
+      const r=await fetch('/api/limpezas',{method:'POST',headers:apiH(token),body:JSON.stringify({action:'delete',table:'cleanings',id:cl.id})})
+      if(r.ok){onSaved();onClose()}else{const d=await r.json();setError(d.error||'Erro')}
+    }catch{setError('Erro')}
+    setSaving(false)
+  }
+
+  const inputS=(extra?:any):any=>({width:'100%',padding:'10px 12px',borderRadius:8,fontSize:13,background:t.inputBg,border:`1.5px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none',boxSizing:'border-box' as const,...extra})
+
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:100,display:'flex',alignItems:'flex-end',justifyContent:'center'}} onClick={onClose}>
+      <div style={{position:'absolute',inset:0,background:t.overlay}}/>
+      <div onClick={e=>e.stopPropagation()} style={{position:'relative',width:'100%',maxWidth:420,maxHeight:'90vh',overflowY:'auto',background:t.modalBg,borderRadius:'16px 16px 0 0',padding:'20px 16px',boxShadow:'0 -4px 30px rgba(0,0,0,0.2)'}}>
+        {/* Header */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <div>
+            <div style={{fontSize:16,fontWeight:700,color:t.textPrimary}}>Apto {cell.apt}</div>
+            <div style={{fontSize:11,color:t.textSecondary}}>{fmtFull(cl.scheduled_date||cl.cleaning_date||cell.date)}</div>
+          </div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            {isAdm&&!isDone&&<button onClick={()=>setDeleteConfirm(true)} style={{background:'none',border:'none',cursor:'pointer',padding:4}}><Trash2 size={16} style={{color:t.red}}/></button>}
+            <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',padding:4}}><X size={18} style={{color:t.textSecondary}}/></button>
+          </div>
         </div>
-        <h1 style={{ fontSize: 18, fontWeight: 700, color: t.textPrimary, marginBottom: 4 }}>Equipe Sua Casa</h1>
-        <p style={{ fontSize: 12, color: t.textSecondary, marginBottom: 24 }}>Faça login para acessar</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <input type="text" placeholder="Usuário" value={user} onChange={e => { setUser(e.target.value); setError('') }} onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-            style={{ width: '100%', padding: '12px 16px', borderRadius: 10, fontSize: 14, background: t.inputBg, border: `1.5px solid ${t.inputBorder}`, color: t.textPrimary, outline: 'none', boxSizing: 'border-box' }} />
-          <div style={{ position: 'relative' }}>
-            <input type={showPass ? 'text' : 'password'} placeholder="Senha" value={pass} onChange={e => { setPass(e.target.value); setError('') }} onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-              style={{ width: '100%', padding: '12px 44px 12px 16px', borderRadius: 10, fontSize: 14, background: t.inputBg, border: `1.5px solid ${t.inputBorder}`, color: t.textPrimary, outline: 'none', boxSizing: 'border-box' }} />
-            <button onClick={() => setShowPass(!showPass)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-              {showPass ? <EyeOff size={16} style={{ color: t.textSecondary }} /> : <Eye size={16} style={{ color: t.textSecondary }} />}
+
+        {/* Delete confirm */}
+        {deleteConfirm&&<div style={{background:t.redBg,border:`1px solid ${t.redBorder}`,borderRadius:8,padding:12,marginBottom:12}}>
+          <div style={{fontSize:12,color:t.red,fontWeight:600,marginBottom:8}}>Deletar esta limpeza?</div>
+          <div style={{display:'flex',gap:8}}>
+            <button onClick={handleDelete} disabled={saving} style={{flex:1,padding:'8px 0',borderRadius:8,border:'none',background:t.red,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>Sim, deletar</button>
+            <button onClick={()=>setDeleteConfirm(false)} style={{flex:1,padding:'8px 0',borderRadius:8,border:`1px solid ${t.border}`,background:'transparent',color:t.textSecondary,fontSize:12,cursor:'pointer'}}>Cancelar</button>
+          </div>
+        </div>}
+
+        {/* Status badge */}
+        {isDone&&<div style={{display:'inline-flex',alignItems:'center',gap:4,background:t.greenBg,border:`1px solid ${t.greenBorder}`,borderRadius:6,padding:'4px 10px',marginBottom:12}}>
+          <span style={{fontSize:12,color:t.green,fontWeight:600}}>✓ Concluída</span>
+        </div>}
+
+        {/* Faxineira */}
+        <div style={{marginBottom:12}}>
+          <label style={{fontSize:11,fontWeight:600,color:t.textSecondary,display:'block',marginBottom:4}}>Faxineira</label>
+          {cleanerLocked?
+            <div style={inputS({opacity:0.6,cursor:'not-allowed'})}>{assigneeName||'Atribuída pelo admin'}</div>:
+            <div style={{position:'relative'}}>
+              <select value={assignee} onChange={e=>{setAssignee(e.target.value);setAssigneeName(cleanerOpts.find(c=>c.id===e.target.value)?.display_name||'')}}
+                style={inputS({appearance:'none' as const,paddingRight:32,cursor:'pointer'})}>
+                <option value="">Selecionar...</option>
+                {cleanerOpts.map(c=><option key={c.id} value={c.id}>{c.display_name}</option>)}
+              </select>
+              <ChevronDown size={14} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',color:t.textSecondary,pointerEvents:'none'}}/>
+            </div>}
+        </div>
+
+        {/* Valor */}
+        <div style={{marginBottom:12}}>
+          <label style={{fontSize:11,fontWeight:600,color:t.textSecondary,display:'block',marginBottom:4}}>Valor (R$) *</label>
+          {costLocked?
+            <div style={inputS({opacity:0.6,cursor:'not-allowed'})}>R$ {cl.cleaning_cost?.toFixed(2)}</div>:
+            <input type="number" min="0" step="0.01" placeholder="0,00" value={cost} onChange={e=>setCost(e.target.value)} style={inputS()} inputMode="decimal"/>}
+        </div>
+
+        {/* Hóspedes */}
+        <div style={{marginBottom:12}}>
+          <label style={{fontSize:11,fontWeight:600,color:t.textSecondary,display:'block',marginBottom:4}}>Nº de hóspedes</label>
+          <input type="number" min="0" placeholder="0" value={guests} onChange={e=>setGuests(e.target.value)} style={inputS()} inputMode="numeric"/>
+        </div>
+
+        {/* Observações */}
+        <div style={{marginBottom:12}}>
+          <label style={{fontSize:11,fontWeight:600,color:t.textSecondary,display:'block',marginBottom:4}}>Observações</label>
+          <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Notas sobre a limpeza..." rows={2} style={inputS({resize:'vertical' as const,fontFamily:'inherit'})}/>
+        </div>
+
+        {/* Fotos */}
+        <div style={{marginBottom:16}}>
+          <label style={{fontSize:11,fontWeight:600,color:t.textSecondary,display:'block',marginBottom:6}}>Fotos * (mín 2, máx 6)</label>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            {photos.map((p,i)=>(
+              <div key={i} style={{width:60,height:60,borderRadius:8,overflow:'hidden',position:'relative',border:`1px solid ${t.border}`}}>
+                <img src={p} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                {!isDone&&<button onClick={()=>setPhotos(ps=>ps.filter((_,j)=>j!==i))} style={{position:'absolute',top:2,right:2,width:18,height:18,borderRadius:9,background:'rgba(0,0,0,0.5)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <X size={10} style={{color:'#fff'}}/>
+                </button>}
+              </div>))}
+            {photos.length<6&&!isDone&&(
+              <button onClick={()=>fileRef.current?.click()} style={{width:60,height:60,borderRadius:8,border:`1.5px dashed ${t.border}`,background:'transparent',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:2}}>
+                <Camera size={16} style={{color:t.textSecondary}}/>
+                <span style={{fontSize:8,color:t.textSecondary}}>{photos.length}/6</span>
+              </button>)}
+          </div>
+          <input ref={fileRef} type="file" accept="image/*" multiple capture="environment" onChange={handlePhoto} style={{display:'none'}}/>
+        </div>
+
+        {/* Error */}
+        {error&&<p style={{color:t.red,fontSize:12,marginBottom:8}}>{error}</p>}
+
+        {/* Actions */}
+        {!isDone&&<div style={{display:'flex',gap:8}}>
+          {isAdm&&<button onClick={()=>handleSave(false)} disabled={saving} style={{flex:1,padding:'12px 0',borderRadius:10,border:`1.5px solid ${t.btnBorder}`,background:t.btnBg,color:t.btnText,fontSize:13,fontWeight:600,cursor:'pointer',opacity:saving?0.6:1}}>
+            {saving?'Salvando...':'Salvar'}
+          </button>}
+          <button onClick={()=>handleSave(true)} disabled={saving||!canComplete} style={{flex:1,padding:'12px 0',borderRadius:10,border:'none',background:canComplete?t.green:t.border,color:canComplete?'#fff':t.textSecondary,fontSize:13,fontWeight:700,cursor:canComplete?'pointer':'not-allowed',opacity:saving?0.6:1}}>
+            {saving?'Concluindo...':canComplete?'✓ Concluir Limpeza':`Falta: ${cost===''?'valor':''} ${photos.length<2?`${2-photos.length} foto(s)`:''}`}
+          </button>
+        </div>}
+      </div>
+    </div>)
+}
+
+// ─── CREATE CLEANING MODAL (admin) ─────────────────────
+function CreateModal({date,t,token,onClose,onSaved}:{date:string;t:T;token:string;onClose:()=>void;onSaved:()=>void}){
+  const [apt,setApt]=useState(APTS[0])
+  const [saving,setSaving]=useState(false)
+  const [error,setError]=useState('')
+  const handleCreate=async()=>{
+    setSaving(true)
+    try{
+      const r=await fetch('/api/limpezas',{method:'POST',headers:apiH(token),body:JSON.stringify({action:'upsert-cleaning',cleaning:{apartment_code:apt,scheduled_date:date,status:'pendente',manually_edited:true}})})
+      if(r.ok){onSaved();onClose()}else{const d=await r.json();setError(d.error||'Erro')}
+    }catch{setError('Erro')}
+    setSaving(false)
+  }
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:100,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={onClose}>
+      <div style={{position:'absolute',inset:0,background:t.overlay}}/>
+      <div onClick={e=>e.stopPropagation()} style={{position:'relative',width:'90%',maxWidth:320,background:t.modalBg,borderRadius:16,padding:'20px 16px'}}>
+        <div style={{fontSize:15,fontWeight:700,color:t.textPrimary,marginBottom:4}}>Nova Limpeza</div>
+        <div style={{fontSize:11,color:t.textSecondary,marginBottom:16}}>{fmtFull(date)}</div>
+        <label style={{fontSize:11,fontWeight:600,color:t.textSecondary,display:'block',marginBottom:4}}>Apartamento</label>
+        <div style={{position:'relative',marginBottom:16}}>
+          <select value={apt} onChange={e=>setApt(e.target.value)} style={{width:'100%',padding:'10px 12px',borderRadius:8,fontSize:13,background:t.inputBg,border:`1.5px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none',appearance:'none' as const}}>
+            {APTS.map(a=><option key={a} value={a}>{a}</option>)}
+          </select>
+          <ChevronDown size={14} style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',color:t.textSecondary,pointerEvents:'none'}}/>
+        </div>
+        {error&&<p style={{color:t.red,fontSize:12,marginBottom:8}}>{error}</p>}
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={onClose} style={{flex:1,padding:'10px 0',borderRadius:10,border:`1.5px solid ${t.btnBorder}`,background:t.btnBg,color:t.btnText,fontSize:13,cursor:'pointer'}}>Cancelar</button>
+          <button onClick={handleCreate} disabled={saving} style={{flex:1,padding:'10px 0',borderRadius:10,border:'none',background:t.gold,color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',opacity:saving?0.6:1}}>
+            {saving?'Criando...':'Criar'}
+          </button>
+        </div>
+      </div>
+    </div>)
+}
+
+// ─── WEEK GRID ─────────────────────────────────────────
+function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isAdm}:{dates:Date[];label:string;reservations:Res[];cleanings:Cln[];t:T;onCellClick:(c:DayCell)=>void;onEmptyClick:(date:string)=>void;isAdm:boolean}){
+  const grid=useMemo(()=>{
+    return APTS.map(apt=>dates.map((day):DayCell=>{
+      const d=ds(day)
+      const cl=cleanings.find(c=>c.apartment_code===apt&&((c.scheduled_date||'').slice(0,10)===d||(c.cleaning_date||'').slice(0,10)===d))
+      if(cl){
+        if(cl.completed||cl.status==='concluida')return{type:'done',apt,cleaning:cl,date:d}
+        if(isLate(d))return{type:'late',apt,cleaning:cl,date:d}
+        return{type:'pending',apt,cleaning:cl,date:d}
+      }
+      const occ=reservations.some(r=>r.apartment_code===apt&&d>=r.checkin&&d<r.checkout)
+      if(occ)return{type:'occupied',apt,date:d}
+      return{type:'empty',apt,date:d}
+    }))
+  },[dates,reservations,cleanings])
+
+  return(
+    <div style={{background:t.cardBg,borderRadius:12,border:`2px solid ${t.border}`,overflow:'hidden',marginBottom:14}}>
+      <div style={{padding:'8px 12px',borderBottom:`1.5px solid ${t.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span style={{fontSize:12,fontWeight:800,color:t.labelColor,textTransform:'uppercase',letterSpacing:'0.06em'}}>{label}</span>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:`1.5px solid ${t.border}`}}>
+        {dates.map((day,i)=>{const td=isToday(day);return(
+          <div key={i} style={{textAlign:'center',padding:'6px 2px',background:td?t.goldBg:'transparent',borderRight:i<6?`1px solid ${t.borderInner}`:'none'}}>
+            <div style={{fontSize:9,fontWeight:700,color:td?t.gold:t.textSecondary}}>{DAYS_L[day.getDay()]}</div>
+            <div style={{fontSize:11,fontWeight:800,color:td?t.gold:t.textPrimary}}>{fmt(day)}</div>
+          </div>)})}
+      </div>
+      {grid.map((row,ri)=>(
+        <div key={ri} style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:ri<grid.length-1?`1.5px solid ${t.borderInner}`:'none',minHeight:44}}>
+          {row.map((cell,ci)=>(
+            <div key={ci} onClick={()=>{
+              if(cell.cleaning)onCellClick(cell)
+              else if(cell.type==='empty'&&isAdm)onEmptyClick(cell.date)
+            }} style={{display:'flex',alignItems:'center',justifyContent:'center',height:44,borderRight:ci<6?`1px solid ${t.borderInner}40`:'none',position:'relative',overflow:'hidden',cursor:cell.cleaning||(cell.type==='empty'&&isAdm)?'pointer':'default'}}>
+              <Cell cell={cell} t={t} />
+            </div>))}
+        </div>))}
+    </div>)
+}
+
+// ─── LEGEND ────────────────────────────────────────────
+function Leg({t}:{t:T}){return(
+  <div style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap',padding:'6px 2px'}}>
+    {[{l:'Pendente',bd:t.yellowBorder,c:t.yellow,i:'◷',bg:'transparent'},{l:'Concluída',bd:t.greenBorder,c:t.green,i:'✓',bg:t.greenBg},{l:'Atrasada',bd:t.redBorder,c:t.warnIcon,i:'⚠',bg:'transparent'}].map(x=>(
+      <div key={x.l} style={{display:'flex',alignItems:'center',gap:5,fontSize:10,color:t.textSecondary}}>
+        <div style={{width:22,height:15,borderRadius:4,background:x.bg,border:`1.5px solid ${x.bd}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:700,color:x.c}}>{x.i}</div>{x.l}
+      </div>))}
+    <div style={{display:'flex',alignItems:'center',gap:5,fontSize:10,color:t.textSecondary}}>
+      <div style={{width:22,height:15,borderRadius:4,overflow:'hidden',border:`1.5px solid ${t.borderInner}`}}><svg width="22" height="15" style={{display:'block'}}><rect width="22" height="15" fill={`url(#${t.hachId})`}/></svg></div>Ocupado
+    </div>
+  </div>)}
+
+// ─── LOGIN ─────────────────────────────────────────────
+function Login({onLogin,t}:{onLogin:(u:string,p:string)=>void;t:T}){
+  const [u,setU]=useState('');const [p,setP]=useState('');const [show,setShow]=useState(false);const [er,setEr]=useState('');const [ld,setLd]=useState(false)
+  const go=async()=>{
+    if(!u||!p){setEr('Preencha usuário e senha');return}
+    setLd(true);setEr('')
+    try{const r=await fetch('/api/limpezas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'login',username:u,password:p})})
+      const d=await r.json();if(!r.ok||d.error){setEr(d.error||'Credenciais inválidas');setLd(false);return}
+      localStorage.setItem('equipe_auth',btoa(`${u}:${p}`));localStorage.setItem('equipe_user',JSON.stringify(d));onLogin(u,p)
+    }catch{setEr('Erro de conexão')};setLd(false)}
+  return(
+    <div style={{minHeight:'100vh',background:t.bg,display:'flex',alignItems:'center',justifyContent:'center',padding:24}}>
+      <div style={{width:'100%',maxWidth:320,textAlign:'center'}}>
+        <div style={{width:56,height:56,borderRadius:16,margin:'0 auto 16px',background:t.goldBg,border:`1.5px solid ${t.gold}30`,display:'flex',alignItems:'center',justifyContent:'center'}}><KeyRound size={28} style={{color:t.gold}}/></div>
+        <h1 style={{fontSize:18,fontWeight:700,color:t.textPrimary,marginBottom:4}}>Equipe Sua Casa</h1>
+        <p style={{fontSize:12,color:t.textSecondary,marginBottom:24}}>Faça login para acessar</p>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          <input type="text" placeholder="Usuário" value={u} onChange={e=>{setU(e.target.value);setEr('')}} onKeyDown={e=>e.key==='Enter'&&go()}
+            style={{width:'100%',padding:'12px 16px',borderRadius:10,fontSize:14,background:t.inputBg,border:`1.5px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none',boxSizing:'border-box'}}/>
+          <div style={{position:'relative'}}>
+            <input type={show?'text':'password'} placeholder="Senha" value={p} onChange={e=>{setP(e.target.value);setEr('')}} onKeyDown={e=>e.key==='Enter'&&go()}
+              style={{width:'100%',padding:'12px 44px 12px 16px',borderRadius:10,fontSize:14,background:t.inputBg,border:`1.5px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none',boxSizing:'border-box'}}/>
+            <button onClick={()=>setShow(!show)} style={{position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',padding:0}}>
+              {show?<EyeOff size={16} style={{color:t.textSecondary}}/>:<Eye size={16} style={{color:t.textSecondary}}/>}
             </button>
           </div>
-          {error && <p style={{ color: t.red, fontSize: 12, margin: 0 }}>{error}</p>}
-          <button onClick={handleSubmit} disabled={loading} style={{ width: '100%', padding: '12px 0', borderRadius: 10, border: 'none', background: t.gold, color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}>
-            {loading ? 'Entrando...' : 'Entrar'}
-          </button>
+          {er&&<p style={{color:t.red,fontSize:12,margin:0}}>{er}</p>}
+          <button onClick={go} disabled={ld} style={{width:'100%',padding:'12px 0',borderRadius:10,border:'none',background:t.gold,color:'#fff',fontSize:14,fontWeight:700,cursor:ld?'wait':'pointer',opacity:ld?0.7:1}}>{ld?'Entrando...':'Entrar'}</button>
         </div>
       </div>
-    </div>
-  )
-}
+    </div>)}
 
-export default function EquipePage() {
-  const [authenticated, setAuthenticated] = useState(false); const [authToken, setAuthToken] = useState('')
-  const [isDark, setIsDark] = useState(false); const [loading, setLoading] = useState(true); const [refreshing, setRefreshing] = useState(false)
-  const [reservations, setReservations] = useState<Reservation[]>([]); const [cleanings, setCleanings] = useState<Cleaning[]>([])
-  const theme = isDark ? DARK : LIGHT
+// ─── MAIN PAGE ─────────────────────────────────────────
+export default function EquipePage(){
+  const [authed,setAuthed]=useState(false);const [token,setToken]=useState('')
+  const [dark,setDark]=useState(false);const [loading,setLoading]=useState(true);const [refreshing,setRefreshing]=useState(false)
+  const [res,setRes]=useState<Res[]>([]);const [clns,setClns]=useState<Cln[]>([])
+  const [user,setUser]=useState<AppUser|null>(null);const [cleaners,setCleaners]=useState<AppUser[]>([])
+  const [modal,setModal]=useState<DayCell|null>(null);const [createDate,setCreateDate]=useState<string|null>(null)
+  const t=dark?DK:LT
+  const isAdm=user?.role==='admin'
 
-  useEffect(() => {
-    const saved = localStorage.getItem('equipe_auth'); const themePref = localStorage.getItem('equipe_theme')
-    if (themePref === 'dark') setIsDark(true)
-    if (saved) { setAuthToken(saved); setAuthenticated(true) } else { setLoading(false) }
-  }, [])
+  useEffect(()=>{
+    const s=localStorage.getItem('equipe_auth'),tp=localStorage.getItem('equipe_theme'),u=localStorage.getItem('equipe_user')
+    if(tp==='dark')setDark(true)
+    if(s){setToken(s);setAuthed(true);if(u)try{setUser(JSON.parse(u))}catch{}}else{setLoading(false)}
+  },[])
+  useEffect(()=>{localStorage.setItem('equipe_theme',dark?'dark':'light')},[dark])
 
-  useEffect(() => { localStorage.setItem('equipe_theme', isDark ? 'dark' : 'light') }, [isDark])
+  const fetchData=useCallback(async(tk:string)=>{
+    try{
+      setRefreshing(true);const h={Authorization:`Basic ${tk}`}
+      try{const r=await fetch('/api/limpezas?action=cleanings',{headers:h});if(r.ok){const d=await r.json();setClns(Array.isArray(d)?d:[])}}catch{}
+      try{const r=await fetch('/api/equipe');if(r.ok){const d=await r.json();const raw=d?.reservations||d||[]
+        setRes((Array.isArray(raw)?raw:[]).map((r:any)=>({...r,checkin:r.checkin?.slice(0,10)||'',checkout:r.checkout?.slice(0,10)||''})))}}catch{}
+      try{const r=await fetch('/api/limpezas?action=users',{headers:h});if(r.ok){const d=await r.json();setCleaners(Array.isArray(d)?d:[])}}catch{}
+    }catch(e){console.error(e)}
+    finally{setLoading(false);setRefreshing(false)}
+  },[])
 
-  const fetchData = useCallback(async (token: string) => {
-    try {
-      setRefreshing(true); const headers = { 'Authorization': `Basic ${token}` }
-      try {
-        const cleanRes = await fetch('/api/limpezas?action=cleanings', { headers })
-        if (cleanRes.ok) { const data = await cleanRes.json(); setCleanings(Array.isArray(data) ? data : []) }
-      } catch {}
-      try {
-        const resvRes = await fetch('/api/equipe')
-        if (resvRes.ok) {
-          const data = await resvRes.json()
-          const raw = data?.reservations || data || []
-          const normalized = (Array.isArray(raw) ? raw : []).map((r: any) => ({
-            ...r,
-            checkin: r.checkin ? r.checkin.slice(0, 10) : '',
-            checkout: r.checkout ? r.checkout.slice(0, 10) : '',
-          }))
-          setReservations(normalized)
-        }
-      } catch {}
-    } catch (e) { console.error('Fetch error:', e) }
-    finally { setLoading(false); setRefreshing(false) }
-  }, [])
+  useEffect(()=>{if(authed&&token)fetchData(token)},[authed,token,fetchData])
 
-  useEffect(() => { if (authenticated && authToken) fetchData(authToken) }, [authenticated, authToken, fetchData])
+  const handleLogin=(u:string,p:string)=>{const tk=btoa(`${u}:${p}`);setToken(tk);setAuthed(true)}
+  const refresh=()=>{if(token)fetchData(token)}
+  const logout=()=>{localStorage.removeItem('equipe_auth');localStorage.removeItem('equipe_user');setAuthed(false);setToken('');setUser(null);setLoading(false)}
 
-  const handleLogin = (user: string, pass: string) => { const token = btoa(`${user}:${pass}`); setAuthToken(token); setAuthenticated(true) }
-  const handleRefresh = () => { if (authToken) fetchData(authToken) }
+  if(!authed)return<Login onLogin={handleLogin} t={t}/>
+  const w1=weekDates(0),w2=weekDates(1)
 
-  if (!authenticated) return <LoginScreen onLogin={handleLogin} t={theme} />
+  return(
+    <div style={{background:t.bg,minHeight:'100vh',transition:'background 0.3s',fontFamily:"'DM Sans',system-ui,-apple-system,sans-serif"}}>
+      <Hach/>
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
 
-  const week1 = getWeekDates(0); const week2 = getWeekDates(1)
-
-  return (
-    <div style={{ background: theme.bg, minHeight: '100vh', transition: 'background 0.3s ease', fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif" }}>
-      <HachPatterns />
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: theme.bg + 'f2', backdropFilter: 'blur(10px)', borderBottom: `2px solid ${theme.border}`, padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: theme.textPrimary }}>Equipe · Limpezas</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button onClick={() => setIsDark(!isDark)} style={{ width: 44, height: 24, borderRadius: 12, border: 'none', background: isDark ? theme.gold + '30' : '#2e221c20', position: 'relative', cursor: 'pointer', transition: 'background 0.3s', padding: 0 }}>
-            <div style={{ width: 20, height: 20, borderRadius: 10, background: isDark ? theme.gold : '#3a3028', position: 'absolute', top: 2, left: isDark ? 22 : 2, transition: 'left 0.3s, background 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 10, color: isDark ? '#1a1a22' : '#faf8f5' }}>{isDark ? '☀' : '☾'}</span>
+      {/* Header */}
+      <div style={{position:'sticky',top:0,zIndex:20,background:t.bg+'f2',backdropFilter:'blur(10px)',borderBottom:`2px solid ${t.border}`,padding:'10px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <div>
+          <div style={{fontSize:15,fontWeight:700,color:t.textPrimary}}>Equipe · Limpezas</div>
+          {user&&<div style={{fontSize:9,color:t.textSecondary}}>{user.display_name} ({user.role})</div>}
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <button onClick={()=>setDark(!dark)} style={{width:44,height:24,borderRadius:12,border:'none',background:dark?t.gold+'30':'#2e221c20',position:'relative',cursor:'pointer',transition:'background 0.3s',padding:0}}>
+            <div style={{width:20,height:20,borderRadius:10,background:dark?t.gold:'#3a3028',position:'absolute',top:2,left:dark?22:2,transition:'left 0.3s,background 0.3s',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <span style={{fontSize:10,color:dark?'#1a1a22':'#faf8f5'}}>{dark?'☀':'☾'}</span>
             </div>
           </button>
-          <button onClick={handleRefresh} disabled={refreshing} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 14px', fontSize: 10, fontWeight: 700, borderRadius: 8, border: `1.5px solid ${theme.btnBorder}`, background: theme.btnBg, color: theme.btnText, cursor: refreshing ? 'wait' : 'pointer', opacity: refreshing ? 0.7 : 1 }}>
-            <RefreshCw size={12} style={refreshing ? { animation: 'spin 1s linear infinite' } : {}} />Atualizar
+          <button onClick={refresh} disabled={refreshing} style={{display:'flex',alignItems:'center',gap:5,padding:'6px 14px',fontSize:10,fontWeight:700,borderRadius:8,border:`1.5px solid ${t.btnBorder}`,background:t.btnBg,color:t.btnText,cursor:refreshing?'wait':'pointer',opacity:refreshing?0.7:1}}>
+            <RefreshCw size={12} style={refreshing?{animation:'spin 1s linear infinite'}:{}}/>Atualizar
           </button>
+          <button onClick={logout} style={{fontSize:9,color:t.textSecondary,background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>Sair</button>
         </div>
       </div>
-      {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}><Loader2 size={20} style={{ animation: 'spin 1s linear infinite', color: theme.gold }} /></div>
-      ) : (
-        <div style={{ padding: '12px 10px', maxWidth: 420, margin: '0 auto' }}>
-          <WeekGrid dates={week1} label="Semana Atual" reservations={reservations} cleanings={cleanings} t={theme} />
-          <WeekGrid dates={week2} label="Próxima Semana" reservations={reservations} cleanings={cleanings} t={theme} />
-          <Legend t={theme} />
+
+      {/* Content */}
+      {loading?(
+        <div style={{display:'flex',justifyContent:'center',padding:'60px 0'}}><Loader2 size={20} style={{animation:'spin 1s linear infinite',color:t.gold}}/></div>
+      ):(
+        <div style={{padding:'12px 10px',maxWidth:420,margin:'0 auto'}}>
+          <Grid dates={w1} label="Semana Atual" reservations={res} cleanings={clns} t={t} isAdm={!!isAdm} onCellClick={c=>setModal(c)} onEmptyClick={d=>isAdm&&setCreateDate(d)}/>
+          <Grid dates={w2} label="Próxima Semana" reservations={res} cleanings={clns} t={t} isAdm={!!isAdm} onCellClick={c=>setModal(c)} onEmptyClick={d=>isAdm&&setCreateDate(d)}/>
+          <Leg t={t}/>
+          {isAdm&&<div style={{textAlign:'center',marginTop:8}}>
+            <span style={{fontSize:9,color:t.textSecondary,opacity:0.6}}>Toque num dia vazio para criar limpeza</span>
+          </div>}
         </div>
       )}
-      <footer style={{ textAlign: 'center', padding: '16px 0', fontSize: 10, color: theme.textSecondary, opacity: 0.5 }}>Sua Casa Leblon · Equipe</footer>
-    </div>
-  )
+
+      {/* Modals */}
+      {modal&&modal.cleaning&&user&&<CleaningModal cell={modal} t={t} token={token} user={user} cleaners={cleaners} onClose={()=>setModal(null)} onSaved={refresh}/>}
+      {createDate&&<CreateModal date={createDate} t={t} token={token} onClose={()=>setCreateDate(null)} onSaved={refresh}/>}
+
+      <footer style={{textAlign:'center',padding:'16px 0',fontSize:10,color:t.textSecondary,opacity:0.5}}>Sua Casa Leblon · Equipe</footer>
+    </div>)
 }
