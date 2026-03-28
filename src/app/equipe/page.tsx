@@ -297,44 +297,109 @@ function CreateModal({date,t,token,onClose,onSaved}:{date:string;t:T;token:strin
     </div>)
 }
 
-// ─── WEEK GRID ─────────────────────────────────────────
-function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isAdm}:{dates:Date[];label:string;reservations:Res[];cleanings:Cln[];t:T;onCellClick:(c:DayCell)=>void;onEmptyClick:(date:string)=>void;isAdm:boolean}){
+// ─── WEEK GRID (with admin reorder per day) ────────────
+function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isAdm,token,onReordered}:{dates:Date[];label:string;reservations:Res[];cleanings:Cln[];t:T;onCellClick:(c:DayCell)=>void;onEmptyClick:(date:string)=>void;isAdm:boolean;token:string;onReordered:()=>void}){
+  const [reorderCol,setReorderCol]=useState<number|null>(null) // which day column is in reorder mode
+  const [localOrder,setLocalOrder]=useState<string[]>(APTS) // apt order for the reorder column
+  const longPressTimer=useRef<any>(null)
+
+  // Build grid: rows=apts, cols=days. For reorder column, use localOrder instead of APTS
   const grid=useMemo(()=>{
-    return APTS.map(apt=>dates.map((day):DayCell=>{
+    return APTS.map((apt,ri)=>dates.map((day,ci):DayCell=>{
       const d=ds(day)
-      const cl=cleanings.find(c=>c.apartment_code===apt&&((c.scheduled_date||'').slice(0,10)===d||(c.cleaning_date||'').slice(0,10)===d))
+      // If this column is being reordered, use localOrder for row mapping
+      const effectiveApt=(reorderCol===ci)?localOrder[ri]||apt:apt
+      const cl=cleanings.find(c=>c.apartment_code===effectiveApt&&((c.scheduled_date||'').slice(0,10)===d||(c.cleaning_date||'').slice(0,10)===d))
       if(cl){
-        if(cl.completed||cl.status==='concluida')return{type:'done',apt,cleaning:cl,date:d}
-        if(isLate(d))return{type:'late',apt,cleaning:cl,date:d}
-        return{type:'pending',apt,cleaning:cl,date:d}
+        if(cl.completed||cl.status==='concluida')return{type:'done',apt:effectiveApt,cleaning:cl,date:d}
+        if(isLate(d))return{type:'late',apt:effectiveApt,cleaning:cl,date:d}
+        return{type:'pending',apt:effectiveApt,cleaning:cl,date:d}
       }
-      const occ=reservations.some(r=>r.apartment_code===apt&&d>=r.checkin&&d<r.checkout)
-      if(occ)return{type:'occupied',apt,date:d}
-      return{type:'empty',apt,date:d}
+      const occ=reservations.some(r=>r.apartment_code===effectiveApt&&d>=r.checkin&&d<r.checkout)
+      if(occ)return{type:'occupied',apt:effectiveApt,date:d}
+      return{type:'empty',apt:effectiveApt,date:d}
     }))
-  },[dates,reservations,cleanings])
+  },[dates,reservations,cleanings,reorderCol,localOrder])
+
+  const startReorder=(colIdx:number)=>{
+    if(!isAdm)return
+    setReorderCol(colIdx)
+    setLocalOrder([...APTS])
+  }
+
+  const moveRow=(rowIdx:number,dir:-1|1)=>{
+    const newIdx=rowIdx+dir
+    if(newIdx<0||newIdx>=APTS.length)return
+    setLocalOrder(prev=>{const n=[...prev];[n[rowIdx],n[newIdx]]=[n[newIdx],n[rowIdx]];return n})
+  }
+
+  const saveReorder=async()=>{
+    if(reorderCol===null)return
+    const d=ds(dates[reorderCol])
+    // Build orders: for each apt in localOrder, find the cleaning on that day and set sort_order
+    const orders:any[]=[]
+    localOrder.forEach((apt,i)=>{
+      const cl=cleanings.find(c=>c.apartment_code===apt&&((c.scheduled_date||'').slice(0,10)===d||(c.cleaning_date||'').slice(0,10)===d))
+      if(cl?.id)orders.push({id:cl.id,sort_order:i})
+    })
+    if(orders.length>0){
+      try{await fetch('/api/limpezas',{method:'POST',headers:apiH(token),body:JSON.stringify({action:'reorder-cleanings',orders})})}catch{}
+    }
+    setReorderCol(null)
+    onReordered()
+  }
+
+  const cancelReorder=()=>{setReorderCol(null);setLocalOrder([...APTS])}
+
+  // Long press handler for cells
+  const handlePointerDown=(ci:number)=>{
+    if(!isAdm)return
+    longPressTimer.current=setTimeout(()=>startReorder(ci),500)
+  }
+  const handlePointerUp=()=>{if(longPressTimer.current){clearTimeout(longPressTimer.current);longPressTimer.current=null}}
 
   return(
     <div style={{background:t.cardBg,borderRadius:12,border:`2px solid ${t.border}`,overflow:'hidden',marginBottom:14}}>
       <div style={{padding:'8px 12px',borderBottom:`1.5px solid ${t.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <span style={{fontSize:12,fontWeight:800,color:t.labelColor,textTransform:'uppercase',letterSpacing:'0.06em'}}>{label}</span>
+        {reorderCol!==null&&<div style={{display:'flex',gap:6}}>
+          <button onClick={saveReorder} style={{fontSize:9,fontWeight:700,padding:'3px 10px',borderRadius:6,border:'none',background:t.green,color:'#fff',cursor:'pointer'}}>✓ Salvar</button>
+          <button onClick={cancelReorder} style={{fontSize:9,fontWeight:600,padding:'3px 10px',borderRadius:6,border:`1px solid ${t.border}`,background:'transparent',color:t.textSecondary,cursor:'pointer'}}>Cancelar</button>
+        </div>}
       </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:`1.5px solid ${t.border}`}}>
-        {dates.map((day,i)=>{const td=isToday(day);return(
-          <div key={i} style={{textAlign:'center',padding:'6px 2px',background:td?t.goldBg:'transparent',borderRight:i<6?`1px solid ${t.borderInner}`:'none'}}>
-            <div style={{fontSize:9,fontWeight:700,color:td?t.gold:t.textSecondary}}>{DAYS_L[day.getDay()]}</div>
-            <div style={{fontSize:11,fontWeight:800,color:td?t.gold:t.textPrimary}}>{fmt(day)}</div>
+        {dates.map((day,i)=>{const td=isToday(day);const reordering=reorderCol===i;return(
+          <div key={i} style={{textAlign:'center',padding:'6px 2px',background:reordering?t.gold+'20':td?t.goldBg:'transparent',borderRight:i<6?`1px solid ${t.borderInner}`:'none',transition:'background 0.2s'}}>
+            <div style={{fontSize:9,fontWeight:700,color:reordering?t.gold:td?t.gold:t.textSecondary}}>{DAYS_L[day.getDay()]}</div>
+            <div style={{fontSize:11,fontWeight:800,color:reordering?t.gold:td?t.gold:t.textPrimary}}>{fmt(day)}</div>
+            {reordering&&<div style={{fontSize:7,color:t.gold,marginTop:1}}>↕ editando</div>}
           </div>)})}
       </div>
       {grid.map((row,ri)=>(
         <div key={ri} style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:ri<grid.length-1?`1.5px solid ${t.borderInner}`:'none',minHeight:44}}>
-          {row.map((cell,ci)=>(
-            <div key={ci} onClick={()=>{
-              if(cell.cleaning)onCellClick(cell)
-              else if(cell.type==='empty'&&isAdm)onEmptyClick(cell.date)
-            }} style={{display:'flex',alignItems:'center',justifyContent:'center',height:44,borderRight:ci<6?`1px solid ${t.borderInner}40`:'none',position:'relative',overflow:'hidden',cursor:cell.cleaning||(cell.type==='empty'&&isAdm)?'pointer':'default'}}>
-              <Cell cell={cell} t={t} />
-            </div>))}
+          {row.map((cell,ci)=>{
+            const reordering=reorderCol===ci
+            return(
+            <div key={ci}
+              onPointerDown={()=>!reordering&&handlePointerDown(ci)}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+              onClick={()=>{
+                if(reordering)return
+                if(cell.cleaning)onCellClick(cell)
+                else if(cell.type==='empty'&&isAdm)onEmptyClick(cell.date)
+              }}
+              style={{display:'flex',alignItems:'center',justifyContent:'center',height:44,borderRight:ci<6?`1px solid ${t.borderInner}40`:'none',position:'relative',overflow:'hidden',
+                cursor:reordering?'default':cell.cleaning||(cell.type==='empty'&&isAdm)?'pointer':'default',
+                background:reordering?t.gold+'08':'transparent',transition:'background 0.2s'}}>
+              {reordering?(
+                <div style={{display:'flex',alignItems:'center',gap:2}}>
+                  {ri>0&&<button onClick={(e)=>{e.stopPropagation();moveRow(ri,-1)}} style={{width:16,height:16,borderRadius:4,border:'none',background:t.btnBg,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:t.textSecondary,padding:0}}>↑</button>}
+                  <Cell cell={cell} t={t}/>
+                  {ri<APTS.length-1&&<button onClick={(e)=>{e.stopPropagation();moveRow(ri,1)}} style={{width:16,height:16,borderRadius:4,border:'none',background:t.btnBg,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:t.textSecondary,padding:0}}>↓</button>}
+                </div>
+              ):(<Cell cell={cell} t={t}/>)}
+            </div>)})}
         </div>))}
     </div>)
 }
@@ -449,8 +514,8 @@ export default function EquipePage(){
         <div style={{display:'flex',justifyContent:'center',padding:'60px 0'}}><Loader2 size={20} style={{animation:'spin 1s linear infinite',color:t.gold}}/></div>
       ):(
         <div style={{padding:'12px 10px',maxWidth:420,margin:'0 auto'}}>
-          <Grid dates={w1} label="Semana Atual" reservations={res} cleanings={clns} t={t} isAdm={!!isAdm} onCellClick={c=>setModal(c)} onEmptyClick={d=>isAdm&&setCreateDate(d)}/>
-          <Grid dates={w2} label="Próxima Semana" reservations={res} cleanings={clns} t={t} isAdm={!!isAdm} onCellClick={c=>setModal(c)} onEmptyClick={d=>isAdm&&setCreateDate(d)}/>
+          <Grid dates={w1} label="Semana Atual" reservations={res} cleanings={clns} t={t} isAdm={!!isAdm} token={token} onCellClick={c=>setModal(c)} onEmptyClick={d=>isAdm&&setCreateDate(d)} onReordered={refresh}/>
+          <Grid dates={w2} label="Próxima Semana" reservations={res} cleanings={clns} t={t} isAdm={!!isAdm} token={token} onCellClick={c=>setModal(c)} onEmptyClick={d=>isAdm&&setCreateDate(d)} onReordered={refresh}/>
           <Leg t={t}/>
           {isAdm&&<div style={{textAlign:'center',marginTop:8}}>
             <span style={{fontSize:9,color:t.textSecondary,opacity:0.6}}>Toque num dia vazio para criar limpeza</span>
