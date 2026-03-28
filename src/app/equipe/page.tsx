@@ -219,10 +219,23 @@ export default function EquipePage() {
   const fetchData = useCallback(async (token: string) => {
     try {
       setRefreshing(true); const headers = { 'Authorization': `Basic ${token}` }
-      const cleanRes = await fetch('/api/limpezas?action=cleanings', { headers })
-      if (cleanRes.ok) { const data = await cleanRes.json(); setCleanings(data || []) }
-      const resvRes = await fetch('/api/equipe?action=reservations')
-      if (resvRes.ok) { const data = await resvRes.json(); setReservations(data || []) }
+      try {
+        const cleanRes = await fetch('/api/limpezas?action=cleanings', { headers })
+        if (cleanRes.ok) { const data = await cleanRes.json(); setCleanings(Array.isArray(data) ? data : []) }
+      } catch {}
+      try {
+        const resvRes = await fetch('/api/equipe')
+        if (resvRes.ok) {
+          const data = await resvRes.json()
+          const raw = data?.reservations || data || []
+          const normalized = (Array.isArray(raw) ? raw : []).map((r: any) => ({
+            ...r,
+            checkin: r.checkin ? r.checkin.slice(0, 10) : '',
+            checkout: r.checkout ? r.checkout.slice(0, 10) : '',
+          }))
+          setReservations(normalized)
+        }
+      } catch {}
     } catch (e) { console.error('Fetch error:', e) }
     finally { setLoading(false); setRefreshing(false) }
   }, [])
