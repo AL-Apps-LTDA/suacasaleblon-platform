@@ -2,13 +2,8 @@ node_modules/
 .next/
 .env
 .env.local
+.env.production
 .vercel
 out/
 dist/
 *.tsbuildinfo
-NEXT_PUBLIC_SUPABASE_URL=https://sqysxboyvpipshapgmjo.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxeXN4Ym95dnBpcHNoYXBnbWpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNjIxNjYsImV4cCI6MjA4OTYzODE2Nn0.JfEYNAT8Pdg-yHnK6MMcrkLiF2rwX6GDdt2DufBURxQ
-SUPABASE_SERVICE_ROLE_KEY=placeholder_for_build
-STRIPE_SECRET_KEY=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
-STRIPE_WEBHOOK_SECRET=placeholder
-HOSPITABLE_API_KEY=placeholder
