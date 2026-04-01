@@ -4,75 +4,56 @@
 
 ## 🔥 AGORA
 
-- corrigir Agenda no /equipe (bug: "undefined NaN Mar")
-- validar no apt 403:
-  - datas corretas
-  - checkout gera limpeza
-  - sem duplicação
-- garantir persistência de edições
-- corrigir sync de data de limpeza (ver seção abaixo)
+- Giro funcional (aba 1)
+- custos extras implementados
+- persistência funcionando
+- adicionar nome + telefone do hóspede na agenda
+- verificar sync de cleaning_fee (ver seção abaixo)
+- configurar corretamente chaves do Supabase
 
 ---
 
 ## ⚙️ EM ANDAMENTO
 
-- estabilizar Giro (/equipe)
-- integração API reservas (token-based)
-- estrutura de apartamentos (admin + site)
-- regras de despesas
+- reconstrução completa do sistema original
+- manter fidelidade ao fluxo antigo (Replit)
+- evitar invenções
 
 ---
 
 ## 🧠 DECISÕES TRAVADAS
 
 ### Produto
-- Sistema = gestão completa da operação
-- Giro (/equipe) = núcleo operacional
-- NÃO redesenhar Giro
-- Agenda só existe se virar ferramenta de decisão
-
-### Modos
-- Operação = execução
-- Financeiro = leitura
+- Sistema = operação + controle + comunicação
+- Giro (/equipe) = núcleo
+- NÃO reinventar → replicar o que já funcionava
 
 ---
 
 ## 📅 DATAS E AGENDA (CRÍTICO)
 
 - timezone: America/Sao_Paulo
-- TODA data da API deve ser normalizada ao entrar
-- nunca usar Date sem timezone
-
-- check-in: 15:00
-- check-out: 11:00
-- checkout gera limpeza no mesmo dia
-
-- API pode retornar UTC (ex: "2026-03-29T20:30:00Z")
-→ sempre converter antes de usar
+- check-in: 15h
+- check-out: 11h
+- checkout gera limpeza
 
 ---
 
-## 🚨 BUG — SYNC DE DATA DE LIMPEZA
+## 📱 MELHORIA — AGENDA (ALTA PRIORIDADE)
 
-Problema:
-- datas de limpeza não estão sincronizando corretamente na interface
-- inconsistência entre reservas e geração de tarefas de limpeza
+Adicionar:
 
-Possíveis causas:
-- erro na lógica de derivação da data (check-out → limpeza)
-- problema no sync que reconstrói eventos
-- conflito entre dados manuais e dados da API
+- nome do hóspede
+- telefone do hóspede
+- botão de ligação direta
 
-Regra:
-- data de limpeza deve sempre derivar corretamente do checkout
-- não pode haver divergência visual entre agenda e estado real
-
-Status:
-→ PENDENTE DE CORREÇÃO
+Objetivo:
+- eliminar dependência do Diego
+- permitir ação direta da faxineira
 
 ---
 
-## 🔴 PERSISTÊNCIA (CRÍTICO — NÃO QUEBRAR)
+## 🔴 PERSISTÊNCIA (CRÍTICO)
 
 - alterações do usuário DEVEM persistir
 - edição nunca pode ser sobrescrita pelo sync
@@ -82,39 +63,137 @@ UI edit → API → DB → UI atualizado
 
 ---
 
-## 🔌 API (CRÍTICO)
+# 🚨 BUG — SYNC DE PREÇO (CLEANING_FEE)
 
-- usar Authorization: Bearer TOKEN
-- nunca expor no frontend
-- chamadas via backend
+Problema:
+- alteração do cleaning_fee no Airbnb não reflete no site
 
-- API inconsistente:
-  - tratar campos como opcionais
-  - validar antes de usar
+Possibilidades:
+- sync não está rodando
+- sync roda mas não salva
+- site não está lendo o campo correto
+- cache impedindo atualização
 
----
+Regra:
+- não assumir que sync existe → verificar explicitamente
 
-## 🌍 APARTAMENTOS
-
-- cadastro via sistema (admin)
-- localização: Leblon / Ipanema / Búzios
-
-- filtro site:
-  [Leblon] [Outros]
+Status:
+→ PENDENTE DE INVESTIGAÇÃO
 
 ---
 
-## 💰 FINANCEIRO
+# ⚠️ VERIFICAÇÃO — SYNC DO SISTEMA
 
-### Giro (custos operacionais)
-- limpeza (custo base)
-- custos adicionais:
-  - transporte
-  - compra
-  - manutenção
-  - outro
+Precisamos confirmar:
 
-### Empresa (custos globais)
+- existe cron rodando?
+- endpoint /api/cron/sync-all está sendo chamado?
+- dados estão sendo salvos corretamente?
+
+---
+
+## 🔑 INFRA — SUPABASE (PENDENTE)
+
+- gerar novas chaves (anon + service role)
+- atualizar no Vercel
+- garantir conexão correta
+
+Status:
+→ PENDENTE
+
+---
+
+# 🧼 GIRO — LIMPEZAS (ABA 1)
+
+### Estrutura
+
+- custo base
+- custos adicionais
+
+### Custos adicionais
+
+- transporte
+- compra
+- manutenção
+- outro (com descrição)
+
+### Regra
+
+- armazenar no próprio cleaning (JSON)
+- não criar tabela separada agora
+
+---
+
+# 💬 CHAT (ABA 2)
+
+### Estrutura
+
+- lista de chats
+- criação
+- mensagens
+
+### Regras
+
+- qualquer usuário pode criar chat
+- Diego sempre incluído automaticamente
+- não pode existir chat sem Diego
+
+### Permissões
+
+- criar: todos
+- editar nome: criador + Diego
+- deletar: criador + Diego
+
+---
+
+# 📞 CONTATOS (ABA 3)
+
+### Objetivo
+
+- centralizar contatos úteis da operação
+
+### Estrutura
+
+- nome
+- telefone (clicável)
+- função
+- categoria
+- observações
+
+---
+
+### Categorias
+
+- porteiro
+- manutenção
+- limpeza
+- emergência
+- outros
+
+---
+
+### Regras
+
+- apenas admin cria novas categorias
+- qualquer usuário pode adicionar contatos
+
+---
+
+### Permissões
+
+- editar: criador + Diego
+- deletar: criador + Diego
+
+---
+
+# 💰 FINANCEIRO
+
+### Giro
+
+- custos operacionais reais (limpeza + extras)
+
+### Empresa
+
 - salários
 - encargos
 - lavanderia
@@ -129,24 +208,24 @@ UI edit → API → DB → UI atualizado
 - apt padrão: 403
 
 validar:
+
 - persistência
 - custos extras
 - agenda
 - sync
+- preço
 
 ---
 
 ## 🧩 BÚZIOS
 
 - separado do Giro
-- não misturar lógica
 
 ---
 
 ## ☁️ GOOGLE
 
-- não migrar nada sem validação
-- evolução gradual
+- não migrar agora
 
 ---
 
@@ -159,7 +238,6 @@ validar:
 
 ## 🧠 MARKETPLACE
 
-- foco: buracos de calendário
 - last-minute
 
 ---
@@ -167,13 +245,14 @@ validar:
 ## 📈 PROSPECÇÃO
 
 - crescimento leve (1–2 apt/mês)
-- não depender de esforço manual pesado
 
 ---
 
 ## 🧾 LOG
 
-- bug Agenda NaN
-- bug persistência
-- bug guests_count
-- bug sync de data de limpeza
+- bug guests_count ✔️ resolvido
+- persistência ✔️ resolvida
+- custos extras ✔️ implementado
+- bug sync limpeza ⏳ resolvido
+- bug sync cleaning_fee ⏳ pendente
+- supabase config ⏳ pendente
