@@ -39,7 +39,8 @@ type T = typeof LT
 
 // ─── TYPES ─────────────────────────────────────────────
 interface Res { apartment_code:string; guest_name:string; checkin:string; checkout:string }
-interface Cln { id?:string; apartment_code:string; scheduled_date:string; cleaning_date?:string; status?:string; completed?:boolean; manually_edited?:boolean; cleaner_name?:string; cleaner_id?:string; cleaning_cost?:number; cost?:number; photos?:string[]; notes?:string; guests_count?:number; sort_order?:number }
+interface ExtraCost { type:string; description?:string; amount:number }
+interface Cln { id?:string; apartment_code:string; scheduled_date:string; cleaning_date?:string; status?:string; completed?:boolean; manually_edited?:boolean; cleaner_name?:string; cleaner_id?:string; cleaning_cost?:number; cost?:number; photos?:string[]; notes?:string; guest_count?:number; sort_order?:number; extra_costs?:ExtraCost[] }
 interface DayCell { type:'empty'|'pending'|'done'|'late'|'occupied'; apt:string; cleaning?:Cln; date:string }
 interface AppUser { id:string; username:string; display_name:string; role:string; pix_key?:string }
 
@@ -96,12 +97,17 @@ function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCel
   const [assignee,setAssignee]=useState(cl.cleaner_id||'')
   const [assigneeName,setAssigneeName]=useState(cl.cleaner_name||'')
   const [notes,setNotes]=useState(cl.notes||'')
-  const [guests,setGuests]=useState(cl.guests_count?.toString()||'')
+  const [guests,setGuests]=useState(cl.guest_count?.toString()||'')
   const [photos,setPhotos]=useState<string[]>(cl.photos||[])
   const [saving,setSaving]=useState(false)
   const [error,setError]=useState('')
   const [deleteConfirm,setDeleteConfirm]=useState(false)
   const fileRef=useRef<HTMLInputElement>(null)
+  // Extra costs (stored as JSON array in cleaning)
+  const [extraCosts,setExtraCosts]=useState<ExtraCost[]>(cl.extra_costs||[])
+  const [showAddCost,setShowAddCost]=useState(false)
+  const [newCostType,setNewCostType]=useState('transporte')
+  const [newCostAmount,setNewCostAmount]=useState('')
 
   // Permission: if admin already set cleaner/cost, cleaner can't change
   const cleanerLocked=!isAdm&&!!cl.cleaner_id&&cl.cleaner_id!==user.id
@@ -134,13 +140,24 @@ function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCel
         const r=await fetch('/api/limpezas',{method:'POST',headers:h,body:JSON.stringify({action:'assign-cleaner',cleaning_id:cl.id,cleaner_id:assignee,cleaner_name:aName})})
         if(!r.ok){const d=await r.json();setError(d.error||'Erro ao atribuir');setSaving(false);return}
       }
+      // Build safe values
+      const safeCost=parseFloat(cost);const validCost=isNaN(safeCost)?0:safeCost
+      const safeGuests=parseInt(guests);const validGuests=isNaN(safeGuests)?null:safeGuests
       // Update fields via upsert (admin) or complete
       if(complete){
-        const r=await fetch('/api/limpezas',{method:'POST',headers:h,body:JSON.stringify({action:'complete-cleaning',cleaning_id:cl.id,cost:parseFloat(cost)||0,photos,notes,guests_count:parseInt(guests)||0})})
+        const payload:any={action:'complete-cleaning',cleaning_id:cl.id,cost:validCost,photos}
+        if(notes)payload.notes=notes
+        if(validGuests!==null)payload.guest_count=validGuests
+        if(extraCosts.length>0)payload.extra_costs=extraCosts
+        const r=await fetch('/api/limpezas',{method:'POST',headers:h,body:JSON.stringify(payload)})
         if(!r.ok){const d=await r.json();setError(d.error||'Erro ao concluir');setSaving(false);return}
       }else if(isAdm){
         // Admin can update any field without completing
-        const r=await fetch('/api/limpezas',{method:'POST',headers:h,body:JSON.stringify({action:'upsert-cleaning',cleaning:{id:cl.id,cleaning_cost:parseFloat(cost)||0,cost:parseFloat(cost)||0,notes,guests_count:parseInt(guests)||0,photos}})})
+        const cleaning:any={id:cl.id,cleaning_cost:validCost,cost:validCost,photos,manually_edited:true}
+        if(notes!==undefined)cleaning.notes=notes
+        if(validGuests!==null)cleaning.guest_count=validGuests
+        if(extraCosts.length>0)cleaning.extra_costs=extraCosts
+        const r=await fetch('/api/limpezas',{method:'POST',headers:h,body:JSON.stringify({action:'upsert-cleaning',cleaning})})
         if(!r.ok){const d=await r.json();setError(d.error||'Erro ao salvar');setSaving(false);return}
       }
       onSaved();onClose()
@@ -222,6 +239,51 @@ function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCel
         <div style={{marginBottom:12}}>
           <label style={{fontSize:11,fontWeight:600,color:t.textSecondary,display:'block',marginBottom:4}}>Observações</label>
           <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Notas sobre a limpeza..." rows={2} style={inputS({resize:'vertical' as const,fontFamily:'inherit'})}/>
+        </div>
+
+        {/* Custos adicionais */}
+        <div style={{marginBottom:12}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+            <label style={{fontSize:11,fontWeight:600,color:t.textSecondary}}>Custos adicionais</label>
+            {!isDone&&<button onClick={()=>setShowAddCost(!showAddCost)} style={{display:'flex',alignItems:'center',gap:3,fontSize:10,fontWeight:600,color:t.gold,background:'none',border:'none',cursor:'pointer',padding:0}}>
+              <Plus size={12}/>{showAddCost?'Cancelar':'Adicionar'}
+            </button>}
+          </div>
+          {/* Add cost form */}
+          {showAddCost&&<div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap'}}>
+            <select value={newCostType} onChange={e=>setNewCostType(e.target.value)} style={{flex:'0 0 auto',padding:'7px 8px',borderRadius:6,fontSize:11,background:t.inputBg,border:`1px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none'}}>
+              <option value="transporte">Transporte</option>
+              <option value="compra">Compra</option>
+              <option value="outro">Outro</option>
+            </select>
+            <input type="number" min="0" step="0.01" placeholder="Valor" value={newCostAmount} onChange={e=>setNewCostAmount(e.target.value)} inputMode="decimal"
+              style={{flex:1,minWidth:70,padding:'7px 8px',borderRadius:6,fontSize:11,background:t.inputBg,border:`1px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none'}}/>
+            <button onClick={()=>{
+              const amt=parseFloat(newCostAmount)
+              if(!amt||amt<=0)return
+              setExtraCosts(prev=>[...prev,{type:newCostType,amount:amt}])
+              setNewCostAmount('');setShowAddCost(false)
+            }} style={{padding:'7px 12px',borderRadius:6,border:'none',background:t.gold,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>+</button>
+          </div>}
+          {/* Cost list */}
+          {extraCosts.length>0?(
+            <div style={{display:'flex',flexDirection:'column',gap:4}}>
+              {extraCosts.map((ec,i)=>(
+                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 10px',borderRadius:6,background:t.goldBg,border:`1px solid ${t.gold}20`}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <span style={{fontSize:10,fontWeight:600,color:t.gold,textTransform:'capitalize'}}>{ec.type}</span>
+                    {ec.description&&<span style={{fontSize:10,color:t.textSecondary}}>{ec.description}</span>}
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <span style={{fontSize:11,fontWeight:700,color:t.textPrimary}}>R$ {ec.amount.toFixed(2)}</span>
+                    {!isDone&&<button onClick={()=>setExtraCosts(prev=>prev.filter((_,j)=>j!==i))} style={{background:'none',border:'none',cursor:'pointer',padding:0,display:'flex'}}><X size={12} style={{color:t.red}}/></button>}
+                  </div>
+                </div>))}
+              <div style={{fontSize:10,color:t.textSecondary,textAlign:'right',marginTop:2}}>
+                Total extras: <strong style={{color:t.textPrimary}}>R$ {extraCosts.reduce((s,c)=>s+c.amount,0).toFixed(2)}</strong>
+              </div>
+            </div>
+          ):(<div style={{fontSize:10,color:t.textSecondary,opacity:0.6}}>Nenhum custo adicional</div>)}
         </div>
 
         {/* Fotos */}

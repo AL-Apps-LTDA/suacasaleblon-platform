@@ -198,6 +198,9 @@ CREATE TABLE IF NOT EXISTS reservations (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Add extra_costs JSON field to cleanings (array of {type, description, amount})
+ALTER TABLE cleanings ADD COLUMN IF NOT EXISTS extra_costs JSONB DEFAULT '[]';
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_cleanings_date ON cleanings(cleaning_date);
 CREATE INDEX IF NOT EXISTS idx_cleanings_apt ON cleanings(apartment_code);

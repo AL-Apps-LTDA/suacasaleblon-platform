@@ -255,18 +255,22 @@ export async function POST(req: NextRequest) {
 
   // === COMPLETE CLEANING ===
   if (action === 'complete-cleaning') {
-    const { cleaning_id, cost, photos, video_url } = body
+    const { cleaning_id, cost, photos, video_url, extra_costs, notes, guest_count } = body
     if (!photos || photos.length < 2) return err('Minimum 2 photos required')
     if (cost === undefined || cost === null) return err('Cost is required (can be 0)')
     const { data: checklist } = await supabase.from('cleaning_checklist').select('completed').eq('cleaning_id', cleaning_id)
     if (checklist && checklist.length > 0 && !checklist.every((c: any) => c.completed)) return err('Complete all checklist items first')
     const { data: cleaning } = await supabase.from('cleanings').select('cleaner_id').eq('id', cleaning_id).single()
     if (!cleaning?.cleaner_id) return err('Assign a cleaner first')
-    const { data: updated, error } = await supabase.from('cleanings').update({
-      completed: true, status: 'concluida', cleaning_cost: cost, cost, photos,
+    const updateData: any = {
+      completed: true, status: 'concluida', cleaning_cost: cost, photos,
       video_url: video_url || null, checklist_completed: true,
       completed_at: new Date().toISOString(), manually_edited: true, updated_at: new Date().toISOString()
-    }).eq('id', cleaning_id).select().single()
+    }
+    if (notes !== undefined) updateData.notes = notes
+    if (guest_count !== undefined && guest_count !== null) updateData.guest_count = guest_count
+    if (extra_costs !== undefined) updateData.extra_costs = extra_costs
+    const { data: updated, error } = await supabase.from('cleanings').update(updateData).eq('id', cleaning_id).select().single()
     if (error) return err(error.message, 500)
     return json(updated)
   }
