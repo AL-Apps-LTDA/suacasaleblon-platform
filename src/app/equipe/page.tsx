@@ -7,6 +7,12 @@ import { Loader2, KeyRound, RefreshCw, Eye, EyeOff, X, Camera, Trash2, Plus, Edi
 const APTS = ['103', '102', '403', '334A', '303']
 const DAYS_L = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
 const CHECKIN_H = 15
+const COST_CATEGORIES = [
+  { value: 'transporte', label: 'Transporte' },
+  { value: 'compra', label: 'Compra' },
+  { value: 'manutencao', label: 'Manutenção' },
+  { value: 'outro', label: 'Outro' },
+] as const
 
 // ─── THEMES ────────────────────────────────────────────
 const LT = {
@@ -107,6 +113,7 @@ function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCel
   const [extraCosts,setExtraCosts]=useState<ExtraCost[]>(cl.extra_costs||[])
   const [showAddCost,setShowAddCost]=useState(false)
   const [newCostType,setNewCostType]=useState('transporte')
+  const [newCostDesc,setNewCostDesc]=useState('')
   const [newCostAmount,setNewCostAmount]=useState('')
 
   // Permission: if admin already set cleaner/cost, cleaner can't change
@@ -250,20 +257,24 @@ function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCel
             </button>}
           </div>
           {/* Add cost form */}
-          {showAddCost&&<div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap'}}>
-            <select value={newCostType} onChange={e=>setNewCostType(e.target.value)} style={{flex:'0 0 auto',padding:'7px 8px',borderRadius:6,fontSize:11,background:t.inputBg,border:`1px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none'}}>
-              <option value="transporte">Transporte</option>
-              <option value="compra">Compra</option>
-              <option value="outro">Outro</option>
-            </select>
-            <input type="number" min="0" step="0.01" placeholder="Valor" value={newCostAmount} onChange={e=>setNewCostAmount(e.target.value)} inputMode="decimal"
-              style={{flex:1,minWidth:70,padding:'7px 8px',borderRadius:6,fontSize:11,background:t.inputBg,border:`1px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none'}}/>
-            <button onClick={()=>{
-              const amt=parseFloat(newCostAmount)
-              if(!amt||amt<=0)return
-              setExtraCosts(prev=>[...prev,{type:newCostType,amount:amt}])
-              setNewCostAmount('');setShowAddCost(false)
-            }} style={{padding:'7px 12px',borderRadius:6,border:'none',background:t.gold,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>+</button>
+          {showAddCost&&<div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:8}}>
+            <div style={{display:'flex',gap:6}}>
+              <select value={newCostType} onChange={e=>{setNewCostType(e.target.value);if(e.target.value!=='outro')setNewCostDesc('')}} style={{flex:'0 0 auto',padding:'7px 8px',borderRadius:6,fontSize:11,background:t.inputBg,border:`1px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none'}}>
+                {COST_CATEGORIES.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+              <input type="number" min="0" step="0.01" placeholder="Valor" value={newCostAmount} onChange={e=>setNewCostAmount(e.target.value)} inputMode="decimal"
+                style={{flex:1,minWidth:70,padding:'7px 8px',borderRadius:6,fontSize:11,background:t.inputBg,border:`1px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none'}}/>
+              <button onClick={()=>{
+                const amt=parseFloat(newCostAmount)
+                if(!amt||amt<=0)return
+                if(newCostType==='outro'&&!newCostDesc.trim())return
+                const desc=newCostType==='outro'?newCostDesc.trim():undefined
+                setExtraCosts(prev=>[...prev,{type:newCostType,description:desc,amount:amt}])
+                setNewCostAmount('');setNewCostDesc('');setShowAddCost(false)
+              }} style={{padding:'7px 12px',borderRadius:6,border:'none',background:t.gold,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>+</button>
+            </div>
+            {newCostType==='outro'&&<input type="text" placeholder="Descreva o custo..." value={newCostDesc} onChange={e=>setNewCostDesc(e.target.value)} maxLength={60}
+              style={{padding:'7px 8px',borderRadius:6,fontSize:11,background:t.inputBg,border:`1px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none'}}/>}
           </div>}
           {/* Cost list */}
           {extraCosts.length>0?(
@@ -271,8 +282,8 @@ function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCel
               {extraCosts.map((ec,i)=>(
                 <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 10px',borderRadius:6,background:t.goldBg,border:`1px solid ${t.gold}20`}}>
                   <div style={{display:'flex',alignItems:'center',gap:6}}>
-                    <span style={{fontSize:10,fontWeight:600,color:t.gold,textTransform:'capitalize'}}>{ec.type}</span>
-                    {ec.description&&<span style={{fontSize:10,color:t.textSecondary}}>{ec.description}</span>}
+                    <span style={{fontSize:10,fontWeight:600,color:t.gold}}>{COST_CATEGORIES.find(c=>c.value===ec.type)?.label||ec.type}</span>
+                    {ec.description&&<span style={{fontSize:10,color:t.textSecondary}}>· {ec.description}</span>}
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:6}}>
                     <span style={{fontSize:11,fontWeight:700,color:t.textPrimary}}>R$ {ec.amount.toFixed(2)}</span>
