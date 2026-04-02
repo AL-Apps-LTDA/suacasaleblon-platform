@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, Trash2, CheckCircle2, Clock, AlertCircle, Loader2, Sparkles, DollarSign, Users, Camera, RefreshCw, Wrench, ClipboardList } from 'lucide-react'
-import { fmtBRL } from '@/lib/types'
+import { fmtBRL, LEBLON_APARTMENTS, DEFAULTS } from '@/lib/types'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
-const APARTMENTS = ['103', '403', '102', '303', '334A']
+const APARTMENTS = [...LEBLON_APARTMENTS]
 const TYPES: Record<string, string> = { checkout: 'Check-out', checkin: 'Check-in', manutencao: 'Manutenção', deep_clean: 'Limpeza Profunda' }
 const STATUSES: Record<string, { label: string; color: string; icon: any }> = {
   agendada: { label: 'Agendada', color: 'text-blue-400 bg-blue-500/15', icon: Clock },
@@ -28,7 +28,7 @@ export default function LimpezasPage() {
   const [showForm, setShowForm] = useState(false)
   const [filterApt, setFilterApt] = useState('all')
   const [tab, setTab] = useState<Tab>('agenda')
-  const [form, setForm] = useState<Partial<Cleaning>>({ apartment_code: '103', scheduled_date: new Date().toLocaleDateString('sv-SE'), scheduled_time: '11:00', cleaner_name: '', status: 'agendada', type: 'checkout', notes: '', cost: 150, source: 'admin' })
+  const [form, setForm] = useState<Partial<Cleaning>>({ apartment_code: '103', scheduled_date: new Date().toLocaleDateString('sv-SE'), scheduled_time: '11:00', cleaner_name: '', status: 'agendada', type: 'checkout', notes: '', cost: DEFAULTS.cleaning_fee, source: 'admin' })
 
   const loadCleanings = useCallback(async () => {
     setLoading(true)
@@ -61,7 +61,7 @@ export default function LimpezasPage() {
     if (!form.apartment_code || !form.scheduled_date) return
     await supabase.from('cleanings').insert({ ...form, manually_edited: true, source: 'admin' })
     setShowForm(false)
-    setForm({ apartment_code: '103', scheduled_date: new Date().toLocaleDateString('sv-SE'), scheduled_time: '11:00', cleaner_name: '', status: 'agendada', type: 'checkout', notes: '', cost: 150, source: 'admin' })
+    setForm({ apartment_code: '103', scheduled_date: new Date().toLocaleDateString('sv-SE'), scheduled_time: '11:00', cleaner_name: '', status: 'agendada', type: 'checkout', notes: '', cost: DEFAULTS.cleaning_fee, source: 'admin' })
     loadCleanings()
   }
 

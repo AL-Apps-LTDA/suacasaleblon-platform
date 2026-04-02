@@ -1,11 +1,11 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { CalendarDays, Plus, Loader2, Trash2, MessageCircle } from 'lucide-react'
-import { fmtBRL } from '@/lib/types'
+import { fmtBRL, LEBLON_APARTMENTS, DEFAULTS } from '@/lib/types'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
-const APARTMENTS = ['103', '403', '102', '303', '334A']
+const APARTMENTS = [...LEBLON_APARTMENTS]
 
 interface DirectRes { id?: number; apartment_code: string; guest_name: string; guest_phone: string; guest_email: string; checkin: string; checkout: string; guests: number; total_value: number; cleaning_fee: number; payment_method: string; payment_status: string; notes: string }
 
@@ -13,7 +13,7 @@ export default function ReservasDiretasPage() {
   const [reservas, setReservas] = useState<DirectRes[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState<Partial<DirectRes>>({ apartment_code: '103', guest_name: '', guest_phone: '', guest_email: '', checkin: '', checkout: '', guests: 2, total_value: 0, cleaning_fee: 150, payment_method: 'pix', payment_status: 'pendente', notes: '' })
+  const [form, setForm] = useState<Partial<DirectRes>>({ apartment_code: '103', guest_name: '', guest_phone: '', guest_email: '', checkin: '', checkout: '', guests: 2, total_value: 0, cleaning_fee: DEFAULTS.cleaning_fee, payment_method: 'pix', payment_status: 'pendente', notes: '' })
 
   async function load() { setLoading(true); const { data } = await supabase.from('direct_reservations').select('*').order('checkin', { ascending: false }); if (data) setReservas(data); setLoading(false) }
   useEffect(() => { load() }, [])
@@ -21,7 +21,7 @@ export default function ReservasDiretasPage() {
   async function save() {
     if (!form.guest_name || !form.checkin || !form.checkout) return
     await supabase.from('direct_reservations').insert(form)
-    setShowForm(false); setForm({ apartment_code: '103', guest_name: '', guest_phone: '', guest_email: '', checkin: '', checkout: '', guests: 2, total_value: 0, cleaning_fee: 150, payment_method: 'pix', payment_status: 'pendente', notes: '' }); load()
+    setShowForm(false); setForm({ apartment_code: '103', guest_name: '', guest_phone: '', guest_email: '', checkin: '', checkout: '', guests: 2, total_value: 0, cleaning_fee: DEFAULTS.cleaning_fee, payment_method: 'pix', payment_status: 'pendente', notes: '' }); load()
   }
 
   async function updatePayment(id: number, status: string) { await supabase.from('direct_reservations').update({ payment_status: status }).eq('id', id); load() }

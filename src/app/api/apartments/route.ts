@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { PROPERTY_HOSPITABLE_MAP, MONTHS_SHORT, fmtBRL, APARTMENTS } from '@/lib/types'
+import { PROPERTY_HOSPITABLE_MAP, MONTHS_SHORT, fmtBRL, APARTMENTS, DEFAULTS } from '@/lib/types'
 import { getAllReservations, splitReservationByMonth } from '@/lib/hospitable'
 import { createClient } from '@supabase/supabase-js'
 
@@ -79,7 +79,7 @@ export async function GET() {
     const summaries = []
     for (const name of [...APARTMENTS]) {
       const config = configMap[name]
-      const commPct = config?.commission_pct ? Number(config.commission_pct) : 0.15
+      const commPct = config?.commission_pct ? Number(config.commission_pct) : DEFAULTS.commission_pct
 
       const aptRes = hospReservations.filter(r => r.apartmentName === name)
       const proRata = aptRes.flatMap(r => splitReservationByMonth(r))
@@ -175,5 +175,5 @@ export async function GET() {
 }
 
 function emptyMonth(label: string) {
-  return { month: `${label}/26`, reservations: [], receitaTotal: 'R$ 0,00', expenses: [], despesaTotal: 'R$ 0,00', resultado: 'R$ 0,00', managerCommission: 'R$ 0,00', managerName: 'Diego', repassar: 'R$ 0,00', _raw: { revenue: 0, expenses: 0, result: 0, commission: 0, ownerPart: 0, commissionPct: 0.15 } }
+  return { month: `${label}/26`, reservations: [], receitaTotal: 'R$ 0,00', expenses: [], despesaTotal: 'R$ 0,00', resultado: 'R$ 0,00', managerCommission: 'R$ 0,00', managerName: 'Diego', repassar: 'R$ 0,00', _raw: { revenue: 0, expenses: 0, result: 0, commission: 0, ownerPart: 0, commissionPct: DEFAULTS.commission_pct } }
 }

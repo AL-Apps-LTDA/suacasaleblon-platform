@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Loader2, KeyRound, RefreshCw, Eye, EyeOff, X, Camera, Trash2, Plus, Edit3, ChevronDown } from 'lucide-react'
+import { LEBLON_APARTMENTS } from '@/lib/types'
 
 // ─── CONSTANTS ─────────────────────────────────────────
-const APTS = ['103', '102', '403', '334A', '303']
+const APTS = [...LEBLON_APARTMENTS]
 const DAYS_L = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
 const CHECKIN_H = 15
 const COST_CATEGORIES = [

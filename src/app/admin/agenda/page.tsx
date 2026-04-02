@@ -3,9 +3,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, Loader2, Users, Sparkles, Calendar, ExternalLink } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
+import { LEBLON_APARTMENTS } from '@/lib/types'
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
-const APARTMENTS = ['103', '403', '102', '303', '334A']
+const APARTMENTS = [...LEBLON_APARTMENTS]
 const APT_COLORS: Record<string, string> = { '103': 'bg-blue-500', '403': 'bg-emerald-500', '102': 'bg-purple-500', '303': 'bg-orange-500', '334A': 'bg-pink-500' }
 const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']

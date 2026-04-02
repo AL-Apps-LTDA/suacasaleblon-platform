@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Upload, FileText, CheckCircle2, AlertCircle, Loader2, Database, RefreshCw } from 'lucide-react'
-import { fmtBRL } from '@/lib/types'
+import { fmtBRL, APARTMENTS } from '@/lib/types'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -113,7 +113,7 @@ function parseDate(ds: string): string | null {
   return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 }
 
-const APT_OPTIONS = ['103', '102', '403', '303', '334A', 'BZ02']
+const APT_OPTIONS = [...APARTMENTS]
 
 export default function ImportarPage() {
   const [file, setFile] = useState<File | null>(null)

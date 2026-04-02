@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, Trash2, DollarSign, Building2, Calendar, Loader2, Save, ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
-import { fmtBRL, MONTHS_FULL } from '@/lib/types'
+import { fmtBRL, MONTHS_FULL, LEBLON_APARTMENTS } from '@/lib/types'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -10,7 +10,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 )
 
-const APARTMENTS = ['103', '403', '102', '303', '334A']
+const APARTMENTS = [...LEBLON_APARTMENTS]
 const CATEGORIES = [
   'condominio', 'iptu', 'luz', 'agua', 'gas', 'internet',
   'limpeza', 'produtos_limpeza', 'lavanderia',
