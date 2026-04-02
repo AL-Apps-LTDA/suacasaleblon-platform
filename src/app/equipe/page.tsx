@@ -185,9 +185,9 @@ function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCel
   const inputS=(extra?:any):any=>({width:'100%',padding:'10px 12px',borderRadius:8,fontSize:13,background:t.inputBg,border:`1.5px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none',boxSizing:'border-box' as const,...extra})
 
   return(
-    <div style={{position:'fixed',inset:0,zIndex:100,display:'flex',alignItems:'flex-end',justifyContent:'center'}} onClick={onClose}>
+    <div style={{position:'fixed',inset:0,zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:16}} onClick={onClose}>
       <div style={{position:'absolute',inset:0,background:t.overlay}}/>
-      <div onClick={e=>e.stopPropagation()} style={{position:'relative',width:'100%',maxWidth:520,maxHeight:'90vh',overflowY:'auto',background:t.modalBg,borderRadius:'16px 16px 0 0',padding:'20px 16px',boxShadow:'0 -4px 30px rgba(0,0,0,0.2)'}}>
+      <div onClick={e=>e.stopPropagation()} style={{position:'relative',width:'100%',maxWidth:520,maxHeight:'85vh',overflowY:'auto',background:t.modalBg,borderRadius:16,padding:'20px 16px',boxShadow:'0 4px 30px rgba(0,0,0,0.25)'}}>
         {/* Header */}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div>
