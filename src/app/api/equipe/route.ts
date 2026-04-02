@@ -5,7 +5,7 @@ import { LEBLON_APARTMENTS } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
-const LEBLON = LEBLON_APARTMENTS
+const LEBLON: readonly string[] = LEBLON_APARTMENTS
 
 // All date math in Brazil timezone to avoid UTC drift
 function brToday(): string {

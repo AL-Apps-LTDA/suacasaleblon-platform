@@ -27,7 +27,7 @@ export const PROPERTY_HOSPITABLE_MAP: Record<string, string> = {
 }
 
 export const APARTMENTS = ['103', '102', '403', '303', '334A', 'BZ02'] as const
-export const LEBLON_APARTMENTS = APARTMENTS.filter(a => a !== 'BZ02')
+export const LEBLON_APARTMENTS = ['103', '102', '403', '303', '334A'] as const
 export type ApartmentCode = typeof APARTMENTS[number]
 
 export const DEFAULTS = { cleaning_fee: 150, commission_pct: 0.15 } as const
