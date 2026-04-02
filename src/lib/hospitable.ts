@@ -150,7 +150,7 @@ export async function getCalendarAvailability(propertyCode: string): Promise<str
   if (!uuid) return []
 
   try {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
     const endDate = '2026-12-31'
 
     const url = `${HOSPITABLE_BASE_URL}/properties/${uuid}/calendar?start_date=${today}&end_date=${endDate}`
@@ -208,7 +208,7 @@ export async function getDailyRates(
 
   for (let i = 0; i < nights; i++) {
     const d = new Date(startDate.getTime() + i * 86400000)
-    const dateStr = d.toISOString().slice(0, 10)
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     const entry = days.find((e: any) => e.date === dateStr)
 
     if (!entry) throw new Error(`No rate data for ${dateStr}`)

@@ -94,7 +94,7 @@ export default function AgendaPage() {
     return { reservations: dayRes, cleanings: dayClean }
   }
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = new Date().toLocaleDateString('sv-SE')
 
   return (
     <div className="p-4 md:p-6 space-y-5">

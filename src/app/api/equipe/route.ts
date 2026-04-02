@@ -3,22 +3,29 @@ import { getAllReservations } from '@/lib/hospitable'
 
 export const dynamic = 'force-dynamic'
 
+// All date math in Brazil timezone to avoid UTC drift
+function brToday(): string {
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
+}
+
+function addDays(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const dt = new Date(y, m - 1, d + days)
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+}
+
 export async function GET() {
   try {
-    const now = new Date()
-    const brNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
-    const dayOfWeek = brNow.getDay()
-    const monday = new Date(brNow)
-    monday.setDate(brNow.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
+    const today = brToday()
+    const [y, m, d] = today.split('-').map(Number)
+    const todayDate = new Date(y, m - 1, d)
+    const dayOfWeek = todayDate.getDay()
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+    const monday = addDays(today, mondayOffset)
 
     // Fetch 5 weeks of data (current -1 to +3)
-    const start = new Date(monday)
-    start.setDate(start.getDate() - 7)
-    const end = new Date(monday)
-    end.setDate(end.getDate() + 28)
-
-    const startDate = start.toISOString().slice(0, 10)
-    const endDate = end.toISOString().slice(0, 10)
+    const startDate = addDays(monday, -7)
+    const endDate = addDays(monday, 28)
 
     const allRes = await getAllReservations(startDate, endDate)
 

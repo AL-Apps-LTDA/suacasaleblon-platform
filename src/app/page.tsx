@@ -21,7 +21,7 @@ export default function Home() {
   const [searching, setSearching] = useState(false)
   const [results, setResults] = useState<AvailableResult[] | null>(null)
   const [searchError, setSearchError] = useState('')
-  const today = new Date().toISOString().slice(0, 10)
+  const today = new Date().toLocaleDateString('sv-SE')
 
   const checkinRef = useRef<HTMLInputElement>(null)
   const checkoutRef = useRef<HTMLInputElement>(null)
@@ -47,7 +47,7 @@ export default function Home() {
           const start = new Date(`${checkin}T00:00:00`), end = new Date(`${checkout}T00:00:00`)
           let isBlocked = false
           const cursor = new Date(start)
-          while (cursor < end) { if (blockedDates.has(cursor.toISOString().slice(0, 10))) { isBlocked = true; break }; cursor.setDate(cursor.getDate() + 1) }
+          while (cursor < end) { const cds = `${cursor.getFullYear()}-${String(cursor.getMonth()+1).padStart(2,'0')}-${String(cursor.getDate()).padStart(2,'0')}`; if (blockedDates.has(cds)) { isBlocked = true; break }; cursor.setDate(cursor.getDate() + 1) }
           if (isBlocked) continue
           const quoteRes = await fetch('/api/quote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ propertyCode: property.code, checkin, checkout, guests }) })
           const quoteData = await quoteRes.json()

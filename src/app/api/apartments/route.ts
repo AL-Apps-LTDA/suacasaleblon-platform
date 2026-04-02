@@ -16,7 +16,7 @@ interface AptConfig { code: string; commission_pct: number; owner_name: string |
 export async function GET() {
   const now = new Date()
   const brNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
-  const todayStr = brNow.toISOString().slice(0, 10)
+  const todayStr = brNow.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
   const currentMonth = brNow.getMonth()
   const currentDay = brNow.getDate()
   const currentYear = brNow.getFullYear()
@@ -34,20 +34,46 @@ export async function GET() {
       { data: dbAirbnb },
       { data: dbDirect },
       { data: dbAppExpenses },
+      { data: dbReservations },
     ] = await Promise.all([
       supabase.from('expenses').select('*').eq('year', currentYear),
       supabase.from('airbnb_transactions').select('*').eq('year', currentYear),
       supabase.from('direct_reservations').select('*').gte('checkin', `${currentYear}-01-01`).lte('checkin', `${currentYear}-12-31`),
       supabase.from('app_expenses').select('*').gte('expense_date', `${currentYear}-01-01`),
+      supabase.from('reservations').select('*').gte('checkin', `${currentYear}-01-01`).lte('checkin', `${currentYear}-12-31`).eq('status', 'accepted'),
     ])
 
-    // 3. Fetch Hospitable reservations
+    // 3. Fetch Hospitable reservations (live API), fallback to Supabase cache
     let hospReservations: any[] = []
     try {
       if (process.env.HOSPITABLE_API_KEY) {
         hospReservations = await getAllReservations(`${currentYear}-01-01`, todayStr)
       }
     } catch (e: any) { console.error('[Hospitable fetch error]', e.message) }
+
+    // Fallback: if live API returned nothing, use cached reservations from Supabase
+    if (hospReservations.length === 0 && dbReservations && dbReservations.length > 0) {
+      hospReservations = dbReservations.map(r => ({
+        id: r.id,
+        platform: r.platform || '',
+        status: r.status || 'accepted',
+        arrivalDate: r.checkin,
+        departureDate: r.checkout,
+        guestName: r.guest_name || 'Unknown',
+        guestCountry: r.guest_country || '',
+        nights: r.nights || 0,
+        guests: r.guests || 0,
+        propertyUuid: '',
+        apartmentName: r.apartment_code,
+        payout: Number(r.payout) || 0,
+        hostServiceFee: Number(r.host_service_fee) || 0,
+        cleaningFee: Number(r.cleaning_fee) || 0,
+        totalPrice: Number(r.total_price) || 0,
+        currency: r.currency || 'BRL',
+        adjustments: [],
+      }))
+      console.log(`[Apartments] Using ${hospReservations.length} cached reservations from Supabase`)
+    }
 
     // 4. Build summaries
     const summaries = []
@@ -95,7 +121,8 @@ export async function GET() {
 
         // Direct reservations with PRO RATA across months
         for (const dr of aptDirect) {
-          const ci = new Date(dr.checkin + 'T12:00:00'), co = new Date(dr.checkout + 'T12:00:00')
+          const [ciy,cim,cid] = dr.checkin.split('-').map(Number), [coy,com,cod] = dr.checkout.split('-').map(Number)
+          const ci = new Date(ciy, cim-1, cid), co = new Date(coy, com-1, cod)
           const totalNights = Math.max(1, Math.round((co.getTime() - ci.getTime()) / 86400000))
           const nightly = Number(dr.total_value) / totalNights
           const mStart = new Date(currentYear, mi, 1), mEnd = new Date(currentYear, mi + 1, 0)
@@ -117,7 +144,7 @@ export async function GET() {
           totalExpenses += Number(exp.amount)
         }
         for (const ae of aptAppExp) {
-          const d = new Date(ae.expense_date + 'T12:00:00')
+          const [ey,em,ed] = ae.expense_date.split('-').map(Number); const d = new Date(ey, em-1, ed)
           if (d.getMonth() === mi) {
             expenses.push({ date: ae.expense_date, label: ae.description || 'Gasto App', obs: 'Via Giro Temporada', value: fmtBRL(Number(ae.amount)) })
             totalExpenses += Number(ae.amount)

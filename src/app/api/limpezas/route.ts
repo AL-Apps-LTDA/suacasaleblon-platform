@@ -68,8 +68,10 @@ export async function GET(req: NextRequest) {
     if (week) {
       const start = new Date(week)
       const end = new Date(start); end.setDate(end.getDate() + 6)
-      query = query.gte('scheduled_date', start.toISOString().slice(0, 10))
-                    .lte('scheduled_date', end.toISOString().slice(0, 10))
+      const startStr = `${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,'0')}-${String(start.getDate()).padStart(2,'0')}`
+      const endStr = `${end.getFullYear()}-${String(end.getMonth()+1).padStart(2,'0')}-${String(end.getDate()).padStart(2,'0')}`
+      query = query.gte('scheduled_date', startStr)
+                    .lte('scheduled_date', endStr)
     }
     const { data, error } = await query
     if (error) return err(error.message, 500)
@@ -113,7 +115,7 @@ export async function GET(req: NextRequest) {
     let query = supabase.from('app_expenses').select('*, expense_categories(name)').order('expense_date', { ascending: false })
     if (month && year) {
       const startDate = `${year}-${month.padStart(2, '0')}-01`
-      const endDate = new Date(+year, +month, 0).toISOString().slice(0, 10)
+      const endD = new Date(+year, +month, 0); const endDate = `${endD.getFullYear()}-${String(endD.getMonth()+1).padStart(2,'0')}-${String(endD.getDate()).padStart(2,'0')}`
       query = query.gte('expense_date', startDate).lte('expense_date', endDate)
     }
     if (apt) query = query.eq('apartment_code', apt)
@@ -178,7 +180,7 @@ export async function GET(req: NextRequest) {
     let cQ = supabase.from('cleanings').select('apartment_code, cleaning_cost, cost, scheduled_date, completed')
     if (year) cQ = cQ.gte('scheduled_date', `${year}-01-01`).lte('scheduled_date', `${year}-12-31`)
     if (month) {
-      const s = `${year}-${month.padStart(2, '0')}-01`, e = new Date(+year, +month, 0).toISOString().slice(0, 10)
+      const s = `${year}-${month.padStart(2, '0')}-01`, eD = new Date(+year, +month, 0), e = `${eD.getFullYear()}-${String(eD.getMonth()+1).padStart(2,'0')}-${String(eD.getDate()).padStart(2,'0')}`
       cQ = cQ.gte('scheduled_date', s).lte('scheduled_date', e)
     }
     if (apt) cQ = cQ.eq('apartment_code', apt)
@@ -371,7 +373,8 @@ export async function POST(req: NextRequest) {
   if (action === 'mark-maintenance-done') {
     const { id } = body
     const { data: item } = await supabase.from('maintenance_items').select('frequency_days').eq('id', id).single()
-    const nextDue = item?.frequency_days ? new Date(Date.now() + item.frequency_days * 86400000).toISOString().slice(0, 10) : null
+    const nextDueD = item?.frequency_days ? new Date(Date.now() + item.frequency_days * 86400000) : null
+    const nextDue = nextDueD ? `${nextDueD.getFullYear()}-${String(nextDueD.getMonth()+1).padStart(2,'0')}-${String(nextDueD.getDate()).padStart(2,'0')}` : null
     const { data, error } = await supabase.from('maintenance_items')
       .update({ last_done_at: new Date().toISOString(), next_due_date: nextDue }).eq('id', id).select().single()
     if (error) return err(error.message, 500)

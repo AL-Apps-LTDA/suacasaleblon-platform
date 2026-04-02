@@ -180,12 +180,12 @@ export default function PropertyPage({ params }: { params: Promise<{ id: string 
               <div className="space-y-3">
                 <div>
                   <label className="text-xs text-[var(--color-text-secondary)] block mb-1">Check-in</label>
-                  <input type="date" value={checkin} onChange={e => setCheckin(e.target.value)} min={new Date().toISOString().slice(0, 10)}
+                  <input type="date" value={checkin} onChange={e => setCheckin(e.target.value)} min={new Date().toLocaleDateString('sv-SE')}
                     className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2.5 text-sm bg-[var(--color-bg)] text-[var(--color-text)]" />
                 </div>
                 <div>
                   <label className="text-xs text-[var(--color-text-secondary)] block mb-1">Check-out</label>
-                  <input type="date" value={checkout} onChange={e => setCheckout(e.target.value)} min={checkin || new Date().toISOString().slice(0, 10)}
+                  <input type="date" value={checkout} onChange={e => setCheckout(e.target.value)} min={checkin || new Date().toLocaleDateString('sv-SE')}
                     className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2.5 text-sm bg-[var(--color-bg)] text-[var(--color-text)]" />
                 </div>
                 <div>

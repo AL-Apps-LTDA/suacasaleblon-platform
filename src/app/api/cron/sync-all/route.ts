@@ -124,10 +124,12 @@ export async function GET(request: NextRequest) {
     if (process.env.HOSPITABLE_API_KEY) {
       const now = new Date()
       const brNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
-      const today = brNow.toISOString().slice(0, 10)
-      
+      const today = brNow.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
+
       // Get next 30 days of reservations to auto-create cleaning events
-      const futureDate = new Date(brNow.getTime() + 30 * 86400000).toISOString().slice(0, 10)
+      const [fy, fm, fd] = today.split('-').map(Number)
+      const futureD = new Date(fy, fm - 1, fd + 30)
+      const futureDate = `${futureD.getFullYear()}-${String(futureD.getMonth() + 1).padStart(2, '0')}-${String(futureD.getDate()).padStart(2, '0')}`
       const reservations = await getAllReservations(today, futureDate)
       
       let created = 0, skipped = 0

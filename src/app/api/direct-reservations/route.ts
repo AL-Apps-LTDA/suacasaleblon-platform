@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const sb = createServerClient()
     const apartment = request.nextUrl.searchParams.get('apartment')
     let query = sb.from('direct_reservations').select('*').order('created_at', { ascending: false })
-    if (apartment) query = query.eq('apartment', apartment)
+    if (apartment) query = query.eq('apartment_code', apartment)
     const { data, error } = await query
     if (error) throw error
     return NextResponse.json(data || [])
@@ -21,13 +21,14 @@ export async function POST(request: NextRequest) {
   try {
     const { createServerClient } = await import('@/lib/supabase')
     const body = await request.json()
-    const { apartment, guestName, checkin, checkout, totalValue, paid, obs } = body
-    if (!apartment || !guestName || !checkin || !checkout || !totalValue) {
+    const { apartment, apartment_code, guestName, checkin, checkout, totalValue, paid, obs } = body
+    const aptCode = apartment_code || apartment
+    if (!aptCode || !guestName || !checkin || !checkout || !totalValue) {
       return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 })
     }
     const sb = createServerClient()
     const { data, error } = await sb.from('direct_reservations').insert({
-      apartment, guest_name: guestName, checkin, checkout,
+      apartment_code: aptCode, guest_name: guestName, checkin, checkout,
       total_value: totalValue, paid: paid || null, obs: obs || null,
     }).select().single()
     if (error) throw error

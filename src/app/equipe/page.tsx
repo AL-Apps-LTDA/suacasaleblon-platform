@@ -55,10 +55,10 @@ function weekDates(off:number):Date[] {
   const n=new Date(),d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-((d+6)%7)+off*7);m.setHours(0,0,0,0)
   return Array.from({length:7},(_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return x})
 }
-function ds(d:Date){return d.toISOString().slice(0,10)}
+function ds(d:Date){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function isToday(d:Date){return ds(d)===ds(new Date())}
 function fmt(d:Date){return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`}
-function fmtFull(s:string){const d=new Date(s+'T12:00:00');return `${DAYS_L[d.getDay()]} ${fmt(d)}`}
+function fmtFull(s:string){const [y,m,d]=s.split('-').map(Number);const dt=new Date(y,m-1,d);return `${DAYS_L[dt.getDay()]} ${fmt(dt)}`}
 function isLate(sd:string){
   const n=new Date(),br=new Date(n.toLocaleString('en-US',{timeZone:'America/Sao_Paulo'})),t=ds(br)
   if(sd>t)return false;if(sd<t)return true;return br.getHours()>=CHECKIN_H

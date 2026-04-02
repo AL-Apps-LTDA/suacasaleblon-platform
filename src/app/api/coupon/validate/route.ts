@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check validity dates
-    const today = new Date().toISOString().slice(0, 10)
+    const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
     if (coupon.valid_from && today < coupon.valid_from) {
       return NextResponse.json({ ok: false, message: 'Este cupom ainda não está válido.' }, { status: 400 })
     }

@@ -87,7 +87,7 @@ async function handleCompletedCheckout(session: any) {
 
   // Insert direct reservation
   const { data, error } = await sb.from('direct_reservations').insert({
-    apartment: meta.propertyCode,
+    apartment_code: meta.propertyCode,
     guest_name: meta.guestName,
     checkin: meta.checkin,
     checkout: meta.checkout,

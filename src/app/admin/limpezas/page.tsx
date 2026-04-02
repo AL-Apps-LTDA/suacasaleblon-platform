@@ -28,7 +28,7 @@ export default function LimpezasPage() {
   const [showForm, setShowForm] = useState(false)
   const [filterApt, setFilterApt] = useState('all')
   const [tab, setTab] = useState<Tab>('agenda')
-  const [form, setForm] = useState<Partial<Cleaning>>({ apartment_code: '103', scheduled_date: new Date().toISOString().slice(0, 10), scheduled_time: '11:00', cleaner_name: '', status: 'agendada', type: 'checkout', notes: '', cost: 150, source: 'admin' })
+  const [form, setForm] = useState<Partial<Cleaning>>({ apartment_code: '103', scheduled_date: new Date().toLocaleDateString('sv-SE'), scheduled_time: '11:00', cleaner_name: '', status: 'agendada', type: 'checkout', notes: '', cost: 150, source: 'admin' })
 
   const loadCleanings = useCallback(async () => {
     setLoading(true)
@@ -61,7 +61,7 @@ export default function LimpezasPage() {
     if (!form.apartment_code || !form.scheduled_date) return
     await supabase.from('cleanings').insert({ ...form, manually_edited: true, source: 'admin' })
     setShowForm(false)
-    setForm({ apartment_code: '103', scheduled_date: new Date().toISOString().slice(0, 10), scheduled_time: '11:00', cleaner_name: '', status: 'agendada', type: 'checkout', notes: '', cost: 150, source: 'admin' })
+    setForm({ apartment_code: '103', scheduled_date: new Date().toLocaleDateString('sv-SE'), scheduled_time: '11:00', cleaner_name: '', status: 'agendada', type: 'checkout', notes: '', cost: 150, source: 'admin' })
     loadCleanings()
   }
 

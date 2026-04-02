@@ -55,8 +55,10 @@ function mapPropertyName(name: string): string | null {
 export async function POST() {
   try {
     const properties = await fetchAllPages('/properties')
-    const now = new Date()
-    const future = new Date(now.getTime() + 60 * 86400000)
+    const nowStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
+    const [ny, nm, nd] = nowStr.split('-').map(Number)
+    const futureD = new Date(ny, nm - 1, nd + 60)
+    const futureStr = `${futureD.getFullYear()}-${String(futureD.getMonth() + 1).padStart(2, '0')}-${String(futureD.getDate()).padStart(2, '0')}`
 
     let totalCreated = 0, totalSkipped = 0
     const errors: string[] = []
@@ -67,8 +69,8 @@ export async function POST() {
 
       try {
         const reservations = await fetchAllPages(`/properties/${prop.id}/reservations`, {
-          'filter[check_out_after]': now.toISOString().slice(0, 10),
-          'filter[check_out_before]': future.toISOString().slice(0, 10),
+          'filter[check_out_after]': nowStr,
+          'filter[check_out_before]': futureStr,
           'filter[status]': 'accepted'
         })
 
