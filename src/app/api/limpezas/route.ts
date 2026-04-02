@@ -409,11 +409,37 @@ export async function POST(req: NextRequest) {
     return json(msg)
   }
 
+  // === CREATE/UPDATE CONTACT ===
+  if (action === 'create-contact') {
+    const { name, phone, role, category, notes, created_by } = body
+    if (!name) return err('Nome obrigatório')
+    const { data, error } = await supabase.from('contacts').insert({ name, phone: phone || null, role: role || null, category: category || 'outros', notes: notes || null, created_by: created_by || user.id }).select().single()
+    if (error) return err(error.message, 500)
+    return json(data)
+  }
+
+  if (action === 'update-contact') {
+    const { id, name, phone, role, category, notes } = body
+    if (!id) return err('ID obrigatório')
+    const { data, error } = await supabase.from('contacts').update({ name, phone: phone || null, role: role || null, category: category || 'outros', notes: notes || null }).eq('id', id).select().single()
+    if (error) return err(error.message, 500)
+    return json(data)
+  }
+
+  // === CREATE CHAT ===
+  if (action === 'create-chat') {
+    const { name, participants, created_by } = body
+    if (!participants || participants.length === 0) return err('Selecione participantes')
+    const { data, error } = await supabase.from('chats').insert({ name: name || null, participants, created_by: created_by || user.id }).select().single()
+    if (error) return err(error.message, 500)
+    return json(data)
+  }
+
   // === DELETE (admin) ===
   if (action === 'delete') {
     if (!isAdmin(user)) return err('Admin only', 403)
     const { table, id } = body
-    const allowed = ['cleanings', 'contacts', 'maintenance_items', 'app_expenses', 'expense_categories', 'fixed_expenses', 'checklist_items', 'app_users']
+    const allowed = ['cleanings', 'contacts', 'chats', 'maintenance_items', 'app_expenses', 'expense_categories', 'fixed_expenses', 'checklist_items', 'app_users']
     if (!allowed.includes(table)) return err('Invalid table')
     if (table === 'cleanings') {
       const { data: cl } = await supabase.from('cleanings').select('apartment_code, cleaning_date, scheduled_date').eq('id', id).single()

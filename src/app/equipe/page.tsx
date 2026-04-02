@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { Loader2, KeyRound, RefreshCw, Eye, EyeOff, X, Camera, Trash2, Plus, Edit3, ChevronDown } from 'lucide-react'
+import { Loader2, KeyRound, RefreshCw, Eye, EyeOff, X, Camera, Trash2, Plus, Edit3, ChevronDown, CalendarDays, MessageSquare, Phone as PhoneIcon, ClipboardList, DollarSign } from 'lucide-react'
 import { LEBLON_APARTMENTS } from '@/lib/types'
+import ContactsTab from './ContactsTab'
+import ChatTab from './ChatTab'
 
 // ─── CONSTANTS ─────────────────────────────────────────
 const APTS: string[] = [...LEBLON_APARTMENTS]
@@ -558,6 +560,7 @@ function Login({onLogin,t}:{onLogin:(u:string,p:string)=>void;t:T}){
 export default function EquipePage(){
   const [authed,setAuthed]=useState(false);const [token,setToken]=useState('')
   const [dark,setDark]=useState(false);const [loading,setLoading]=useState(true);const [refreshing,setRefreshing]=useState(false)
+  const [activeTab,setActiveTab]=useState<'agenda'|'chat'|'contatos'|'gestao'|'custos'>('agenda')
   const [res,setRes]=useState<Res[]>([]);const [clns,setClns]=useState<Cln[]>([])
   const [user,setUser]=useState<AppUser|null>(null);const [cleaners,setCleaners]=useState<AppUser[]>([])
   const [modal,setModal]=useState<DayCell|null>(null);const [createDate,setCreateDate]=useState<string|null>(null)
@@ -599,7 +602,7 @@ export default function EquipePage(){
       {/* Header */}
       <div style={{position:'sticky',top:0,zIndex:20,background:t.bg+'f2',backdropFilter:'blur(10px)',borderBottom:`2px solid ${t.border}`,padding:'10px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <div>
-          <div style={{fontSize:15,fontWeight:700,color:t.textPrimary}}>Equipe · Limpezas</div>
+          <div style={{fontSize:15,fontWeight:700,color:t.textPrimary}}>Giro Temporada</div>
           {user&&<div style={{fontSize:9,color:t.textSecondary}}>{user.display_name} ({user.role})</div>}
         </div>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -615,24 +618,48 @@ export default function EquipePage(){
         </div>
       </div>
 
-      {/* Content */}
-      {loading?(
-        <div style={{display:'flex',justifyContent:'center',padding:'60px 0'}}><Loader2 size={20} style={{animation:'spin 1s linear infinite',color:t.gold}}/></div>
-      ):(
-        <div style={{padding:'12px 10px',maxWidth:600,margin:'0 auto'}}>
-          <Grid dates={w1} label="Semana Atual" reservations={res} cleanings={clns} t={t} isAdm={!!isAdm} token={token} onCellClick={c=>setModal(c)} onEmptyClick={d=>isAdm&&setCreateDate(d)} onReordered={refresh}/>
-          <Grid dates={w2} label="Próxima Semana" reservations={res} cleanings={clns} t={t} isAdm={!!isAdm} token={token} onCellClick={c=>setModal(c)} onEmptyClick={d=>isAdm&&setCreateDate(d)} onReordered={refresh}/>
-          <Leg t={t}/>
-          {isAdm&&<div style={{textAlign:'center',marginTop:8}}>
-            <span style={{fontSize:9,color:t.textSecondary,opacity:0.6}}>Toque num dia vazio para criar limpeza</span>
-          </div>}
-        </div>
-      )}
+      {/* Content — tab views */}
+      <div style={{paddingBottom:60}}>
+        {activeTab==='agenda'&&(loading?(
+          <div style={{display:'flex',justifyContent:'center',padding:'60px 0'}}><Loader2 size={20} style={{animation:'spin 1s linear infinite',color:t.gold}}/></div>
+        ):(
+          <div style={{padding:'12px 10px',maxWidth:600,margin:'0 auto'}}>
+            <Grid dates={w1} label="Semana Atual" reservations={res} cleanings={clns} t={t} isAdm={!!isAdm} token={token} onCellClick={c=>setModal(c)} onEmptyClick={d=>isAdm&&setCreateDate(d)} onReordered={refresh}/>
+            <Grid dates={w2} label="Próxima Semana" reservations={res} cleanings={clns} t={t} isAdm={!!isAdm} token={token} onCellClick={c=>setModal(c)} onEmptyClick={d=>isAdm&&setCreateDate(d)} onReordered={refresh}/>
+            <Leg t={t}/>
+            {isAdm&&<div style={{textAlign:'center',marginTop:8}}>
+              <span style={{fontSize:9,color:t.textSecondary,opacity:0.6}}>Toque num dia vazio para criar limpeza</span>
+            </div>}
+          </div>
+        ))}
+
+        {activeTab==='chat'&&user&&<ChatTab t={t} token={token} user={user} allUsers={cleaners}/>}
+        {activeTab==='contatos'&&<ContactsTab t={t} token={token} userId={user?.id}/>}
+        {activeTab==='gestao'&&<div style={{padding:'40px 20px',textAlign:'center',color:t.textSecondary,fontSize:13}}>Gestão — em breve</div>}
+        {activeTab==='custos'&&<div style={{padding:'40px 20px',textAlign:'center',color:t.textSecondary,fontSize:13}}>Custos — em breve</div>}
+      </div>
 
       {/* Modals */}
       {modal&&modal.cleaning&&user&&<CleaningModal cell={modal} t={t} token={token} user={user} cleaners={cleaners} reservations={res} onClose={()=>setModal(null)} onSaved={refresh}/>}
       {createDate&&<CreateModal date={createDate} t={t} token={token} onClose={()=>setCreateDate(null)} onSaved={refresh}/>}
 
-      <footer style={{textAlign:'center',padding:'16px 0',fontSize:10,color:t.textSecondary,opacity:0.5}}>Sua Casa Leblon · Equipe</footer>
+      {/* Bottom Navigation */}
+      <div style={{position:'fixed',bottom:0,left:0,right:0,zIndex:30,background:t.bg,borderTop:`1.5px solid ${t.border}`,display:'flex',justifyContent:'space-around',padding:'6px 0 env(safe-area-inset-bottom, 8px)'}}>
+        {([
+          {key:'agenda',label:'Agenda',icon:CalendarDays},
+          {key:'chat',label:'Chat',icon:MessageSquare},
+          {key:'contatos',label:'Contatos',icon:PhoneIcon},
+          {key:'gestao',label:'Gestão',icon:ClipboardList},
+          {key:'custos',label:'Custos',icon:DollarSign},
+        ] as const).map(tab=>{
+          const active=activeTab===tab.key
+          return(
+            <button key={tab.key} onClick={()=>setActiveTab(tab.key)}
+              style={{display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'4px 8px',background:active?t.gold+'18':'transparent',borderRadius:8,border:'none',cursor:'pointer',transition:'all 0.15s',minWidth:56}}>
+              <tab.icon size={18} style={{color:active?t.gold:t.textSecondary}}/>
+              <span style={{fontSize:9,fontWeight:active?700:500,color:active?t.gold:t.textSecondary}}>{tab.label}</span>
+            </button>)
+        })}
+      </div>
     </div>)
 }
