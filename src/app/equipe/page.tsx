@@ -45,7 +45,7 @@ const DK = {
 type T = typeof LT
 
 // ─── TYPES ─────────────────────────────────────────────
-interface Res { apartment_code:string; guest_name:string; checkin:string; checkout:string }
+interface Res { apartment_code:string; guest_name:string; guest_phone?:string; checkin:string; checkout:string }
 interface ExtraCost { type:string; description?:string; amount:number }
 interface Cln { id?:string; apartment_code:string; scheduled_date:string; cleaning_date?:string; status?:string; completed?:boolean; manually_edited?:boolean; cleaner_name?:string; cleaner_id?:string; cleaning_cost?:number; cost?:number; photos?:string[]; notes?:string; guest_count?:number; sort_order?:number; extra_costs?:ExtraCost[] }
 interface DayCell { type:'empty'|'pending'|'done'|'late'|'occupied'; apt:string; cleaning?:Cln; date:string }
@@ -97,9 +97,35 @@ function Cell({cell,t,onClick}:{cell:DayCell;t:T;onClick?:()=>void}){
 }
 
 // ─── CLEANING MODAL ────────────────────────────────────
-function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCell;t:T;token:string;user:AppUser;cleaners:AppUser[];onClose:()=>void;onSaved:()=>void}){
+function GuestBox({label,emoji,name,phone,t}:{label:string;emoji:string;name:string;phone?:string;t:T}){
+  const phoneClean=phone?.replace(/\D/g,'')||''
+  const whatsUrl=phoneClean?`https://wa.me/${phoneClean.startsWith('55')?phoneClean:'55'+phoneClean}`:''
+  const telUrl=phoneClean?`tel:+${phoneClean.startsWith('55')?phoneClean:'55'+phoneClean}`:''
+  return(
+    <div style={{background:t.inputBg,border:`1.5px solid ${t.inputBorder}`,borderRadius:10,padding:'10px 12px'}}>
+      <div style={{fontSize:9,fontWeight:700,color:t.textSecondary,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:6}}>{emoji} {label}</div>
+      <div style={{fontSize:13,fontWeight:600,color:t.textPrimary,marginBottom:phone?6:0}}>{name}</div>
+      {phone&&<div style={{display:'flex',gap:6,marginTop:4}}>
+        <a href={telUrl} style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'7px 0',borderRadius:8,fontSize:11,fontWeight:600,background:t.gold+'18',color:t.gold,textDecoration:'none',border:`1px solid ${t.gold}30`}}>
+          📞 Ligar
+        </a>
+        <a href={whatsUrl} target="_blank" rel="noopener" style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'7px 0',borderRadius:8,fontSize:11,fontWeight:600,background:'#25D36618',color:'#25D366',textDecoration:'none',border:'1px solid #25D36630'}}>
+          💬 WhatsApp
+        </a>
+      </div>}
+      {!phone&&<div style={{fontSize:10,color:t.textSecondary,opacity:0.6,fontStyle:'italic'}}>Telefone não disponível</div>}
+    </div>)
+}
+
+function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}:{cell:DayCell;t:T;token:string;user:AppUser;cleaners:AppUser[];reservations:Res[];onClose:()=>void;onSaved:()=>void}){
   const cl=cell.cleaning!
   const isAdm=user.role==='admin'
+
+  // Find checkout/checkin guests for this apartment on this day
+  const date=cl.scheduled_date||cl.cleaning_date||cell.date
+  const aptRes=reservations.filter(r=>r.apartment_code===cell.apt)
+  const checkoutGuest=aptRes.find(r=>r.checkout===date)
+  const checkinGuest=aptRes.find(r=>r.checkin===date)
   const [cost,setCost]=useState(cl.cleaning_cost?.toString()??cl.cost?.toString()??'')
   const [assignee,setAssignee]=useState(cl.cleaner_id||'')
   const [assigneeName,setAssigneeName]=useState(cl.cleaner_name||'')
@@ -214,6 +240,12 @@ function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCel
           <span style={{fontSize:12,color:t.green,fontWeight:600}}>✓ Concluída</span>
         </div>}
 
+        {/* Guest info boxes */}
+        {(checkoutGuest||checkinGuest)&&<div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:14}}>
+          {checkoutGuest&&<GuestBox label="Saindo" emoji="🔴" name={checkoutGuest.guest_name} phone={checkoutGuest.guest_phone} t={t}/>}
+          {checkinGuest&&<GuestBox label="Entrando" emoji="🟢" name={checkinGuest.guest_name} phone={checkinGuest.guest_phone} t={t}/>}
+        </div>}
+
         {/* Faxineira */}
         <div style={{marginBottom:12}}>
           <label style={{fontSize:11,fontWeight:600,color:t.textSecondary,display:'block',marginBottom:4}}>Faxineira</label>
@@ -249,10 +281,10 @@ function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCel
           <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Notas sobre a limpeza..." rows={2} style={inputS({resize:'vertical' as const,fontFamily:'inherit'})}/>
         </div>
 
-        {/* Custos adicionais */}
-        <div style={{marginBottom:12}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-            <label style={{fontSize:11,fontWeight:600,color:t.textSecondary}}>Custos adicionais</label>
+        {/* Custos adicionais — caixinha */}
+        <div style={{background:t.inputBg,border:`1.5px solid ${t.inputBorder}`,borderRadius:10,padding:'10px 12px',marginBottom:12}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:extraCosts.length>0||showAddCost?8:0}}>
+            <label style={{fontSize:9,fontWeight:700,color:t.textSecondary,textTransform:'uppercase',letterSpacing:'0.05em'}}>💰 Custos adicionais</label>
             {!isDone&&<button onClick={()=>setShowAddCost(!showAddCost)} style={{display:'flex',alignItems:'center',gap:3,fontSize:10,fontWeight:600,color:t.gold,background:'none',border:'none',cursor:'pointer',padding:0}}>
               <Plus size={12}/>{showAddCost?'Cancelar':'Adicionar'}
             </button>}
@@ -260,11 +292,11 @@ function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCel
           {/* Add cost form */}
           {showAddCost&&<div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:8}}>
             <div style={{display:'flex',gap:6}}>
-              <select value={newCostType} onChange={e=>{setNewCostType(e.target.value);if(e.target.value!=='outro')setNewCostDesc('')}} style={{flex:'0 0 auto',padding:'7px 8px',borderRadius:6,fontSize:11,background:t.inputBg,border:`1px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none'}}>
+              <select value={newCostType} onChange={e=>{setNewCostType(e.target.value);if(e.target.value!=='outro')setNewCostDesc('')}} style={{flex:'0 0 auto',padding:'7px 8px',borderRadius:6,fontSize:11,background:t.bg,border:`1px solid ${t.border}`,color:t.textPrimary,outline:'none'}}>
                 {COST_CATEGORIES.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
               <input type="number" min="0" step="0.01" placeholder="Valor" value={newCostAmount} onChange={e=>setNewCostAmount(e.target.value)} inputMode="decimal"
-                style={{flex:1,minWidth:70,padding:'7px 8px',borderRadius:6,fontSize:11,background:t.inputBg,border:`1px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none'}}/>
+                style={{flex:1,minWidth:70,padding:'7px 8px',borderRadius:6,fontSize:11,background:t.bg,border:`1px solid ${t.border}`,color:t.textPrimary,outline:'none'}}/>
               <button onClick={()=>{
                 const amt=parseFloat(newCostAmount)
                 if(!amt||amt<=0)return
@@ -275,7 +307,7 @@ function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCel
               }} style={{padding:'7px 12px',borderRadius:6,border:'none',background:t.gold,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}}>+</button>
             </div>
             {newCostType==='outro'&&<input type="text" placeholder="Descreva o custo..." value={newCostDesc} onChange={e=>setNewCostDesc(e.target.value)} maxLength={60}
-              style={{padding:'7px 8px',borderRadius:6,fontSize:11,background:t.inputBg,border:`1px solid ${t.inputBorder}`,color:t.textPrimary,outline:'none'}}/>}
+              style={{padding:'7px 8px',borderRadius:6,fontSize:11,background:t.bg,border:`1px solid ${t.border}`,color:t.textPrimary,outline:'none'}}/>}
           </div>}
           {/* Cost list */}
           {extraCosts.length>0?(
@@ -295,7 +327,7 @@ function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCel
                 Total extras: <strong style={{color:t.textPrimary}}>R$ {extraCosts.reduce((s,c)=>s+c.amount,0).toFixed(2)}</strong>
               </div>
             </div>
-          ):(<div style={{fontSize:10,color:t.textSecondary,opacity:0.6}}>Nenhum custo adicional</div>)}
+          ):(!showAddCost&&<div style={{fontSize:10,color:t.textSecondary,opacity:0.6}}>Nenhum custo adicional</div>)}
         </div>
 
         {/* Fotos */}
@@ -598,7 +630,7 @@ export default function EquipePage(){
       )}
 
       {/* Modals */}
-      {modal&&modal.cleaning&&user&&<CleaningModal cell={modal} t={t} token={token} user={user} cleaners={cleaners} onClose={()=>setModal(null)} onSaved={refresh}/>}
+      {modal&&modal.cleaning&&user&&<CleaningModal cell={modal} t={t} token={token} user={user} cleaners={cleaners} reservations={res} onClose={()=>setModal(null)} onSaved={refresh}/>}
       {createDate&&<CreateModal date={createDate} t={t} token={token} onClose={()=>setCreateDate(null)} onSaved={refresh}/>}
 
       <footer style={{textAlign:'center',padding:'16px 0',fontSize:10,color:t.textSecondary,opacity:0.5}}>Sua Casa Leblon · Equipe</footer>

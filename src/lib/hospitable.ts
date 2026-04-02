@@ -62,6 +62,7 @@ function parseReservation(r: any, propertyUuid: string, apartmentName: string): 
     arrivalDate: r.arrival_date || '',
     departureDate: r.departure_date || '',
     guestName: guest.full_name || guest.first_name || 'Unknown',
+    guestPhone: guest.phone || guest.phone_number || '',
     guestCountry: guest.country || guest.location || '',
     nights: r.nights || 0,
     guests: r.guests || 0,

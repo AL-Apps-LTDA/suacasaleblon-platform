@@ -149,6 +149,7 @@ export interface HospitableReservation {
   arrivalDate: string
   departureDate: string
   guestName: string
+  guestPhone: string
   guestCountry: string
   nights: number
   guests: number

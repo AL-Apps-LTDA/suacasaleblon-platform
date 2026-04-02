@@ -12,7 +12,7 @@ const navItems = [
   { name: 'Apartamentos', path: '/admin/apartamentos', icon: Building2 },
   { name: 'Agenda', path: '/admin/agenda', icon: CalendarRange },
   { name: 'Despesas', path: '/admin/despesas', icon: DollarSign },
-  { name: 'Limpezas', path: '/admin/limpezas', icon: Sparkles },
+  { name: 'Giro', path: '/admin/limpezas', icon: Sparkles },
   { name: 'Reservas Diretas', path: '/admin/reservas-diretas', icon: CalendarDays },
   { name: 'Importar CSV', path: '/admin/importar', icon: Upload },
   { name: 'Relatórios', path: '/admin/relatorios', icon: FileText },
@@ -78,13 +78,13 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [authed, setAuthed] = useState(false)
   const [checking, setChecking] = useState(true)
-  const [dark, setDark] = useState(true)
+  const [dark, setDark] = useState(false)
 
   useEffect(() => {
     const stored = sessionStorage.getItem('admin_auth')
     if (stored === 'true') setAuthed(true)
     const savedTheme = localStorage.getItem('admin-theme')
-    if (savedTheme === 'light') setDark(false)
+    if (savedTheme === 'dark') setDark(true)
     setChecking(false)
   }, [])
 

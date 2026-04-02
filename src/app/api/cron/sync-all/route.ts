@@ -86,6 +86,7 @@ export async function GET(request: NextRequest) {
         id: r.id,
         apartment_code: r.apartmentName,
         guest_name: r.guestName,
+        guest_phone: r.guestPhone || null,
         guest_country: r.guestCountry,
         checkin: r.arrivalDate,
         checkout: r.departureDate,

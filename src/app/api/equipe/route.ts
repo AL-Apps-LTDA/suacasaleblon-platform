@@ -22,6 +22,7 @@ function mapHospitableRes(r: any) {
   return {
     apartment_code: r.apartmentName,
     guest_name: r.guestName,
+    guest_phone: r.guestPhone || '',
     checkin: r.arrivalDate,
     checkout: r.departureDate,
     nights: r.nights || 0,
@@ -34,11 +35,25 @@ function mapSupabaseRes(r: any) {
   return {
     apartment_code: r.apartment_code,
     guest_name: r.guest_name || 'Unknown',
+    guest_phone: r.guest_phone || '',
     checkin: r.checkin,
     checkout: r.checkout,
     nights: r.nights || 0,
     guests: r.guests || 0,
     source: r.platform || 'cache',
+  }
+}
+
+function mapDirectRes(r: any) {
+  return {
+    apartment_code: r.apartment_code,
+    guest_name: r.guest_name || 'Unknown',
+    guest_phone: r.guest_phone || '',
+    checkin: r.checkin,
+    checkout: r.checkout,
+    nights: r.nights || 0,
+    guests: r.guests || 0,
+    source: 'direto',
   }
 }
 
@@ -67,22 +82,45 @@ export async function GET() {
     }
 
     // 2. Fallback: Supabase cache (same rule as /admin)
-    if (reservations.length === 0) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      if (supabaseUrl && supabaseKey) {
-        const supabase = createClient(supabaseUrl, supabaseKey)
-        const { data } = await supabase
-          .from('reservations')
-          .select('*')
-          .gte('checkout', startDate)
-          .lte('checkin', endDate)
-          .eq('status', 'accepted')
-        if (data && data.length > 0) {
-          reservations = data
-            .filter(r => LEBLON.includes(r.apartment_code))
-            .map(mapSupabaseRes)
-          console.log(`[Equipe] Using ${reservations.length} cached reservations from Supabase`)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null
+
+    if (reservations.length === 0 && supabase) {
+      const { data } = await supabase
+        .from('reservations')
+        .select('*')
+        .gte('checkout', startDate)
+        .lte('checkin', endDate)
+        .eq('status', 'accepted')
+      if (data && data.length > 0) {
+        reservations = data
+          .filter(r => LEBLON.includes(r.apartment_code))
+          .map(mapSupabaseRes)
+        console.log(`[Equipe] Using ${reservations.length} cached reservations from Supabase`)
+      }
+    }
+
+    // 3. Merge direct reservations (priority for phone — most reliable)
+    if (supabase) {
+      const { data: directData } = await supabase
+        .from('direct_reservations')
+        .select('*')
+        .gte('checkout', startDate)
+        .lte('checkin', endDate)
+      if (directData && directData.length > 0) {
+        for (const dr of directData) {
+          if (!LEBLON.includes(dr.apartment_code)) continue
+          // If a matching reservation exists, enrich with phone from direct
+          const existing = reservations.find(r =>
+            r.apartment_code === dr.apartment_code &&
+            r.checkin === dr.checkin && r.checkout === dr.checkout
+          )
+          if (existing) {
+            if (dr.guest_phone) existing.guest_phone = dr.guest_phone
+          } else {
+            reservations.push(mapDirectRes(dr))
+          }
         }
       }
     }
