@@ -537,8 +537,8 @@ function Login({onLogin,t}:{onLogin:(u:string,p:string)=>void;t:T}){
   return(
     <div style={{minHeight:'100vh',background:t.bg,display:'flex',alignItems:'center',justifyContent:'center',padding:24}}>
       <div style={{width:'100%',maxWidth:320,textAlign:'center'}}>
-        <div style={{width:56,height:56,borderRadius:16,margin:'0 auto 16px',background:t.goldBg,border:`1.5px solid ${t.gold}30`,display:'flex',alignItems:'center',justifyContent:'center'}}><KeyRound size={28} style={{color:t.gold}}/></div>
-        <h1 style={{fontSize:18,fontWeight:700,color:t.textPrimary,marginBottom:4}}>Equipe Sua Casa</h1>
+        <img src="/images/logo.png" alt="Giro Temporada" style={{width:56,height:56,borderRadius:16,margin:'0 auto 16px'}} />
+        <h1 style={{fontSize:18,fontWeight:700,color:t.textPrimary,marginBottom:4}}>Giro Temporada</h1>
         <p style={{fontSize:12,color:t.textSecondary,marginBottom:24}}>Faça login para acessar</p>
         <div style={{display:'flex',flexDirection:'column',gap:12}}>
           <input type="text" placeholder="Usuário" value={u} onChange={e=>{setU(e.target.value);setEr('')}} onKeyDown={e=>e.key==='Enter'&&go()}
@@ -601,9 +601,12 @@ export default function EquipePage(){
 
       {/* Header */}
       <div style={{position:'sticky',top:0,zIndex:20,background:t.bg+'f2',backdropFilter:'blur(10px)',borderBottom:`2px solid ${t.border}`,padding:'10px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-        <div>
-          <div style={{fontSize:15,fontWeight:700,color:t.textPrimary}}>Giro Temporada</div>
-          {user&&<div style={{fontSize:9,color:t.textSecondary}}>{user.display_name} ({user.role})</div>}
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <img src="/images/logo.png" alt="Giro" style={{width:32,height:32,borderRadius:8}} />
+          <div>
+            <div style={{fontSize:15,fontWeight:700,color:t.textPrimary}}>Giro Temporada</div>
+            {user&&<div style={{fontSize:9,color:t.textSecondary}}>{user.display_name} ({user.role})</div>}
+          </div>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
           <button onClick={()=>setDark(!dark)} style={{width:44,height:24,borderRadius:12,border:'none',background:dark?t.gold+'30':'#2e221c20',position:'relative',cursor:'pointer',transition:'background 0.3s',padding:0}}>
