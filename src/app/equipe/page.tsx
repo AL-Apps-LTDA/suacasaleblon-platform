@@ -187,7 +187,7 @@ function CleaningModal({cell,t,token,user,cleaners,onClose,onSaved}:{cell:DayCel
   return(
     <div style={{position:'fixed',inset:0,zIndex:100,display:'flex',alignItems:'flex-end',justifyContent:'center'}} onClick={onClose}>
       <div style={{position:'absolute',inset:0,background:t.overlay}}/>
-      <div onClick={e=>e.stopPropagation()} style={{position:'relative',width:'100%',maxWidth:420,maxHeight:'90vh',overflowY:'auto',background:t.modalBg,borderRadius:'16px 16px 0 0',padding:'20px 16px',boxShadow:'0 -4px 30px rgba(0,0,0,0.2)'}}>
+      <div onClick={e=>e.stopPropagation()} style={{position:'relative',width:'100%',maxWidth:520,maxHeight:'90vh',overflowY:'auto',background:t.modalBg,borderRadius:'16px 16px 0 0',padding:'20px 16px',boxShadow:'0 -4px 30px rgba(0,0,0,0.2)'}}>
         {/* Header */}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
           <div>
@@ -350,7 +350,7 @@ function CreateModal({date,t,token,onClose,onSaved}:{date:string;t:T;token:strin
   return(
     <div style={{position:'fixed',inset:0,zIndex:100,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={onClose}>
       <div style={{position:'absolute',inset:0,background:t.overlay}}/>
-      <div onClick={e=>e.stopPropagation()} style={{position:'relative',width:'90%',maxWidth:320,background:t.modalBg,borderRadius:16,padding:'20px 16px'}}>
+      <div onClick={e=>e.stopPropagation()} style={{position:'relative',width:'90%',maxWidth:400,background:t.modalBg,borderRadius:16,padding:'20px 16px'}}>
         <div style={{fontSize:15,fontWeight:700,color:t.textPrimary,marginBottom:4}}>Nova Limpeza</div>
         <div style={{fontSize:11,color:t.textSecondary,marginBottom:16}}>{fmtFull(date)}</div>
         <label style={{fontSize:11,fontWeight:600,color:t.textSecondary,display:'block',marginBottom:4}}>Apartamento</label>
@@ -450,7 +450,7 @@ function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isA
           </div>)})}
       </div>
       {grid.map((row,ri)=>(
-        <div key={ri} style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:ri<grid.length-1?`1.5px solid ${t.borderInner}`:'none',minHeight:44}}>
+        <div key={ri} style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:ri<grid.length-1?`1.5px solid ${t.borderInner}`:'none',minHeight:52}}>
           {row.map((cell,ci)=>{
             const reordering=reorderCol===ci
             return(
@@ -463,7 +463,7 @@ function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isA
                 if(cell.cleaning)onCellClick(cell)
                 else if(cell.type==='empty'&&isAdm)onEmptyClick(cell.date)
               }}
-              style={{display:'flex',alignItems:'center',justifyContent:'center',height:44,borderRight:ci<6?`1px solid ${t.borderInner}40`:'none',position:'relative',overflow:'hidden',
+              style={{display:'flex',alignItems:'center',justifyContent:'center',height:52,borderRight:ci<6?`1px solid ${t.borderInner}40`:'none',position:'relative',overflow:'hidden',
                 cursor:reordering?'default':cell.cleaning||(cell.type==='empty'&&isAdm)?'pointer':'default',
                 background:reordering?t.gold+'08':'transparent',transition:'background 0.2s'}}>
               {reordering?(
@@ -587,7 +587,7 @@ export default function EquipePage(){
       {loading?(
         <div style={{display:'flex',justifyContent:'center',padding:'60px 0'}}><Loader2 size={20} style={{animation:'spin 1s linear infinite',color:t.gold}}/></div>
       ):(
-        <div style={{padding:'12px 10px',maxWidth:420,margin:'0 auto'}}>
+        <div style={{padding:'12px 10px',maxWidth:600,margin:'0 auto'}}>
           <Grid dates={w1} label="Semana Atual" reservations={res} cleanings={clns} t={t} isAdm={!!isAdm} token={token} onCellClick={c=>setModal(c)} onEmptyClick={d=>isAdm&&setCreateDate(d)} onReordered={refresh}/>
           <Grid dates={w2} label="Próxima Semana" reservations={res} cleanings={clns} t={t} isAdm={!!isAdm} token={token} onCellClick={c=>setModal(c)} onEmptyClick={d=>isAdm&&setCreateDate(d)} onReordered={refresh}/>
           <Leg t={t}/>
