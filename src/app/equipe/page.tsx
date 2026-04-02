@@ -5,7 +5,7 @@ import { Loader2, KeyRound, RefreshCw, Eye, EyeOff, X, Camera, Trash2, Plus, Edi
 import { LEBLON_APARTMENTS } from '@/lib/types'
 
 // ─── CONSTANTS ─────────────────────────────────────────
-const APTS = [...LEBLON_APARTMENTS]
+const APTS: string[] = [...LEBLON_APARTMENTS]
 const DAYS_L = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
 const CHECKIN_H = 15
 const COST_CATEGORIES = [
