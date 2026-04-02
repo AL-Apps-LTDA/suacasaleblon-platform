@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, CalendarDays, FileText, Settings, Activity, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, FileText, Settings, Activity, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2 } from 'lucide-react'
 
 const ADMIN_PASSWORD = 'suacasa2026'
 
 const navItems = [
   { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+  { name: 'Apartamentos', path: '/admin/apartamentos', icon: Building2 },
   { name: 'Agenda', path: '/admin/agenda', icon: CalendarRange },
   { name: 'Despesas', path: '/admin/despesas', icon: DollarSign },
   { name: 'Limpezas', path: '/admin/limpezas', icon: Sparkles },
