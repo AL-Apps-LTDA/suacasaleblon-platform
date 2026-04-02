@@ -101,66 +101,66 @@ export default function AgendaPage() {
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-[#f0eee8]">Agenda</h1>
-          <p className="text-xs text-[#94918a] mt-0.5">Calendário de reservas e limpezas</p>
+          <h1 className="text-xl font-bold tracking-tight text-[rgb(var(--adm-text))]">Agenda</h1>
+          <p className="text-xs text-[rgb(var(--adm-muted))] mt-0.5">Calendário de reservas e limpezas</p>
         </div>
-        <div className="flex items-center gap-1.5 bg-[#1e1e24] rounded-lg border border-[#2a2a30] px-1">
-          <button onClick={() => setMonth(m => m > 0 ? m - 1 : 11)} className="p-1.5 text-[#94918a] hover:text-[#f0eee8]"><ChevronLeft className="h-4 w-4" /></button>
-          <span className="text-sm font-medium text-[#f0eee8] min-w-[120px] text-center">{MONTHS[month]} {year}</span>
-          <button onClick={() => setMonth(m => m < 11 ? m + 1 : 0)} className="p-1.5 text-[#94918a] hover:text-[#f0eee8]"><ChevronRight className="h-4 w-4" /></button>
+        <div className="flex items-center gap-1.5 bg-[rgb(var(--adm-elevated))] rounded-lg border border-[rgb(var(--adm-border))] px-1">
+          <button onClick={() => setMonth(m => m > 0 ? m - 1 : 11)} className="p-1.5 text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]"><ChevronLeft className="h-4 w-4" /></button>
+          <span className="text-sm font-medium text-[rgb(var(--adm-text))] min-w-[120px] text-center">{MONTHS[month]} {year}</span>
+          <button onClick={() => setMonth(m => m < 11 ? m + 1 : 0)} className="p-1.5 text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]"><ChevronRight className="h-4 w-4" /></button>
         </div>
       </div>
 
       {/* Apartment filter */}
       <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex rounded-lg border border-[#2a2a30] overflow-hidden text-xs">
-          <button onClick={() => setFilterApt('all')} className={`px-4 py-2 font-medium ${filterApt === 'all' ? 'bg-[#c9a96e] text-[#1a1207]' : 'bg-[#1e1e24] text-[#94918a] hover:text-[#f0eee8]'}`}>Todos</button>
+        <div className="flex rounded-lg border border-[rgb(var(--adm-border))] overflow-hidden text-xs">
+          <button onClick={() => setFilterApt('all')} className={`px-4 py-2 font-medium ${filterApt === 'all' ? 'bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))]' : 'bg-[rgb(var(--adm-elevated))] text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]'}`}>Todos</button>
           {APARTMENTS.map(a => (
-            <button key={a} onClick={() => setFilterApt(a)} className={`px-3 py-2 font-medium ${filterApt === a ? 'bg-[#c9a96e] text-[#1a1207]' : 'bg-[#1e1e24] text-[#94918a] hover:text-[#f0eee8]'}`}>{a}</button>
+            <button key={a} onClick={() => setFilterApt(a)} className={`px-3 py-2 font-medium ${filterApt === a ? 'bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))]' : 'bg-[rgb(var(--adm-elevated))] text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]'}`}>{a}</button>
           ))}
         </div>
         <div className="flex items-center gap-3 text-[10px]">
           {APARTMENTS.map(a => (
             <div key={a} className="flex items-center gap-1">
               <div className={`w-2.5 h-2.5 rounded-sm ${APT_COLORS[a]}`} />
-              <span className="text-[#94918a]">{a}</span>
+              <span className="text-[rgb(var(--adm-muted))]">{a}</span>
             </div>
           ))}
           <div className="flex items-center gap-1">
             <Sparkles className="h-2.5 w-2.5 text-yellow-400" />
-            <span className="text-[#94918a]">Limpeza</span>
+            <span className="text-[rgb(var(--adm-muted))]">Limpeza</span>
           </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="h-5 w-5 animate-spin text-[#c9a96e]" /></div>
+        <div className="flex items-center justify-center py-20"><Loader2 className="h-5 w-5 animate-spin text-[rgb(var(--adm-accent))]" /></div>
       ) : (
-        <div className="bg-[#16161a] border border-[#2a2a30] rounded-xl overflow-hidden">
+        <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl overflow-hidden">
           {/* Day headers */}
-          <div className="grid grid-cols-7 border-b border-[#2a2a30]">
+          <div className="grid grid-cols-7 border-b border-[rgb(var(--adm-border))]">
             {DAYS.map(d => (
-              <div key={d} className="py-2 text-center text-[10px] font-medium text-[#94918a] uppercase tracking-wider">{d}</div>
+              <div key={d} className="py-2 text-center text-[10px] font-medium text-[rgb(var(--adm-muted))] uppercase tracking-wider">{d}</div>
             ))}
           </div>
 
           {/* Calendar grid */}
           <div className="grid grid-cols-7">
             {calendarDays.map((day, i) => {
-              if (day === null) return <div key={`empty-${i}`} className="min-h-[80px] border-b border-r border-[#2a2a30]/30 bg-[#0c0c0f]/30" />
+              if (day === null) return <div key={`empty-${i}`} className="min-h-[80px] border-b border-r border-[rgb(var(--adm-border)/0.30)] bg-[rgb(var(--adm-bg)/0.30)]" />
 
               const dateStr = getDateStr(day)
               const isToday = dateStr === today
               const { reservations: dayRes, cleanings: dayClean } = getEventsForDay(day)
 
               return (
-                <div key={day} className={`min-h-[80px] border-b border-r border-[#2a2a30]/30 p-1 ${isToday ? 'bg-[#c9a96e]/5' : 'hover:bg-[#1e1e24]/50'}`}>
-                  <div className={`text-[11px] font-medium mb-0.5 ${isToday ? 'text-[#c9a96e] font-bold' : 'text-[#94918a]'}`}>{day}</div>
+                <div key={day} className={`min-h-[80px] border-b border-r border-[rgb(var(--adm-border)/0.30)] p-1 ${isToday ? 'bg-[rgb(var(--adm-accent)/0.5)]' : 'hover:bg-[rgb(var(--adm-elevated)/0.50)]'}`}>
+                  <div className={`text-[11px] font-medium mb-0.5 ${isToday ? 'text-[rgb(var(--adm-accent))] font-bold' : 'text-[rgb(var(--adm-muted))]'}`}>{day}</div>
                   <div className="space-y-0.5">
                     {dayRes.map((r, ri) => (
                       <div key={ri} className={`${APT_COLORS[r.apartment_code] || 'bg-gray-500'} bg-opacity-20 rounded px-1 py-0.5 text-[8px] leading-tight truncate border-l-2 ${APT_COLORS[r.apartment_code]?.replace('bg-', 'border-') || 'border-gray-500'}`}>
-                        <span className="text-[#f0eee8] font-medium">{r.apartment_code}</span>
-                        <span className="text-[#94918a] ml-1">{r.guest_name?.split(' ')[0] || ''}</span>
+                        <span className="text-[rgb(var(--adm-text))] font-medium">{r.apartment_code}</span>
+                        <span className="text-[rgb(var(--adm-muted))] ml-1">{r.guest_name?.split(' ')[0] || ''}</span>
                       </div>
                     ))}
                     {dayClean.map((c, ci) => (
@@ -178,34 +178,34 @@ export default function AgendaPage() {
       )}
 
       {/* Today's events sidebar */}
-      <div className="bg-[#16161a] border border-[#c9a96e]/20 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-[#f0eee8] flex items-center gap-2 mb-3"><Calendar className="h-4 w-4 text-[#c9a96e]" /> Hoje — {new Date().toLocaleDateString('pt-BR')}</h3>
+      <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-accent)/0.20)] rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-[rgb(var(--adm-text))] flex items-center gap-2 mb-3"><Calendar className="h-4 w-4 text-[rgb(var(--adm-accent))]" /> Hoje — {new Date().toLocaleDateString('pt-BR')}</h3>
         {(() => {
           const todayDay = new Date().getDate()
-          if (new Date().getMonth() !== month) return <p className="text-xs text-[#94918a]">Navegue para o mês atual para ver eventos de hoje</p>
+          if (new Date().getMonth() !== month) return <p className="text-xs text-[rgb(var(--adm-muted))]">Navegue para o mês atual para ver eventos de hoje</p>
           const { reservations: tRes, cleanings: tClean } = getEventsForDay(todayDay)
-          if (tRes.length === 0 && tClean.length === 0) return <p className="text-xs text-[#94918a]">Nenhum evento hoje</p>
+          if (tRes.length === 0 && tClean.length === 0) return <p className="text-xs text-[rgb(var(--adm-muted))]">Nenhum evento hoje</p>
           return (
             <div className="space-y-2">
               {tRes.map((r, i) => (
-                <div key={i} className="flex items-center justify-between bg-[#1e1e24] rounded-lg p-2.5">
+                <div key={i} className="flex items-center justify-between bg-[rgb(var(--adm-elevated))] rounded-lg p-2.5">
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-8 rounded ${APT_COLORS[r.apartment_code]}`} />
                     <div>
-                      <span className="text-xs font-medium text-[#f0eee8]">Apt {r.apartment_code}</span>
-                      <span className="text-[10px] text-[#94918a] block">{r.guest_name} • {r.checkin} → {r.checkout}</span>
+                      <span className="text-xs font-medium text-[rgb(var(--adm-text))]">Apt {r.apartment_code}</span>
+                      <span className="text-[10px] text-[rgb(var(--adm-muted))] block">{r.guest_name} • {r.checkin} → {r.checkout}</span>
                     </div>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-semibold">{r.source}</span>
                 </div>
               ))}
               {tClean.map((c, i) => (
-                <div key={`c-${i}`} className="flex items-center justify-between bg-[#1e1e24] rounded-lg p-2.5">
+                <div key={`c-${i}`} className="flex items-center justify-between bg-[rgb(var(--adm-elevated))] rounded-lg p-2.5">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-yellow-400" />
                     <div>
-                      <span className="text-xs font-medium text-[#f0eee8]">Limpeza Apt {c.apartment_code}</span>
-                      <span className="text-[10px] text-[#94918a] block">{c.type} • {c.cleaner_name || 'Sem faxineira'}</span>
+                      <span className="text-xs font-medium text-[rgb(var(--adm-text))]">Limpeza Apt {c.apartment_code}</span>
+                      <span className="text-[10px] text-[rgb(var(--adm-muted))] block">{c.type} • {c.cleaner_name || 'Sem faxineira'}</span>
                     </div>
                   </div>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${c.status === 'concluida' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-blue-500/15 text-blue-400'}`}>{c.status}</span>

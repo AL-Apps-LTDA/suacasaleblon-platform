@@ -85,41 +85,41 @@ export default function ApartamentosPage() {
     setForm(prev => ({ ...prev, [key]: value }))
   }
 
-  const inputCls = 'w-full px-3 py-2 rounded-lg text-sm bg-[#2a2a38] border border-[#444455] text-[#e8e6e0] placeholder-[#666] focus:border-[#c9a96e] focus:outline-none'
-  const labelCls = 'block text-xs font-semibold text-[#94918a] mb-1'
+  const inputCls = 'w-full px-3 py-2 rounded-lg text-sm bg-[rgb(var(--adm-border))] border border-[rgb(var(--adm-border))] text-[rgb(var(--adm-text))] placeholder-[#666] focus:border-[rgb(var(--adm-accent))] focus:outline-none'
+  const labelCls = 'block text-xs font-semibold text-[rgb(var(--adm-muted))] mb-1'
 
   return (
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-[#f0eee8]">Apartamentos</h1>
-          <p className="text-xs text-[#94918a] mt-0.5">Gerenciar imóveis, donos e comissões</p>
+          <h1 className="text-xl font-bold tracking-tight text-[rgb(var(--adm-text))]">Apartamentos</h1>
+          <p className="text-xs text-[rgb(var(--adm-muted))] mt-0.5">Gerenciar imóveis, donos e comissões</p>
         </div>
-        <button onClick={openNew} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-[#c9a96e] text-[#1a1a22] hover:bg-[#d4b87a] transition">
+        <button onClick={openNew} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))] hover:bg-[rgb(var(--adm-accent-hover))] transition">
           <Plus className="h-3.5 w-3.5" /> Novo Apartamento
         </button>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-[#c9a96e]" /></div>
+        <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-[rgb(var(--adm-accent))]" /></div>
       ) : (
         <div className="grid gap-3">
           {apts.map(apt => (
-            <div key={apt.id} className={`rounded-xl border p-4 ${apt.active ? 'bg-[#222230] border-[#333340]' : 'bg-[#1a1a22] border-[#2a2a38] opacity-60'}`}>
+            <div key={apt.id} className={`rounded-xl border p-4 ${apt.active ? 'bg-[rgb(var(--adm-surface))] border-[rgb(var(--adm-border))]' : 'bg-[rgb(var(--adm-bg))] border-[rgb(var(--adm-border))] opacity-60'}`}>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#c9a96e18] flex items-center justify-center">
-                    <Building2 className="h-5 w-5 text-[#c9a96e]" />
+                  <div className="w-10 h-10 rounded-lg bg-[rgb(var(--adm-accent)/0.1)] flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-[rgb(var(--adm-accent))]" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-[#f0eee8]">{apt.code}</span>
-                      <span className="text-sm text-[#c0b8a8]">{apt.title}</span>
+                      <span className="font-bold text-[rgb(var(--adm-text))]">{apt.code}</span>
+                      <span className="text-sm text-[rgb(var(--adm-muted))]">{apt.title}</span>
                       {!apt.active && <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400">Inativo</span>}
                       {apt.hospitable_uuid && <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/15 text-green-400">Hospitable</span>}
                       {!apt.hospitable_uuid && <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/15 text-yellow-400">Só diretas</span>}
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-[#94918a]">
+                    <div className="flex items-center gap-3 mt-1 text-xs text-[rgb(var(--adm-muted))]">
                       {apt.slug && <span className="flex items-center gap-1"><Globe className="h-3 w-3" />/{apt.slug}</span>}
                       {apt.owner_name && <span className="flex items-center gap-1"><User className="h-3 w-3" />{apt.owner_name}</span>}
                       <span className="flex items-center gap-1"><Percent className="h-3 w-3" />{Math.round(Number(apt.commission_pct) * 100)}%</span>
@@ -127,8 +127,8 @@ export default function ApartamentosPage() {
                     </div>
                   </div>
                 </div>
-                <button onClick={() => openEdit(apt)} className="p-2 rounded-lg hover:bg-[#333340] transition">
-                  <Pencil className="h-4 w-4 text-[#94918a]" />
+                <button onClick={() => openEdit(apt)} className="p-2 rounded-lg hover:bg-[rgb(var(--adm-border))] transition">
+                  <Pencil className="h-4 w-4 text-[rgb(var(--adm-muted))]" />
                 </button>
               </div>
             </div>
@@ -139,10 +139,10 @@ export default function ApartamentosPage() {
       {/* Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setShowForm(false)}>
-          <div className="bg-[#1e1e28] rounded-2xl border border-[#333340] w-full max-w-lg max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
+          <div className="bg-[rgb(var(--adm-elevated))] rounded-2xl border border-[rgb(var(--adm-border))] w-full max-w-lg max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-[#f0eee8]">{editing ? `Editar ${editing.code}` : 'Novo Apartamento'}</h2>
-              <button onClick={() => setShowForm(false)}><X className="h-5 w-5 text-[#94918a]" /></button>
+              <h2 className="text-lg font-bold text-[rgb(var(--adm-text))]">{editing ? `Editar ${editing.code}` : 'Novo Apartamento'}</h2>
+              <button onClick={() => setShowForm(false)}><X className="h-5 w-5 text-[rgb(var(--adm-muted))]" /></button>
             </div>
 
             <div className="space-y-4">
@@ -174,8 +174,8 @@ export default function ApartamentosPage() {
               </div>
 
               {/* Dono */}
-              <div className="border-t border-[#333340] pt-4">
-                <p className="text-xs font-bold text-[#c9a96e] mb-3">Proprietário</p>
+              <div className="border-t border-[rgb(var(--adm-border))] pt-4">
+                <p className="text-xs font-bold text-[rgb(var(--adm-accent))] mb-3">Proprietário</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelCls}>Nome</label>
@@ -193,8 +193,8 @@ export default function ApartamentosPage() {
               </div>
 
               {/* Comissao */}
-              <div className="border-t border-[#333340] pt-4">
-                <p className="text-xs font-bold text-[#c9a96e] mb-3">Comissão</p>
+              <div className="border-t border-[rgb(var(--adm-border))] pt-4">
+                <p className="text-xs font-bold text-[rgb(var(--adm-accent))] mb-3">Comissão</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelCls}>Comissão (%)</label>
@@ -208,8 +208,8 @@ export default function ApartamentosPage() {
               </div>
 
               {/* Hospedes */}
-              <div className="border-t border-[#333340] pt-4">
-                <p className="text-xs font-bold text-[#c9a96e] mb-3">Hóspedes & Preço</p>
+              <div className="border-t border-[rgb(var(--adm-border))] pt-4">
+                <p className="text-xs font-bold text-[rgb(var(--adm-accent))] mb-3">Hóspedes & Preço</p>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label className={labelCls}>Máx hóspedes</label>
@@ -227,8 +227,8 @@ export default function ApartamentosPage() {
               </div>
 
               {/* Integracoes */}
-              <div className="border-t border-[#333340] pt-4">
-                <p className="text-xs font-bold text-[#c9a96e] mb-3">Integrações</p>
+              <div className="border-t border-[rgb(var(--adm-border))] pt-4">
+                <p className="text-xs font-bold text-[rgb(var(--adm-accent))] mb-3">Integrações</p>
                 <div>
                   <label className={labelCls}>UUID Hospitable (opcional)</label>
                   <input className={inputCls} value={form.hospitable_uuid || ''} onChange={e => f('hospitable_uuid', e.target.value)} placeholder="Deixe vazio para só reservas diretas" />
@@ -237,12 +237,12 @@ export default function ApartamentosPage() {
               </div>
 
               {/* Toggles */}
-              <div className="border-t border-[#333340] pt-4 flex gap-6">
-                <label className="flex items-center gap-2 text-sm text-[#c0b8a8] cursor-pointer">
+              <div className="border-t border-[rgb(var(--adm-border))] pt-4 flex gap-6">
+                <label className="flex items-center gap-2 text-sm text-[rgb(var(--adm-muted))] cursor-pointer">
                   <input type="checkbox" checked={form.show_on_site !== false} onChange={e => f('show_on_site', e.target.checked)} className="rounded" />
                   Visível no site
                 </label>
-                <label className="flex items-center gap-2 text-sm text-[#c0b8a8] cursor-pointer">
+                <label className="flex items-center gap-2 text-sm text-[rgb(var(--adm-muted))] cursor-pointer">
                   <input type="checkbox" checked={form.active !== false} onChange={e => f('active', e.target.checked)} className="rounded" />
                   Ativo
                 </label>
@@ -250,7 +250,7 @@ export default function ApartamentosPage() {
 
               {error && <p className="text-red-400 text-xs">{error}</p>}
 
-              <button onClick={save} disabled={saving} className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#c9a96e] text-[#1a1a22] hover:bg-[#d4b87a] disabled:opacity-50 transition flex items-center justify-center gap-2">
+              <button onClick={save} disabled={saving} className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))] hover:bg-[rgb(var(--adm-accent-hover))] disabled:opacity-50 transition flex items-center justify-center gap-2">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 {editing ? 'Salvar Alterações' : 'Criar Apartamento'}
               </button>

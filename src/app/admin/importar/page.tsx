@@ -219,8 +219,8 @@ export default function ImportarPage() {
   return (
     <div className="p-4 md:p-6 space-y-5">
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-[#f0eee8]">Importar Dados</h1>
-        <p className="text-xs text-[#94918a] mt-0.5">Importe CSVs do Airbnb ou extratos bancários para o Supabase</p>
+        <h1 className="text-xl font-bold tracking-tight text-[rgb(var(--adm-text))]">Importar Dados</h1>
+        <p className="text-xs text-[rgb(var(--adm-muted))] mt-0.5">Importe CSVs do Airbnb ou extratos bancários para o Supabase</p>
       </div>
 
       <div className="flex gap-2">
@@ -229,23 +229,23 @@ export default function ImportarPage() {
           { k: 'bank' as const, l: 'Extrato Bancário', desc: 'CSV do Itaú, Nubank, Inter, etc.' },
         ]).map(t => (
           <button key={t.k} onClick={() => { setFileType(t.k); setParsed(null); setFile(null); setSaved(false) }}
-            className={`flex-1 p-4 rounded-xl border text-left transition-all ${fileType === t.k ? 'bg-[#c9a96e]/10 border-[#c9a96e]/30 text-[#f0eee8]' : 'bg-[#16161a] border-[#2a2a30] text-[#94918a] hover:border-[#c9a96e]/20'}`}>
+            className={`flex-1 p-4 rounded-xl border text-left transition-all ${fileType === t.k ? 'bg-[rgb(var(--adm-accent)/0.10)] border-[rgb(var(--adm-accent)/0.30)] text-[rgb(var(--adm-text))]' : 'bg-[rgb(var(--adm-surface))] border-[rgb(var(--adm-border))] text-[rgb(var(--adm-muted))] hover:border-[rgb(var(--adm-accent)/0.20)]'}`}>
             <div className="flex items-center gap-2"><FileText className="h-4 w-4" /><span className="text-sm font-semibold">{t.l}</span></div>
-            <p className="text-[10px] text-[#94918a] mt-1">{t.desc}</p>
+            <p className="text-[10px] text-[rgb(var(--adm-muted))] mt-1">{t.desc}</p>
           </button>
         ))}
       </div>
 
       <div onClick={() => inputRef.current?.click()} onDragOver={e => e.preventDefault()}
         onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f) }}
-        className="bg-[#16161a] border-2 border-dashed border-[#2a2a30] hover:border-[#c9a96e]/30 rounded-xl p-8 text-center cursor-pointer transition-all">
-        <Upload className="h-8 w-8 text-[#94918a] mx-auto mb-3" />
-        <p className="text-sm text-[#f0eee8]">{file ? file.name : 'Clique ou arraste um arquivo CSV'}</p>
-        <p className="text-xs text-[#94918a] mt-1">{fileType === 'airbnb' ? 'Formato CSV exportado do Airbnb' : 'Formato CSV ou OFX do banco'}</p>
+        className="bg-[rgb(var(--adm-surface))] border-2 border-dashed border-[rgb(var(--adm-border))] hover:border-[rgb(var(--adm-accent)/0.30)] rounded-xl p-8 text-center cursor-pointer transition-all">
+        <Upload className="h-8 w-8 text-[rgb(var(--adm-muted))] mx-auto mb-3" />
+        <p className="text-sm text-[rgb(var(--adm-text))]">{file ? file.name : 'Clique ou arraste um arquivo CSV'}</p>
+        <p className="text-xs text-[rgb(var(--adm-muted))] mt-1">{fileType === 'airbnb' ? 'Formato CSV exportado do Airbnb' : 'Formato CSV ou OFX do banco'}</p>
         <input ref={inputRef} type="file" accept=".csv,.ofx,.txt" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
       </div>
 
-      {loading && <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-[#c9a96e]" /><span className="ml-2 text-sm text-[#94918a]">Processando...</span></div>}
+      {loading && <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-[rgb(var(--adm-accent))]" /><span className="ml-2 text-sm text-[rgb(var(--adm-muted))]">Processando...</span></div>}
       {error && <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center gap-2"><AlertCircle className="h-4 w-4 text-red-400 shrink-0" /><span className="text-sm text-red-400">{error}</span></div>}
       {saved && <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" /><span className="text-sm text-emerald-400">{parsed?.length} transações importadas com sucesso!</span></div>}
 
@@ -253,13 +253,13 @@ export default function ImportarPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { l: 'Linhas', v: String(parsed.length), c: 'text-[#f0eee8]' },
+              { l: 'Linhas', v: String(parsed.length), c: 'text-[rgb(var(--adm-text))]' },
               { l: 'Entradas', v: fmtBRL(positiveTotal), c: 'text-emerald-400' },
               { l: 'Saídas / Ajustes', v: fmtBRL(negativeTotal), c: 'text-red-400' },
               { l: 'Líquido', v: fmtBRL(totalAmount), c: totalAmount >= 0 ? 'text-emerald-400' : 'text-red-400' },
             ].map(card => (
-              <div key={card.l} className="bg-[#16161a] border border-[#2a2a30] rounded-xl p-4">
-                <p className="text-[10px] text-[#94918a] uppercase tracking-wider">{card.l}</p>
+              <div key={card.l} className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl p-4">
+                <p className="text-[10px] text-[rgb(var(--adm-muted))] uppercase tracking-wider">{card.l}</p>
                 <p className={`text-lg font-bold font-mono mt-1 ${card.c}`}>{card.v}</p>
               </div>
             ))}
@@ -281,25 +281,25 @@ export default function ImportarPage() {
             </div>
           )}
 
-          <div className="bg-[#16161a] border border-[#2a2a30] rounded-xl overflow-hidden">
+          <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
-                <thead><tr className="border-b border-[#2a2a30]">
-                  <th className="text-left py-2 px-3 text-[#94918a] font-medium">Data</th>
-                  {fileType === 'airbnb' && <th className="text-left py-2 px-3 text-[#94918a] font-medium">Hóspede</th>}
-                  <th className="text-left py-2 px-3 text-[#94918a] font-medium">Tipo</th>
-                  <th className="text-left py-2 px-3 text-[#94918a] font-medium">Imóvel</th>
-                  <th className="text-right py-2 px-3 text-[#94918a] font-medium">Valor</th>
+                <thead><tr className="border-b border-[rgb(var(--adm-border))]">
+                  <th className="text-left py-2 px-3 text-[rgb(var(--adm-muted))] font-medium">Data</th>
+                  {fileType === 'airbnb' && <th className="text-left py-2 px-3 text-[rgb(var(--adm-muted))] font-medium">Hóspede</th>}
+                  <th className="text-left py-2 px-3 text-[rgb(var(--adm-muted))] font-medium">Tipo</th>
+                  <th className="text-left py-2 px-3 text-[rgb(var(--adm-muted))] font-medium">Imóvel</th>
+                  <th className="text-right py-2 px-3 text-[rgb(var(--adm-muted))] font-medium">Valor</th>
                 </tr></thead>
                 <tbody>
                   {parsed.slice(0, 100).map((r, i) => (
-                    <tr key={i} className={`border-b border-[#2a2a30]/30 hover:bg-[#1e1e24] ${r.isAdjustment ? 'bg-amber-500/5' : ''}`}>
-                      <td className="py-2 px-3 text-[#f0eee8] font-mono whitespace-nowrap">{r.date}</td>
-                      {fileType === 'airbnb' && <td className="py-2 px-3 text-[#f0eee8]">{r.guest || '—'}</td>}
-                      <td className="py-2 px-3 text-[#94918a]">{r.type}{r.isAdjustment && <span className="ml-1 text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">AJUSTE</span>}</td>
+                    <tr key={i} className={`border-b border-[rgb(var(--adm-border)/0.30)] hover:bg-[rgb(var(--adm-elevated))] ${r.isAdjustment ? 'bg-amber-500/5' : ''}`}>
+                      <td className="py-2 px-3 text-[rgb(var(--adm-text))] font-mono whitespace-nowrap">{r.date}</td>
+                      {fileType === 'airbnb' && <td className="py-2 px-3 text-[rgb(var(--adm-text))]">{r.guest || '—'}</td>}
+                      <td className="py-2 px-3 text-[rgb(var(--adm-muted))]">{r.type}{r.isAdjustment && <span className="ml-1 text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">AJUSTE</span>}</td>
                       <td className="py-2 px-3">
                         <select value={editCodes[i] || r.apartmentCode || ''} onChange={e => setEditCodes(p => ({ ...p, [i]: e.target.value }))}
-                          className={`bg-[#1e1e24] border rounded px-2 py-1 text-xs ${editCodes[i] || r.apartmentCode ? 'border-emerald-500/30 text-emerald-400' : 'border-[#2a2a30] text-[#94918a]'}`}>
+                          className={`bg-[rgb(var(--adm-elevated))] border rounded px-2 py-1 text-xs ${editCodes[i] || r.apartmentCode ? 'border-emerald-500/30 text-emerald-400' : 'border-[rgb(var(--adm-border))] text-[rgb(var(--adm-muted))]'}`}>
                           <option value="">—</option>
                           {APT_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
@@ -310,24 +310,24 @@ export default function ImportarPage() {
                 </tbody>
               </table>
             </div>
-            {parsed.length > 100 && <div className="text-center py-2 text-xs text-[#94918a] border-t border-[#2a2a30]">Mostrando 100 de {parsed.length} linhas</div>}
+            {parsed.length > 100 && <div className="text-center py-2 text-xs text-[rgb(var(--adm-muted))] border-t border-[rgb(var(--adm-border))]">Mostrando 100 de {parsed.length} linhas</div>}
           </div>
 
           <div className="flex gap-2">
             <button onClick={handleImport} disabled={saving}
-              className="flex items-center gap-1.5 bg-[#c9a96e] text-[#1a1207] px-5 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#dbc192] transition-colors disabled:opacity-50">
+              className="flex items-center gap-1.5 bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))] px-5 py-2.5 rounded-lg text-xs font-semibold hover:bg-[rgb(var(--adm-accent-hover))] transition-colors disabled:opacity-50">
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Database className="h-3.5 w-3.5" />}
               {saving ? 'Salvando...' : `Importar ${parsed.length} linhas para o Supabase`}
             </button>
             <button onClick={() => { setParsed(null); setFile(null); setSaved(false); setEditCodes({}) }}
-              className="px-4 py-2 rounded-lg text-xs text-[#94918a] border border-[#2a2a30] hover:text-[#f0eee8]">Limpar</button>
+              className="px-4 py-2 rounded-lg text-xs text-[rgb(var(--adm-muted))] border border-[rgb(var(--adm-border))] hover:text-[rgb(var(--adm-text))]">Limpar</button>
           </div>
         </div>
       )}
 
       {saved && (
         <button onClick={() => { setParsed(null); setFile(null); setSaved(false); setEditCodes({}) }}
-          className="flex items-center gap-1.5 bg-[#c9a96e] text-[#1a1207] px-4 py-2 rounded-lg text-xs font-semibold hover:bg-[#dbc192]">
+          className="flex items-center gap-1.5 bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))] px-4 py-2 rounded-lg text-xs font-semibold hover:bg-[rgb(var(--adm-accent-hover))]">
           <RefreshCw className="h-3.5 w-3.5" /> Importar outro arquivo
         </button>
       )}

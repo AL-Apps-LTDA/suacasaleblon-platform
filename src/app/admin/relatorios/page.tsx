@@ -223,18 +223,18 @@ export default function RelatoriosPage() {
     <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-[#f0eee8]">Relatórios</h1>
-          <p className="text-xs text-[#94918a] mt-0.5">Gerar relatórios mensais em PDF para enviar aos proprietários</p>
+          <h1 className="text-xl font-bold text-[rgb(var(--adm-text))]">Relatórios</h1>
+          <p className="text-xs text-[rgb(var(--adm-muted))] mt-0.5">Gerar relatórios mensais em PDF para enviar aos proprietários</p>
         </div>
-        <div className="flex items-center gap-1.5 bg-[#1e1e24] rounded-lg border border-[#2a2a30] px-1">
-          <button onClick={() => setSelectedMonth(s => s > 0 ? s - 1 : 11)} className="p-1.5 text-[#94918a] hover:text-[#f0eee8]"><ChevronLeft className="h-4 w-4" /></button>
-          <span className="text-sm font-medium text-[#f0eee8] min-w-[80px] text-center">{MONTHS_FULL[selectedMonth]}</span>
-          <button onClick={() => setSelectedMonth(s => s < 11 ? s + 1 : 0)} className="p-1.5 text-[#94918a] hover:text-[#f0eee8]"><ChevronRight className="h-4 w-4" /></button>
+        <div className="flex items-center gap-1.5 bg-[rgb(var(--adm-elevated))] rounded-lg border border-[rgb(var(--adm-border))] px-1">
+          <button onClick={() => setSelectedMonth(s => s > 0 ? s - 1 : 11)} className="p-1.5 text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]"><ChevronLeft className="h-4 w-4" /></button>
+          <span className="text-sm font-medium text-[rgb(var(--adm-text))] min-w-[80px] text-center">{MONTHS_FULL[selectedMonth]}</span>
+          <button onClick={() => setSelectedMonth(s => s < 11 ? s + 1 : 0)} className="p-1.5 text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]"><ChevronRight className="h-4 w-4" /></button>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-[#c9a96e]" /></div>
+        <div className="flex items-center justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-[rgb(var(--adm-accent))]" /></div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {apartments.filter(a => !a.error).map(apt => {
@@ -242,11 +242,11 @@ export default function RelatoriosPage() {
             const hasData = md && (parseBRL(md.receitaTotal) > 0 || md.reservations.length > 0)
 
             return (
-              <div key={apt.name} className="bg-[#16161a] border border-[#2a2a30] rounded-xl p-4">
+              <div key={apt.name} className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-[#c9a96e]" />
-                    <span className="text-sm font-medium text-[#f0eee8]">Apt {apt.name}</span>
+                    <FileText className="h-4 w-4 text-[rgb(var(--adm-accent))]" />
+                    <span className="text-sm font-medium text-[rgb(var(--adm-text))]">Apt {apt.name}</span>
                   </div>
                   {hasData && (
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-400/15 text-emerald-400">Dados disponíveis</span>
@@ -255,26 +255,26 @@ export default function RelatoriosPage() {
                 {hasData && md ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2 text-center">
-                      <div className="bg-[#1e1e24] rounded-lg p-1.5">
-                        <p className="text-[8px] text-[#94918a] uppercase">Receita</p>
+                      <div className="bg-[rgb(var(--adm-elevated))] rounded-lg p-1.5">
+                        <p className="text-[8px] text-[rgb(var(--adm-muted))] uppercase">Receita</p>
                         <p className="text-[10px] font-bold text-emerald-400 font-mono">{md.receitaTotal}</p>
                       </div>
-                      <div className="bg-[#1e1e24] rounded-lg p-1.5">
-                        <p className="text-[8px] text-[#94918a] uppercase">Reservas</p>
-                        <p className="text-[10px] font-bold text-[#f0eee8] font-mono">{md.reservations.filter(r => r.source !== 'adjustment').length}</p>
+                      <div className="bg-[rgb(var(--adm-elevated))] rounded-lg p-1.5">
+                        <p className="text-[8px] text-[rgb(var(--adm-muted))] uppercase">Reservas</p>
+                        <p className="text-[10px] font-bold text-[rgb(var(--adm-text))] font-mono">{md.reservations.filter(r => r.source !== 'adjustment').length}</p>
                       </div>
                     </div>
                     <button
                       onClick={() => generatePDF(apt.name)}
                       disabled={generating === apt.name}
-                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs bg-[#c9a96e] text-[#1a1207] font-semibold hover:bg-[#c9a96e]/90 disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))] font-semibold hover:bg-[rgb(var(--adm-accent)/0.90)] disabled:opacity-50"
                     >
                       {generating === apt.name ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
                       Gerar PDF
                     </button>
                   </div>
                 ) : (
-                  <p className="text-[11px] text-[#94918a]">Sem dados para {MONTHS_FULL[selectedMonth]}</p>
+                  <p className="text-[11px] text-[rgb(var(--adm-muted))]">Sem dados para {MONTHS_FULL[selectedMonth]}</p>
                 )}
               </div>
             )
