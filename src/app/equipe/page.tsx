@@ -574,6 +574,17 @@ export default function EquipePage(){
   },[])
   useEffect(()=>{localStorage.setItem('equipe_theme',dark?'dark':'light')},[dark])
 
+  // PWA: override manifest and meta tags for Giro Temporada
+  useEffect(()=>{
+    const ml=document.querySelector('link[rel="manifest"]')
+    if(ml)ml.setAttribute('href','/manifest-equipe.json')
+    const tc=document.querySelector('meta[name="theme-color"]')
+    if(tc)tc.setAttribute('content','#b08a40')
+    const at=document.querySelector('meta[name="apple-mobile-web-app-title"]')
+    if(at)at.setAttribute('content','Giro Temporada')
+    document.title='Giro Temporada'
+  },[])
+
   const fetchData=useCallback(async(tk:string)=>{
     try{
       setRefreshing(true);const h={Authorization:`Basic ${tk}`}

@@ -1,0 +1,27 @@
+{
+  "name": "Giro Temporada",
+  "short_name": "Giro",
+  "description": "App da equipe de limpezas — Sua Casa Leblon",
+  "start_url": "/equipe",
+  "scope": "/equipe",
+  "display": "standalone",
+  "background_color": "#faf8f5",
+  "theme_color": "#b08a40",
+  "orientation": "portrait",
+  "categories": ["business", "productivity"],
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
