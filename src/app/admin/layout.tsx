@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, CalendarDays, FileText, Settings, Activity, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2 } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, FileText, Settings, Activity, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2, Menu, X } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 import { AdminThemeToggle } from '@/components/AdminThemeToggle'
 
 const ADMIN_PASSWORD = 'suacasa2026'
@@ -79,6 +80,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [authed, setAuthed] = useState(false)
   const [checking, setChecking] = useState(true)
   const [dark, setDark] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     const stored = sessionStorage.getItem('admin_auth')
@@ -106,7 +109,45 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className={`${themeClass} flex h-screen bg-[rgb(var(--adm-bg))] overflow-hidden`}>
-      {/* Sidebar */}
+      {/* Mobile drawer overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden" onClick={() => setMobileMenuOpen(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <aside className="relative w-72 h-full bg-[rgb(var(--adm-surface))] border-r border-[rgb(var(--adm-border))] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="h-16 flex items-center justify-between px-5 border-b border-[rgb(var(--adm-border))]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[rgb(var(--adm-accent))] flex items-center justify-center">
+                  <Activity className="h-4 w-4 text-[rgb(var(--adm-accent-fg))]" />
+                </div>
+                <div>
+                  <span className="font-semibold text-sm text-[rgb(var(--adm-text))] tracking-tight">Sua Casa Leblon</span>
+                  <span className="block text-[10px] text-[rgb(var(--adm-muted))] leading-none mt-0.5">Admin • 2026</span>
+                </div>
+              </div>
+              <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-lg hover:bg-[rgb(var(--adm-elevated))] transition-colors">
+                <X className="h-5 w-5 text-[rgb(var(--adm-muted))]" />
+              </button>
+            </div>
+            <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
+              {navItems.map((item) => {
+                const isActive = pathname === item.path || (item.path !== '/admin' && pathname.startsWith(item.path))
+                return (
+                  <Link key={item.path} href={item.path} onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 border border-transparent ${isActive ? 'bg-[rgb(var(--adm-accent)/0.10)] text-[rgb(var(--adm-accent))] border-[rgb(var(--adm-accent)/0.15)]' : 'text-[rgb(var(--adm-muted))] hover:bg-[rgb(var(--adm-elevated))] hover:text-[rgb(var(--adm-text))]'}`}>
+                    <item.icon className="h-4 w-4" />{item.name}
+                  </Link>
+                )
+              })}
+            </nav>
+            <div className="p-4 border-t border-[rgb(var(--adm-border))] space-y-2">
+              <Link href="/" className="text-xs text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-accent))] transition-colors block">← Voltar ao site</Link>
+              <button onClick={handleLogout} className="flex items-center gap-1.5 text-xs text-[rgb(var(--adm-muted))] hover:text-red-400 transition-colors"><LogOut className="h-3 w-3" /> Sair</button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* Desktop Sidebar */}
       <aside className="w-60 border-r border-[rgb(var(--adm-border))] bg-[rgb(var(--adm-surface))] flex-col hidden md:flex">
         <div className="h-16 flex items-center px-5 border-b border-[rgb(var(--adm-border))]">
           <div className="flex items-center gap-2.5">
@@ -121,12 +162,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         <nav className="flex-1 py-4 px-3 space-y-0.5">
-          {navItems.map((item) => (
-            <Link key={item.path} href={item.path}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 text-[rgb(var(--adm-muted))] hover:bg-[rgb(var(--adm-elevated))] hover:text-[rgb(var(--adm-text))] border border-transparent">
-              <item.icon className="h-4 w-4" />{item.name}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isActive = pathname === item.path || (item.path !== '/admin' && pathname.startsWith(item.path))
+            return (
+              <Link key={item.path} href={item.path}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 border ${isActive ? 'bg-[rgb(var(--adm-accent)/0.10)] text-[rgb(var(--adm-accent))] border-[rgb(var(--adm-accent)/0.15)]' : 'text-[rgb(var(--adm-muted))] hover:bg-[rgb(var(--adm-elevated))] hover:text-[rgb(var(--adm-text))] border-transparent'}`}>
+                <item.icon className="h-4 w-4" />{item.name}
+              </Link>
+            )
+          })}
         </nav>
 
         <div className="p-4 border-t border-[rgb(var(--adm-border))] space-y-2">
@@ -137,9 +181,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Main */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
-        <header className="h-14 border-b border-[rgb(var(--adm-border))] bg-[rgb(var(--adm-surface)/0.50)] backdrop-blur flex items-center px-6 shrink-0 justify-between">
-          <div className="flex items-center gap-2 md:hidden text-[rgb(var(--adm-accent))] font-semibold text-sm">
-            <Activity className="h-4 w-4" /><span>Admin</span>
+        <header className="h-14 border-b border-[rgb(var(--adm-border))] bg-[rgb(var(--adm-surface)/0.50)] backdrop-blur flex items-center px-4 md:px-6 shrink-0 justify-between">
+          <div className="flex items-center gap-3 md:hidden">
+            <button onClick={() => setMobileMenuOpen(true)} className="p-1.5 -ml-1 rounded-lg hover:bg-[rgb(var(--adm-elevated))] transition-colors">
+              <Menu className="h-5 w-5 text-[rgb(var(--adm-text))]" />
+            </button>
+            <div className="flex items-center gap-2 text-[rgb(var(--adm-accent))] font-semibold text-sm">
+              <Activity className="h-4 w-4" /><span>Admin</span>
+            </div>
           </div>
           <div className="hidden md:block flex-1" />
           <div className="flex items-center gap-2">
