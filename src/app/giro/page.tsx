@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Loader2, KeyRound, RefreshCw, Eye, EyeOff, X, Camera, Trash2, Plus, Edit3, ChevronDown, CalendarDays, MessageSquare, Phone as PhoneIcon, ClipboardList, DollarSign } from 'lucide-react'
-import { LEBLON_APARTMENTS } from '@/lib/types'
 import ContactsTab from './ContactsTab'
 import ChatTab from './ChatTab'
 
 // ─── CONSTANTS ─────────────────────────────────────────
-const APTS: string[] = [...LEBLON_APARTMENTS]
+// Apartments are loaded dynamically per client — no hardcoded list
+const APTS: string[] = []
 const DAYS_L = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
 const CHECKIN_H = 15
 const COST_CATEGORIES = [
@@ -373,7 +373,7 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
 
 // ─── CREATE CLEANING MODAL (admin) ─────────────────────
 function CreateModal({date,t,token,onClose,onSaved}:{date:string;t:T;token:string;onClose:()=>void;onSaved:()=>void}){
-  const [apt,setApt]=useState(APTS[0])
+  const [apt,setApt]=useState(APTS[0]||'')
   const [saving,setSaving]=useState(false)
   const [error,setError]=useState('')
   const handleCreate=async()=>{
