@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { Loader2, KeyRound, RefreshCw, Eye, EyeOff, X, Camera, Trash2, Plus, Edit3, ChevronDown, CalendarDays, MessageSquare, Phone as PhoneIcon, ClipboardList, DollarSign } from 'lucide-react'
+import { Loader2, KeyRound, RefreshCw, Eye, EyeOff, X, Camera, Trash2, Plus, Edit3, ChevronDown, CalendarDays, MessageSquare, Phone as PhoneIcon, Settings, DollarSign } from 'lucide-react'
 import { LEBLON_APARTMENTS } from '@/lib/types'
 import ContactsTab from './ContactsTab'
 import ChatTab from './ChatTab'
@@ -563,7 +563,7 @@ function Login({onLogin,t}:{onLogin:(u:string,p:string)=>void;t:T}){
 export default function EquipePage(){
   const [authed,setAuthed]=useState(false);const [token,setToken]=useState('')
   const [dark,setDark]=useState(false);const [loading,setLoading]=useState(true);const [refreshing,setRefreshing]=useState(false)
-  const [activeTab,setActiveTab]=useState<'agenda'|'chat'|'contatos'|'gestao'|'custos'>('agenda')
+  const [activeTab,setActiveTab]=useState<'agenda'|'custos'|'chat'|'config'>('agenda')
   const [res,setRes]=useState<Res[]>([]);const [clns,setClns]=useState<Cln[]>([])
   const [user,setUser]=useState<AppUser|null>(null);const [cleaners,setCleaners]=useState<AppUser[]>([])
   const [modal,setModal]=useState<DayCell|null>(null);const [createDate,setCreateDate]=useState<string|null>(null)
@@ -650,10 +650,11 @@ export default function EquipePage(){
           </div>
         ))}
 
-        {activeTab==='chat'&&user&&<ChatTab t={t} token={token} user={user} allUsers={cleaners}/>}
-        {activeTab==='contatos'&&<ContactsTab t={t} token={token} userId={user?.id}/>}
-        {activeTab==='gestao'&&<div style={{padding:'40px 20px',textAlign:'center',color:t.textSecondary,fontSize:13}}>Gestão — em breve</div>}
         {activeTab==='custos'&&<div style={{padding:'40px 20px',textAlign:'center',color:t.textSecondary,fontSize:13}}>Custos — em breve</div>}
+        {activeTab==='chat'&&user&&<ChatTab t={t} token={token} user={user} allUsers={cleaners}/>}
+        {activeTab==='config'&&<div style={{maxWidth:600,margin:'0 auto'}}>
+          <ContactsTab t={t} token={token} userId={user?.id}/>
+        </div>}
       </div>
 
       {/* Modals */}
@@ -664,10 +665,9 @@ export default function EquipePage(){
       <div style={{position:'fixed',bottom:0,left:0,right:0,zIndex:30,background:t.bg,borderTop:`1.5px solid ${t.border}`,display:'flex',justifyContent:'space-around',padding:'6px 0 env(safe-area-inset-bottom, 8px)'}}>
         {([
           {key:'agenda',label:'Agenda',icon:CalendarDays},
-          {key:'chat',label:'Chat',icon:MessageSquare},
-          {key:'contatos',label:'Contatos',icon:PhoneIcon},
-          {key:'gestao',label:'Gestão',icon:ClipboardList},
           {key:'custos',label:'Custos',icon:DollarSign},
+          {key:'chat',label:'Chat',icon:MessageSquare},
+          {key:'config',label:'Config',icon:Settings},
         ] as const).map(tab=>{
           const active=activeTab===tab.key
           return(
