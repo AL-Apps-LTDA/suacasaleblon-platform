@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, CalendarDays, FileText, Settings, Activity, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2 } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, FileText, Settings, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2, TrendingUp } from 'lucide-react'
 import { AdminThemeToggle } from '@/components/AdminThemeToggle'
 
 const ADMIN_PASSWORD = 'suacasa2026'
@@ -19,6 +19,7 @@ const navItems = [
   { name: 'Contador', path: '/admin/contador', icon: Calculator },
   { name: 'Prospecção', path: '/admin/prospeccao', icon: Search },
   { name: 'Cupons', path: '/admin/cupons', icon: Tag },
+  { name: 'Dynamic Pricing', path: '/admin/dynamic-pricing', icon: TrendingUp },
   { name: 'Integrações', path: '/admin/integracoes', icon: Settings },
 ]
 
@@ -110,9 +111,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="w-60 border-r border-[rgb(var(--adm-border))] bg-[rgb(var(--adm-surface))] flex-col hidden md:flex">
         <div className="h-16 flex items-center px-5 border-b border-[rgb(var(--adm-border))]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[rgb(var(--adm-accent))] flex items-center justify-center">
-              <Activity className="h-4 w-4 text-[rgb(var(--adm-accent-fg))]" />
-            </div>
+            <img src="/images/logo.png" alt="Giro" className="w-8 h-8 rounded-lg" />
             <div>
               <span className="font-semibold text-sm text-[rgb(var(--adm-text))] tracking-tight">Sua Casa Leblon</span>
               <span className="block text-[10px] text-[rgb(var(--adm-muted))] leading-none mt-0.5">Admin • 2026</span>
@@ -139,7 +138,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 flex flex-col h-full overflow-hidden">
         <header className="h-14 border-b border-[rgb(var(--adm-border))] bg-[rgb(var(--adm-surface)/0.50)] backdrop-blur flex items-center px-6 shrink-0 justify-between">
           <div className="flex items-center gap-2 md:hidden text-[rgb(var(--adm-accent))] font-semibold text-sm">
-            <Activity className="h-4 w-4" /><span>Admin</span>
+            <img src="/images/logo.png" alt="Giro" className="w-5 h-5 rounded" /><span>Admin</span>
           </div>
           <div className="hidden md:block flex-1" />
           <div className="flex items-center gap-2">

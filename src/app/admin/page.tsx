@@ -10,6 +10,19 @@ import {
 import type { ApartmentSummary, MonthData, BizExpense } from '@/lib/types'
 import { parseBRL, fmtBRL, getMonthIndex, MONTHS_SHORT, MONTHS_FULL, APARTMENTS } from '@/lib/types'
 
+// Format a date value: "2026-03-05" → "05/03/2026", or day number "5" + month context → "05/03/2026"
+function fmtDate(val: string, monthIdx?: number, year = 2026): string {
+  if (val.includes('-')) {
+    const [y, m, d] = val.split('-')
+    return `${d}/${m}/${y}`
+  }
+  const day = parseInt(val)
+  if (!isNaN(day) && monthIdx !== undefined) {
+    return `${String(day).padStart(2, '0')}/${String(monthIdx + 1).padStart(2, '0')}/${year}`
+  }
+  return val
+}
+
 function filterMonths(months: MonthData[], filter: string, sel: number): MonthData[] {
   if (filter === 'all') return months
   if (filter === 'ytd') return months.filter(m => getMonthIndex(m.month) <= new Date().getMonth())
@@ -155,7 +168,7 @@ function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; 
               <h5 className="text-[10px] text-[rgb(var(--adm-accent))] font-semibold mb-2 uppercase flex items-center gap-1"><UserCheck className="h-3 w-3" /> Reservas Diretas ({dr.length})</h5>
               {dr.map((r, i) => (
                 <div key={i} className="bg-[rgb(var(--adm-surface)/0.60)] rounded-lg p-2 border border-[rgb(var(--adm-border)/0.50)] mb-1">
-                  <div className="flex items-center gap-2 text-[10px] text-[rgb(var(--adm-muted))]"><Calendar className="h-3 w-3" />{r.checkin} → {r.checkout}</div>
+                  <div className="flex items-center gap-2 text-[10px] text-[rgb(var(--adm-muted))]"><Calendar className="h-3 w-3" />{fmtDate(r.checkin)} → {fmtDate(r.checkout)}</div>
                   <div className="flex justify-between mt-1"><span className="text-[11px] text-[rgb(var(--adm-text))]">{r.guest}</span><span className="font-mono text-xs font-bold text-[rgb(var(--adm-accent))]">{r.totalValue}</span></div>
                 </div>
               ))}
@@ -175,7 +188,7 @@ function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; 
                       const isAdj = rv.source === 'adjustment'
                       return (
                         <div key={ri} className={`flex items-center text-[11px] py-1 border-b border-[rgb(var(--adm-border)/0.30)] last:border-0 gap-2 ${isAdj ? 'pl-4 opacity-80' : ''}`}>
-                          {!isAdj ? <span className="font-mono text-[rgb(var(--adm-muted))] w-14 shrink-0">{rv.checkin}→{rv.checkout}</span> : <span className="w-14 shrink-0" />}
+                          {!isAdj ? <span className="font-mono text-[rgb(var(--adm-muted))] shrink-0 text-[10px]">{fmtDate(rv.checkin, mi)}→{fmtDate(rv.checkout, mi)}</span> : <span className="w-14 shrink-0" />}
                           <span className={`flex-1 truncate ${isAdj ? 'text-orange-400/80 text-[10px] italic' : 'text-[rgb(var(--adm-text))]'}`}>{rv.guest || '—'}</span>
                           {rv.source && !isAdj && rv.source !== 'hospitable' && <span className={`text-[8px] px-1 py-0.5 rounded font-semibold ${rv.source === 'whatsapp' ? 'bg-green-500/15 text-green-400' : rv.source === 'site' ? 'bg-[rgb(var(--adm-accent)/0.15)] text-[rgb(var(--adm-accent))]' : 'bg-blue-500/15 text-blue-400'}`}>{rv.source === 'airbnb_csv' ? 'CSV' : rv.source}</span>}
                           {rv.guestOrigin && !isAdj && <span className="text-[9px] text-[rgb(var(--adm-muted))] max-w-[80px] truncate">{rv.guestOrigin}</span>}

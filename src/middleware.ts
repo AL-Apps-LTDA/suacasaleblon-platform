@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const SUBDOMAIN_MAP: Record<string, string> = {
   giro: '/equipe',
   equipe: '/equipe', // alias — ambos funcionam
+  buzios: '/buzios',
   admin: '/admin',
   proprietarios: '/proprietarios',
 }
