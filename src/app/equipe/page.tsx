@@ -154,6 +154,9 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
 
   const canComplete=cost!==''&&photos.length>=2
   const isDone=cl.completed||cl.status==='concluida'
+  // Admin or assigned cleaner can edit even completed cleanings
+  const canEdit=isAdm||cl.cleaner_id===user.id
+  const locked=isDone&&!canEdit
 
   const handlePhoto=async(e:React.ChangeEvent<HTMLInputElement>)=>{
     const files=e.target.files;if(!files)return
@@ -223,7 +226,7 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
             <div style={{fontSize:11,color:t.textSecondary}}>{fmtFull(cl.scheduled_date||cl.cleaning_date||cell.date)}</div>
           </div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            {isAdm&&!isDone&&<button onClick={()=>setDeleteConfirm(true)} style={{background:'none',border:'none',cursor:'pointer',padding:4}}><Trash2 size={16} style={{color:t.red}}/></button>}
+            {isAdm&&!locked&&<button onClick={()=>setDeleteConfirm(true)} style={{background:'none',border:'none',cursor:'pointer',padding:4}}><Trash2 size={16} style={{color:t.red}}/></button>}
             <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',padding:4}}><X size={18} style={{color:t.textSecondary}}/></button>
           </div>
         </div>
@@ -287,7 +290,7 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
         <div style={{background:t.inputBg,border:`1.5px solid ${t.inputBorder}`,borderRadius:10,padding:'10px 12px',marginBottom:12}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:extraCosts.length>0||showAddCost?8:0}}>
             <label style={{fontSize:9,fontWeight:700,color:t.textSecondary,textTransform:'uppercase',letterSpacing:'0.05em'}}>💰 Custos adicionais</label>
-            {!isDone&&<button onClick={()=>setShowAddCost(!showAddCost)} style={{display:'flex',alignItems:'center',gap:3,fontSize:10,fontWeight:600,color:t.gold,background:'none',border:'none',cursor:'pointer',padding:0}}>
+            {!locked&&<button onClick={()=>setShowAddCost(!showAddCost)} style={{display:'flex',alignItems:'center',gap:3,fontSize:10,fontWeight:600,color:t.gold,background:'none',border:'none',cursor:'pointer',padding:0}}>
               <Plus size={12}/>{showAddCost?'Cancelar':'Adicionar'}
             </button>}
           </div>
@@ -322,7 +325,7 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:6}}>
                     <span style={{fontSize:11,fontWeight:700,color:t.textPrimary}}>R$ {ec.amount.toFixed(2)}</span>
-                    {!isDone&&<button onClick={()=>setExtraCosts(prev=>prev.filter((_,j)=>j!==i))} style={{background:'none',border:'none',cursor:'pointer',padding:0,display:'flex'}}><X size={12} style={{color:t.red}}/></button>}
+                    {!locked&&<button onClick={()=>setExtraCosts(prev=>prev.filter((_,j)=>j!==i))} style={{background:'none',border:'none',cursor:'pointer',padding:0,display:'flex'}}><X size={12} style={{color:t.red}}/></button>}
                   </div>
                 </div>))}
               <div style={{fontSize:10,color:t.textSecondary,textAlign:'right',marginTop:2}}>
@@ -339,11 +342,11 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
             {photos.map((p,i)=>(
               <div key={i} style={{width:60,height:60,borderRadius:8,overflow:'hidden',position:'relative',border:`1px solid ${t.border}`}}>
                 <img src={p} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                {!isDone&&<button onClick={()=>setPhotos(ps=>ps.filter((_,j)=>j!==i))} style={{position:'absolute',top:2,right:2,width:18,height:18,borderRadius:9,background:'rgba(0,0,0,0.5)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                {!locked&&<button onClick={()=>setPhotos(ps=>ps.filter((_,j)=>j!==i))} style={{position:'absolute',top:2,right:2,width:18,height:18,borderRadius:9,background:'rgba(0,0,0,0.5)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <X size={10} style={{color:'#fff'}}/>
                 </button>}
               </div>))}
-            {photos.length<6&&!isDone&&(
+            {photos.length<6&&!locked&&(
               <button onClick={()=>fileRef.current?.click()} style={{width:60,height:60,borderRadius:8,border:`1.5px dashed ${t.border}`,background:'transparent',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:2}}>
                 <Camera size={16} style={{color:t.textSecondary}}/>
                 <span style={{fontSize:8,color:t.textSecondary}}>{photos.length}/6</span>
@@ -356,7 +359,7 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
         {error&&<p style={{color:t.red,fontSize:12,marginBottom:8}}>{error}</p>}
 
         {/* Actions */}
-        {!isDone&&<div style={{display:'flex',gap:8}}>
+        {!locked&&<div style={{display:'flex',gap:8}}>
           {isAdm&&<button onClick={()=>handleSave(false)} disabled={saving} style={{flex:1,padding:'12px 0',borderRadius:10,border:`1.5px solid ${t.btnBorder}`,background:t.btnBg,color:t.btnText,fontSize:13,fontWeight:600,cursor:'pointer',opacity:saving?0.6:1}}>
             {saving?'Salvando...':'Salvar'}
           </button>}
