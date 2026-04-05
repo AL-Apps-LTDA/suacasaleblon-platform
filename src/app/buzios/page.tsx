@@ -45,7 +45,7 @@ function Login({onLogin,t}:{onLogin:(u:string,p:string)=>void;t:T}){
   const go=async()=>{
     if(!u||!p){setEr('Preencha usuário e senha');return}
     setLd(true);setEr('')
-    try{const r=await fetch('/api/limpezas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'login',username:u,password:p})})
+    try{const r=await fetch('/api/limpezas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'login',username:u,password:p,context:'buzios'})})
       const d=await r.json();if(!r.ok||d.error){setEr(d.error||'Credenciais inválidas');setLd(false);return}
       localStorage.setItem('buzios_auth',btoa(`${u}:${p}`));localStorage.setItem('buzios_user',JSON.stringify(d));onLogin(u,p)
     }catch{setEr('Erro de conexão')};setLd(false)}
