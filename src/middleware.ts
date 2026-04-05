@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // Subdomain → path mapping
 const SUBDOMAIN_MAP: Record<string, string> = {
-  giro: '/equipe',
-  equipe: '/equipe', // alias — ambos funcionam
+  giro: '/giro',
+  equipe: '/equipe',
   buzios: '/buzios',
   admin: '/admin',
   proprietarios: '/proprietarios',
