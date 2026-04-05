@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, CalendarDays, FileText, Settings, Activity, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2, Menu, X } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, FileText, Settings, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2, Menu, X, TrendingUp } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { AdminThemeToggle } from '@/components/AdminThemeToggle'
 
@@ -20,6 +20,7 @@ const navItems = [
   { name: 'Contador', path: '/admin/contador', icon: Calculator },
   { name: 'Prospecção', path: '/admin/prospeccao', icon: Search },
   { name: 'Cupons', path: '/admin/cupons', icon: Tag },
+  { name: 'Dynamic Pricing', path: '/admin/dynamic-pricing', icon: TrendingUp },
   { name: 'Integrações', path: '/admin/integracoes', icon: Settings },
 ]
 
@@ -116,9 +117,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <aside className="relative w-72 h-full bg-[rgb(var(--adm-surface))] border-r border-[rgb(var(--adm-border))] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="h-16 flex items-center justify-between px-5 border-b border-[rgb(var(--adm-border))]">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[rgb(var(--adm-accent))] flex items-center justify-center">
-                  <Activity className="h-4 w-4 text-[rgb(var(--adm-accent-fg))]" />
-                </div>
+                <img src="/images/logo.png" alt="Giro" className="w-8 h-8 rounded-lg" />
                 <div>
                   <span className="font-semibold text-sm text-[rgb(var(--adm-text))] tracking-tight">Sua Casa Leblon</span>
                   <span className="block text-[10px] text-[rgb(var(--adm-muted))] leading-none mt-0.5">Admin • 2026</span>
@@ -151,9 +150,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="w-60 border-r border-[rgb(var(--adm-border))] bg-[rgb(var(--adm-surface))] flex-col hidden md:flex">
         <div className="h-16 flex items-center px-5 border-b border-[rgb(var(--adm-border))]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[rgb(var(--adm-accent))] flex items-center justify-center">
-              <Activity className="h-4 w-4 text-[rgb(var(--adm-accent-fg))]" />
-            </div>
+            <img src="/images/logo.png" alt="Giro" className="w-8 h-8 rounded-lg" />
             <div>
               <span className="font-semibold text-sm text-[rgb(var(--adm-text))] tracking-tight">Sua Casa Leblon</span>
               <span className="block text-[10px] text-[rgb(var(--adm-muted))] leading-none mt-0.5">Admin • 2026</span>
@@ -187,7 +184,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Menu className="h-5 w-5 text-[rgb(var(--adm-text))]" />
             </button>
             <div className="flex items-center gap-2 text-[rgb(var(--adm-accent))] font-semibold text-sm">
-              <Activity className="h-4 w-4" /><span>Admin</span>
+              <img src="/images/logo.png" alt="Giro" className="w-5 h-5 rounded" /><span>Admin</span>
             </div>
           </div>
           <div className="hidden md:block flex-1" />
