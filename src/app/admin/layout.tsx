@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, CalendarDays, FileText, Settings, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2, Menu, X, TrendingUp } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, FileText, Settings, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2, Menu, X, TrendingUp, Palmtree } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { AdminThemeToggle } from '@/components/AdminThemeToggle'
 
@@ -14,6 +14,7 @@ const navItems = [
   { name: 'Agenda', path: '/admin/agenda', icon: CalendarRange },
   { name: 'Despesas', path: '/admin/despesas', icon: DollarSign },
   { name: 'Giro', path: '/admin/limpezas', icon: Sparkles },
+  { name: 'Agenda Búzios', path: '/admin/agenda-buzios', icon: Palmtree },
   { name: 'Reservas Diretas', path: '/admin/reservas-diretas', icon: CalendarDays },
   { name: 'Importar CSV', path: '/admin/importar', icon: Upload },
   { name: 'Relatórios', path: '/admin/relatorios', icon: FileText },
