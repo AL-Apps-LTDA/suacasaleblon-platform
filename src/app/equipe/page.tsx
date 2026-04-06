@@ -500,7 +500,7 @@ function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isA
                 if(cell.cleaning)onCellClick(cell)
                 else if(cell.type==='empty'&&isAdm)onEmptyClick(cell.date)
               }}
-              style={{display:'flex',alignItems:'center',justifyContent:'center',height:52,borderRight:ci<6?`1px solid ${t.borderInner}40`:'none',position:'relative',overflow:'hidden',
+              style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:52,padding:'2px 0',borderRight:ci<6?`1px solid ${t.borderInner}40`:'none',position:'relative',overflow:'hidden',
                 cursor:reordering?'default':cell.cleaning||(cell.type==='empty'&&isAdm)?'pointer':'default',
                 background:reordering?t.gold+'08':'transparent',transition:'background 0.2s'}}>
               {reordering?(
@@ -509,7 +509,20 @@ function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isA
                   <Cell cell={cell} t={t}/>
                   {ri<APTS.length-1&&<button onClick={(e)=>{e.stopPropagation();moveRow(ri,1)}} style={{width:16,height:16,borderRadius:4,border:'none',background:t.btnBg,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:t.textSecondary,padding:0}}>↓</button>}
                 </div>
-              ):(<Cell cell={cell} t={t}/>)}
+              ):(
+                <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:1}}>
+                  <Cell cell={cell} t={t}/>
+                  {cell.cleaning&&(()=>{
+                    const d=cell.date
+                    const guest=reservations.find(r=>r.apartment_code===cell.apt&&r.checkout===d)
+                      ||reservations.find(r=>r.apartment_code===cell.apt&&r.checkin===d)
+                    if(!guest)return null
+                    const firstName=guest.guest_name.split(' ')[0]
+                    const isOut=guest.checkout===d
+                    return<span style={{fontSize:7,lineHeight:'1',color:isOut?'#ef4444':'#22c55e',fontWeight:600,maxWidth:46,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',textAlign:'center'}}>{isOut?'🔴':'🟢'} {firstName}</span>
+                  })()}
+                </div>
+              )}
             </div>)})}
         </div>))}
     </div>)

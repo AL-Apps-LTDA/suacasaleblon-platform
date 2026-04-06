@@ -263,6 +263,52 @@ export function splitReservationByMonth(r: HospitableReservation): ProRataEntry[
   return entries
 }
 
+/**
+ * Block dates on the Hospitable calendar so OTAs (Airbnb, Booking) mark them unavailable.
+ * Used after a direct reservation is confirmed via Stripe.
+ */
+export async function blockCalendarDates(
+  apartmentCode: string,
+  checkin: string,
+  checkout: string,
+  note?: string
+): Promise<{ ok: boolean; blocked: number; error?: string }> {
+  const uuid = PROPERTY_HOSPITABLE_MAP[apartmentCode]
+  if (!uuid) return { ok: false, blocked: 0, error: `Unknown apartment: ${apartmentCode}` }
+
+  // Build array of dates from checkin to checkout (exclusive of checkout day)
+  const dates: { date: string; available: boolean }[] = []
+  const start = new Date(`${checkin}T00:00:00`)
+  const end = new Date(`${checkout}T00:00:00`)
+
+  for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    dates.push({ date: dateStr, available: false })
+  }
+
+  if (dates.length === 0) return { ok: false, blocked: 0, error: 'No dates to block' }
+
+  const url = `${HOSPITABLE_BASE_URL}/properties/${uuid}/calendar`
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${getApiKey()}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({ data: dates }),
+  })
+
+  if (!res.ok) {
+    const body = await res.text()
+    console.error(`Failed to block calendar dates for ${apartmentCode}: ${res.status} ${body}`)
+    return { ok: false, blocked: 0, error: `Hospitable API ${res.status}: ${body}` }
+  }
+
+  console.log(`✅ Blocked ${dates.length} dates on Hospitable for apt ${apartmentCode} (${checkin} → ${checkout})${note ? ` — ${note}` : ''}`)
+  return { ok: true, blocked: dates.length }
+}
+
 export async function testConnection(): Promise<{ ok: boolean; error?: string }> {
   try {
     await hospitableFetch('/reservations', {
