@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { siteConfig } from '@/lib/config'
-import { PROPERTY_HOSPITABLE_MAP } from '@/lib/types'
+import { PROPERTY_HOSPITABLE_MAP, DEFAULTS } from '@/lib/types'
+import { createClient } from '@supabase/supabase-js'
 
 function nightsBetween(ci: string, co: string): number | null {
   const a = new Date(`${ci}T00:00:00`)
@@ -58,6 +59,26 @@ function getProperty(code: string) {
   return siteConfig.properties.find(p => p.code === code)
 }
 
+// Fetch per-apartment cleaning_fee from Supabase (returns null if column doesn't exist yet or no value)
+async function getApartmentCleaningFee(code: string): Promise<number | null> {
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+    )
+    const { data } = await supabase
+      .from('apartments')
+      .select('cleaning_fee')
+      .eq('code', code)
+      .eq('active', true)
+      .single()
+    if (data?.cleaning_fee != null) return Number(data.cleaning_fee)
+    return null
+  } catch {
+    return null
+  }
+}
+
 function round2(n: number) {
   return Math.round(n * 100) / 100
 }
@@ -109,7 +130,9 @@ export async function POST(request: NextRequest) {
     const discountedDaily = dailyRates.map(r => round2(r * (1 - discountPct)))
     const nightsSubtotal = round2(discountedDaily.reduce((a, b) => a + b, 0))
 
-    const cleaningFee = pricing.cleaning_fee
+    // Per-apartment cleaning fee: Supabase apartment config > static property config > global pricing > DEFAULTS fallback
+    const dbCleaningFee = await getApartmentCleaningFee(propertyCode)
+    const cleaningFee = dbCleaningFee ?? p.cleaning_fee ?? pricing.cleaning_fee ?? DEFAULTS.cleaning_fee
     const extraGuests = Math.max(0, g - p.base_guests)
     const extrasTotal = extraGuests * p.extra_per_guest_per_night * n
     const total = round2(nightsSubtotal + cleaningFee + extrasTotal)

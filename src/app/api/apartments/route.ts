@@ -6,14 +6,17 @@ import { createClient } from '@supabase/supabase-js'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+  )
+}
 
-interface AptConfig { code: string; commission_pct: number; owner_name: string | null }
+interface AptConfig { code: string; commission_pct: number; owner_name: string | null; cleaning_fee: number | null }
 
 export async function GET() {
+  const supabase = getSupabase()
   const now = new Date()
   const brNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
   const todayStr = brNow.toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })
@@ -24,7 +27,7 @@ export async function GET() {
   try {
     // 1. Load apartment configs (commission rates, owner info)
     const { data: aptConfigs } = await supabase
-      .from('apartments').select('code, commission_pct, owner_name').eq('active', true)
+      .from('apartments').select('code, commission_pct, owner_name, cleaning_fee').eq('active', true)
     const configMap: Record<string, AptConfig> = {}
     for (const a of (aptConfigs || [])) configMap[a.code] = a
 
@@ -51,42 +54,47 @@ export async function GET() {
       }
     } catch (e: any) { console.error('[Hospitable fetch error]', e.message) }
 
-    // Fallback: if live API returned nothing, use cached reservations from Supabase
-    if (hospReservations.length === 0 && dbReservations && dbReservations.length > 0) {
-      hospReservations = dbReservations.map(r => ({
-        id: r.id,
-        platform: r.platform || '',
-        status: r.status || 'accepted',
-        arrivalDate: r.checkin,
-        departureDate: r.checkout,
-        guestName: r.guest_name || 'Unknown',
-        guestCountry: r.guest_country || '',
-        nights: r.nights || 0,
-        guests: r.guests || 0,
-        propertyUuid: '',
-        apartmentName: r.apartment_code,
-        payout: Number(r.payout) || 0,
-        hostServiceFee: Number(r.host_service_fee) || 0,
-        cleaningFee: Number(r.cleaning_fee) || 0,
-        totalPrice: Number(r.total_price) || 0,
-        currency: r.currency || 'BRL',
-        adjustments: [],
-      }))
-      console.log(`[Apartments] Using ${hospReservations.length} cached reservations from Supabase`)
-    }
-
     // 4. Build summaries
     const summaries = []
     for (const name of [...APARTMENTS]) {
       const config = configMap[name]
       const commPct = config?.commission_pct ? Number(config.commission_pct) : DEFAULTS.commission_pct
 
-      const aptRes = hospReservations.filter(r => r.apartmentName === name)
+      // Per-apartment: use Hospitable API data, fallback to Supabase cache if empty for THIS apartment
+      let aptRes = hospReservations.filter(r => r.apartmentName === name)
+      let hospSource = 'hospitable_api'
+      if (aptRes.length === 0 && dbReservations && dbReservations.length > 0) {
+        const cachedForApt = dbReservations.filter(r => r.apartment_code === name)
+        if (cachedForApt.length > 0) {
+          aptRes = cachedForApt.map(r => ({
+            id: r.id,
+            platform: r.platform || '',
+            status: r.status || 'accepted',
+            arrivalDate: r.checkin,
+            departureDate: r.checkout,
+            guestName: r.guest_name || 'Unknown',
+            guestCountry: r.guest_country || '',
+            nights: r.nights || 0,
+            guests: r.guests || 0,
+            propertyUuid: '',
+            apartmentName: r.apartment_code,
+            payout: Number(r.payout) || 0,
+            hostServiceFee: Number(r.host_service_fee) || 0,
+            cleaningFee: Number(r.cleaning_fee) || 0,
+            totalPrice: Number(r.total_price) || 0,
+            currency: r.currency || 'BRL',
+            adjustments: [],
+          }))
+          hospSource = 'supabase_cache'
+        }
+      }
       const proRata = aptRes.flatMap(r => splitReservationByMonth(r))
       const aptAirbnb = (dbAirbnb || []).filter(t => t.apartment_code === name)
       const aptExpenses = (dbExpenses || []).filter(e => e.apartment_code === name)
       const aptAppExp = (dbAppExpenses || []).filter(e => e.apartment_code === name)
       const aptDirect = (dbDirect || []).filter(r => r.apartment_code === name)
+
+      console.log(`[Apartments] ${name}: hospitable=${aptRes.length} (${hospSource}), airbnb_csv=${aptAirbnb.length}, direct=${aptDirect.length}, expenses=${aptExpenses.length}`)
 
       const months = MONTHS_SHORT.map((label, mi) => {
         if (mi > currentMonth) return emptyMonth(label)

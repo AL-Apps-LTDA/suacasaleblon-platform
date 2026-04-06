@@ -5,10 +5,14 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+export const dynamic = 'force-dynamic'
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  )
+}
 
 const HOSPITABLE_BASE = 'https://public.api.hospitable.com/v2'
 const HOSPITABLE_TOKEN = process.env.HOSPITABLE_API_KEY!
@@ -53,6 +57,7 @@ function mapPropertyName(name: string): string | null {
 }
 
 export async function POST() {
+  const supabase = getSupabase()
   try {
     const properties = await fetchAllPages('/properties')
     const nowStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' })

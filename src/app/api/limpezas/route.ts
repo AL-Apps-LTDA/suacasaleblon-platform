@@ -6,10 +6,14 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+export const dynamic = 'force-dynamic'
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  )
+}
 
 function hash(pw: string) {
   return crypto.createHash('sha256').update(pw).digest('hex')
@@ -40,7 +44,7 @@ async function getUser(req: NextRequest) {
   try {
     const decoded = Buffer.from(auth.slice(6), 'base64').toString()
     const [username, password] = decoded.split(':')
-    const { data } = await supabase
+    const { data } = await getSupabase()
       .from('app_users')
       .select('*')
       .eq('username', username)
@@ -53,6 +57,7 @@ async function getUser(req: NextRequest) {
 function isAdmin(user: any) { return user?.role === 'admin' }
 
 export async function GET(req: NextRequest) {
+  const supabase = getSupabase()
   const { searchParams } = new URL(req.url)
   const action = searchParams.get('action')
 
@@ -195,6 +200,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const supabase = getSupabase()
   const body = await req.json()
   const action = body.action
 

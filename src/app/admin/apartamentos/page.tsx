@@ -8,14 +8,14 @@ interface Apartment {
   owner_name: string | null; owner_email: string | null; owner_phone: string | null
   commission_pct: number; commission_valid_from: string | null; address: string | null
   hospitable_uuid: string | null; show_on_site: boolean; active: boolean
-  max_guests: number; base_guests: number; extra_per_guest_per_night: number
+  max_guests: number; base_guests: number; extra_per_guest_per_night: number; cleaning_fee: number
 }
 
 const EMPTY: Partial<Apartment> = {
   code: '', title: '', subtitle: '', slug: '', owner_name: '', owner_email: '', owner_phone: '',
   commission_pct: 0.15, commission_valid_from: new Date().toLocaleDateString('sv-SE'),
   address: '', hospitable_uuid: '', show_on_site: true, active: true,
-  max_guests: 2, base_guests: 2, extra_per_guest_per_night: 0,
+  max_guests: 2, base_guests: 2, extra_per_guest_per_night: 0, cleaning_fee: 150,
 }
 
 export default function ApartamentosPage() {
@@ -210,7 +210,7 @@ export default function ApartamentosPage() {
               {/* Hospedes */}
               <div className="border-t border-[rgb(var(--adm-border))] pt-4">
                 <p className="text-xs font-bold text-[rgb(var(--adm-accent))] mb-3">Hóspedes & Preço</p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
                     <label className={labelCls}>Máx hóspedes</label>
                     <input type="number" className={inputCls} value={form.max_guests || ''} onChange={e => f('max_guests', Number(e.target.value))} min="1" />
@@ -222,6 +222,10 @@ export default function ApartamentosPage() {
                   <div>
                     <label className={labelCls}>Extra/hósp/noite</label>
                     <input type="number" className={inputCls} value={form.extra_per_guest_per_night || ''} onChange={e => f('extra_per_guest_per_night', Number(e.target.value))} min="0" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Taxa limpeza (R$)</label>
+                    <input type="number" className={inputCls} value={form.cleaning_fee ?? ''} onChange={e => f('cleaning_fee', Number(e.target.value))} min="0" step="10" placeholder="150" />
                   </div>
                 </div>
               </div>

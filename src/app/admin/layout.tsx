@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { LayoutDashboard, CalendarDays, FileText, Settings, Activity, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2 } from 'lucide-react'
 import { AdminThemeToggle } from '@/components/AdminThemeToggle'
+import { AdminPWAHead } from '@/components/AdminPWAHead'
 
 const ADMIN_PASSWORD = 'suacasa2026'
 
@@ -106,6 +107,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className={`${themeClass} flex h-screen bg-[rgb(var(--adm-bg))] overflow-hidden`}>
+      <AdminPWAHead />
       {/* Sidebar */}
       <aside className="w-60 border-r border-[rgb(var(--adm-border))] bg-[rgb(var(--adm-surface))] flex-col hidden md:flex">
         <div className="h-16 flex items-center px-5 border-b border-[rgb(var(--adm-border))]">
