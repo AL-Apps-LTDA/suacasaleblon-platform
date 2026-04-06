@@ -6,10 +6,14 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+export const dynamic = 'force-dynamic'
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  )
+}
 
 function hash(pw: string) {
   return crypto.createHash('sha256').update(pw).digest('hex')
@@ -40,7 +44,7 @@ async function getUser(req: NextRequest) {
   try {
     const decoded = Buffer.from(auth.slice(6), 'base64').toString()
     const [username, password] = decoded.split(':')
-    const { data } = await supabase
+    const { data } = await getSupabase()
       .from('app_users')
       .select('*')
       .eq('username', username)
@@ -53,6 +57,7 @@ async function getUser(req: NextRequest) {
 function isAdmin(user: any) { return user?.role === 'admin' }
 
 export async function GET(req: NextRequest) {
+  const supabase = getSupabase()
   const { searchParams } = new URL(req.url)
   const action = searchParams.get('action')
 
@@ -195,22 +200,28 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const supabase = getSupabase()
   const body = await req.json()
   const action = body.action
 
   // === AUTH (no user needed) ===
   if (action === 'login') {
-    const { username, password } = body
+    const { username, password, context } = body
     if (!username || !password) return err('Missing credentials')
     const { data } = await supabase
       .from('app_users')
-      .select('id, username, display_name, role, pix_key')
+      .select('id, username, display_name, role, pix_key, access')
       .eq('username', username)
       .eq('password', hash(password))
       .single()
     if (!data) return err('Invalid credentials', 401)
+    // Check access restriction: context = 'leblon' | 'buzios'
+    if (context && Array.isArray(data.access) && !data.access.includes(context)) {
+      return err('Sem acesso a esta área', 403)
+    }
     await supabase.from('login_logs').insert({ user_id: data.id, username: data.username, display_name: data.display_name })
-    return json(data)
+    const { access: _, ...safeData } = data
+    return json(safeData)
   }
 
   const user = await getUser(req)

@@ -1,0 +1,59 @@
+{
+  "name": "Sua Casa Leblon — Admin",
+  "short_name": "SCL Admin",
+  "description": "Painel administrativo Sua Casa Leblon",
+  "start_url": "/admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "background_color": "#0c0c0f",
+  "theme_color": "#c9a96e",
+  "orientation": "any",
+  "categories": ["business"],
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "url": "/admin",
+      "description": "Painel principal"
+    },
+    {
+      "name": "Agenda",
+      "short_name": "Agenda",
+      "url": "/admin/agenda",
+      "description": "Agenda de reservas"
+    },
+    {
+      "name": "Giro",
+      "short_name": "Giro",
+      "url": "/admin/limpezas",
+      "description": "Gestão de limpezas"
+    }
+  ]
+}

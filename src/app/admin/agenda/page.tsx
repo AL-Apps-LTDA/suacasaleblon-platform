@@ -36,7 +36,7 @@ export default function AgendaPage() {
   const [cleanings, setCleanings] = useState<Cleaning[]>([])
   const [loading, setLoading] = useState(true)
   const [month, setMonth] = useState(new Date().getMonth())
-  const [year] = useState(2026)
+  const [year, setYear] = useState(new Date().getFullYear())
   const [filterApt, setFilterApt] = useState('all')
 
   useEffect(() => {
@@ -109,6 +109,10 @@ export default function AgendaPage() {
           <span className="text-sm font-medium text-[rgb(var(--adm-text))] min-w-[120px] text-center">{MONTHS[month]} {year}</span>
           <button onClick={() => setMonth(m => m < 11 ? m + 1 : 0)} className="p-1.5 text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]"><ChevronRight className="h-4 w-4" /></button>
         </div>
+        <select value={year} onChange={e => setYear(Number(e.target.value))}
+          className="bg-[rgb(var(--adm-elevated))] border border-[rgb(var(--adm-border))] rounded-lg px-3 py-2 text-xs font-medium text-[rgb(var(--adm-text))]">
+          {[2025, 2026, 2027, 2028, 2029, 2030].map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
       </div>
 
       {/* Apartment filter */}
@@ -193,7 +197,7 @@ export default function AgendaPage() {
                     <div className={`w-2 h-8 rounded ${APT_COLORS[r.apartment_code]}`} />
                     <div>
                       <span className="text-xs font-medium text-[rgb(var(--adm-text))]">Apt {r.apartment_code}</span>
-                      <span className="text-[10px] text-[rgb(var(--adm-muted))] block">{r.guest_name} • {r.checkin} → {r.checkout}</span>
+                      <span className="text-[10px] text-[rgb(var(--adm-muted))] block">{r.guest_name} • {r.checkin.split('-').reverse().join('/')} → {r.checkout.split('-').reverse().join('/')}</span>
                     </div>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-semibold">{r.source}</span>

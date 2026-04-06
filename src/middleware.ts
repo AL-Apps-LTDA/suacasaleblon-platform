@@ -5,6 +5,7 @@ import { createServerClient } from '@supabase/ssr'
 const SUBDOMAIN_MAP: Record<string, string> = {
   giro: '/giro',           // SaaS product — separate from /equipe
   equipe: '/equipe',       // Diego's internal team tool
+  buzios: '/buzios',
   admin: '/admin',
   proprietarios: '/proprietarios',
 }

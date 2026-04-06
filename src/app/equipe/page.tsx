@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { Loader2, KeyRound, RefreshCw, Eye, EyeOff, X, Camera, Trash2, Plus, Edit3, ChevronDown, CalendarDays, MessageSquare, Phone as PhoneIcon, ClipboardList, DollarSign } from 'lucide-react'
+import { Loader2, KeyRound, RefreshCw, Eye, EyeOff, X, Camera, Trash2, Plus, Edit3, ChevronDown, CalendarDays, MessageSquare, Phone as PhoneIcon, Settings, DollarSign } from 'lucide-react'
 import { LEBLON_APARTMENTS } from '@/lib/types'
 import ContactsTab from './ContactsTab'
 import ChatTab from './ChatTab'
@@ -154,6 +154,9 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
 
   const canComplete=cost!==''&&photos.length>=2
   const isDone=cl.completed||cl.status==='concluida'
+  // Admin or assigned cleaner can edit even completed cleanings
+  const canEdit=isAdm||cl.cleaner_id===user.id
+  const locked=isDone&&!canEdit
 
   const handlePhoto=async(e:React.ChangeEvent<HTMLInputElement>)=>{
     const files=e.target.files;if(!files)return
@@ -223,7 +226,7 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
             <div style={{fontSize:11,color:t.textSecondary}}>{fmtFull(cl.scheduled_date||cl.cleaning_date||cell.date)}</div>
           </div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            {isAdm&&!isDone&&<button onClick={()=>setDeleteConfirm(true)} style={{background:'none',border:'none',cursor:'pointer',padding:4}}><Trash2 size={16} style={{color:t.red}}/></button>}
+            {isAdm&&!locked&&<button onClick={()=>setDeleteConfirm(true)} style={{background:'none',border:'none',cursor:'pointer',padding:4}}><Trash2 size={16} style={{color:t.red}}/></button>}
             <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',padding:4}}><X size={18} style={{color:t.textSecondary}}/></button>
           </div>
         </div>
@@ -287,7 +290,7 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
         <div style={{background:t.inputBg,border:`1.5px solid ${t.inputBorder}`,borderRadius:10,padding:'10px 12px',marginBottom:12}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:extraCosts.length>0||showAddCost?8:0}}>
             <label style={{fontSize:9,fontWeight:700,color:t.textSecondary,textTransform:'uppercase',letterSpacing:'0.05em'}}>💰 Custos adicionais</label>
-            {!isDone&&<button onClick={()=>setShowAddCost(!showAddCost)} style={{display:'flex',alignItems:'center',gap:3,fontSize:10,fontWeight:600,color:t.gold,background:'none',border:'none',cursor:'pointer',padding:0}}>
+            {!locked&&<button onClick={()=>setShowAddCost(!showAddCost)} style={{display:'flex',alignItems:'center',gap:3,fontSize:10,fontWeight:600,color:t.gold,background:'none',border:'none',cursor:'pointer',padding:0}}>
               <Plus size={12}/>{showAddCost?'Cancelar':'Adicionar'}
             </button>}
           </div>
@@ -322,7 +325,7 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:6}}>
                     <span style={{fontSize:11,fontWeight:700,color:t.textPrimary}}>R$ {ec.amount.toFixed(2)}</span>
-                    {!isDone&&<button onClick={()=>setExtraCosts(prev=>prev.filter((_,j)=>j!==i))} style={{background:'none',border:'none',cursor:'pointer',padding:0,display:'flex'}}><X size={12} style={{color:t.red}}/></button>}
+                    {!locked&&<button onClick={()=>setExtraCosts(prev=>prev.filter((_,j)=>j!==i))} style={{background:'none',border:'none',cursor:'pointer',padding:0,display:'flex'}}><X size={12} style={{color:t.red}}/></button>}
                   </div>
                 </div>))}
               <div style={{fontSize:10,color:t.textSecondary,textAlign:'right',marginTop:2}}>
@@ -339,11 +342,11 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
             {photos.map((p,i)=>(
               <div key={i} style={{width:60,height:60,borderRadius:8,overflow:'hidden',position:'relative',border:`1px solid ${t.border}`}}>
                 <img src={p} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
-                {!isDone&&<button onClick={()=>setPhotos(ps=>ps.filter((_,j)=>j!==i))} style={{position:'absolute',top:2,right:2,width:18,height:18,borderRadius:9,background:'rgba(0,0,0,0.5)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                {!locked&&<button onClick={()=>setPhotos(ps=>ps.filter((_,j)=>j!==i))} style={{position:'absolute',top:2,right:2,width:18,height:18,borderRadius:9,background:'rgba(0,0,0,0.5)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <X size={10} style={{color:'#fff'}}/>
                 </button>}
               </div>))}
-            {photos.length<6&&!isDone&&(
+            {photos.length<6&&!locked&&(
               <button onClick={()=>fileRef.current?.click()} style={{width:60,height:60,borderRadius:8,border:`1.5px dashed ${t.border}`,background:'transparent',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:2}}>
                 <Camera size={16} style={{color:t.textSecondary}}/>
                 <span style={{fontSize:8,color:t.textSecondary}}>{photos.length}/6</span>
@@ -356,7 +359,7 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
         {error&&<p style={{color:t.red,fontSize:12,marginBottom:8}}>{error}</p>}
 
         {/* Actions */}
-        {!isDone&&<div style={{display:'flex',gap:8}}>
+        {!locked&&<div style={{display:'flex',gap:8}}>
           {isAdm&&<button onClick={()=>handleSave(false)} disabled={saving} style={{flex:1,padding:'12px 0',borderRadius:10,border:`1.5px solid ${t.btnBorder}`,background:t.btnBg,color:t.btnText,fontSize:13,fontWeight:600,cursor:'pointer',opacity:saving?0.6:1}}>
             {saving?'Salvando...':'Salvar'}
           </button>}
@@ -497,7 +500,7 @@ function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isA
                 if(cell.cleaning)onCellClick(cell)
                 else if(cell.type==='empty'&&isAdm)onEmptyClick(cell.date)
               }}
-              style={{display:'flex',alignItems:'center',justifyContent:'center',height:52,borderRight:ci<6?`1px solid ${t.borderInner}40`:'none',position:'relative',overflow:'hidden',
+              style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:52,padding:'2px 0',borderRight:ci<6?`1px solid ${t.borderInner}40`:'none',position:'relative',overflow:'hidden',
                 cursor:reordering?'default':cell.cleaning||(cell.type==='empty'&&isAdm)?'pointer':'default',
                 background:reordering?t.gold+'08':'transparent',transition:'background 0.2s'}}>
               {reordering?(
@@ -506,7 +509,20 @@ function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isA
                   <Cell cell={cell} t={t}/>
                   {ri<APTS.length-1&&<button onClick={(e)=>{e.stopPropagation();moveRow(ri,1)}} style={{width:16,height:16,borderRadius:4,border:'none',background:t.btnBg,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:t.textSecondary,padding:0}}>↓</button>}
                 </div>
-              ):(<Cell cell={cell} t={t}/>)}
+              ):(
+                <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:1}}>
+                  <Cell cell={cell} t={t}/>
+                  {cell.cleaning&&(()=>{
+                    const d=cell.date
+                    const guest=reservations.find(r=>r.apartment_code===cell.apt&&r.checkout===d)
+                      ||reservations.find(r=>r.apartment_code===cell.apt&&r.checkin===d)
+                    if(!guest)return null
+                    const firstName=guest.guest_name.split(' ')[0]
+                    const isOut=guest.checkout===d
+                    return<span style={{fontSize:7,lineHeight:'1',color:isOut?'#ef4444':'#22c55e',fontWeight:600,maxWidth:46,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',textAlign:'center'}}>{isOut?'🔴':'🟢'} {firstName}</span>
+                  })()}
+                </div>
+              )}
             </div>)})}
         </div>))}
     </div>)
@@ -530,15 +546,15 @@ function Login({onLogin,t}:{onLogin:(u:string,p:string)=>void;t:T}){
   const go=async()=>{
     if(!u||!p){setEr('Preencha usuário e senha');return}
     setLd(true);setEr('')
-    try{const r=await fetch('/api/limpezas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'login',username:u,password:p})})
+    try{const r=await fetch('/api/limpezas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'login',username:u,password:p,context:'leblon'})})
       const d=await r.json();if(!r.ok||d.error){setEr(d.error||'Credenciais inválidas');setLd(false);return}
       localStorage.setItem('equipe_auth',btoa(`${u}:${p}`));localStorage.setItem('equipe_user',JSON.stringify(d));onLogin(u,p)
     }catch{setEr('Erro de conexão')};setLd(false)}
   return(
     <div style={{minHeight:'100vh',background:t.bg,display:'flex',alignItems:'center',justifyContent:'center',padding:24}}>
       <div style={{width:'100%',maxWidth:320,textAlign:'center'}}>
-        <img src="/images/logo.png" alt="Giro Temporada" style={{width:56,height:56,borderRadius:16,margin:'0 auto 16px'}} />
-        <h1 style={{fontSize:18,fontWeight:700,color:t.textPrimary,marginBottom:4}}>Giro Temporada</h1>
+        <img src="/images/logo.png" alt="Equipe Sua Casa" style={{width:56,height:56,borderRadius:16,margin:'0 auto 16px'}} />
+        <h1 style={{fontSize:18,fontWeight:700,color:t.textPrimary,marginBottom:4}}>Equipe Sua Casa</h1>
         <p style={{fontSize:12,color:t.textSecondary,marginBottom:24}}>Faça login para acessar</p>
         <div style={{display:'flex',flexDirection:'column',gap:12}}>
           <input type="text" placeholder="Usuário" value={u} onChange={e=>{setU(e.target.value);setEr('')}} onKeyDown={e=>e.key==='Enter'&&go()}
@@ -560,7 +576,7 @@ function Login({onLogin,t}:{onLogin:(u:string,p:string)=>void;t:T}){
 export default function EquipePage(){
   const [authed,setAuthed]=useState(false);const [token,setToken]=useState('')
   const [dark,setDark]=useState(false);const [loading,setLoading]=useState(true);const [refreshing,setRefreshing]=useState(false)
-  const [activeTab,setActiveTab]=useState<'agenda'|'chat'|'contatos'|'gestao'|'custos'>('agenda')
+  const [activeTab,setActiveTab]=useState<'agenda'|'custos'|'chat'|'config'>('agenda')
   const [res,setRes]=useState<Res[]>([]);const [clns,setClns]=useState<Cln[]>([])
   const [user,setUser]=useState<AppUser|null>(null);const [cleaners,setCleaners]=useState<AppUser[]>([])
   const [modal,setModal]=useState<DayCell|null>(null);const [createDate,setCreateDate]=useState<string|null>(null)
@@ -573,6 +589,17 @@ export default function EquipePage(){
     if(s){setToken(s);setAuthed(true);if(u)try{setUser(JSON.parse(u))}catch{}}else{setLoading(false)}
   },[])
   useEffect(()=>{localStorage.setItem('equipe_theme',dark?'dark':'light')},[dark])
+
+  // PWA: override manifest and meta tags for Giro Temporada
+  useEffect(()=>{
+    const ml=document.querySelector('link[rel="manifest"]')
+    if(ml)ml.setAttribute('href','/manifest-equipe.json')
+    const tc=document.querySelector('meta[name="theme-color"]')
+    if(tc)tc.setAttribute('content','#b08a40')
+    const at=document.querySelector('meta[name="apple-mobile-web-app-title"]')
+    if(at)at.setAttribute('content','Equipe Sua Casa')
+    document.title='Equipe Sua Casa'
+  },[])
 
   const fetchData=useCallback(async(tk:string)=>{
     try{
@@ -602,9 +629,9 @@ export default function EquipePage(){
       {/* Header */}
       <div style={{position:'sticky',top:0,zIndex:20,background:t.bg+'f2',backdropFilter:'blur(10px)',borderBottom:`2px solid ${t.border}`,padding:'10px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
-          <img src="/images/logo.png" alt="Giro" style={{width:32,height:32,borderRadius:8}} />
+          <img src="/images/logo.png" alt="Equipe" style={{width:32,height:32,borderRadius:8}} />
           <div>
-            <div style={{fontSize:15,fontWeight:700,color:t.textPrimary}}>Giro Temporada</div>
+            <div style={{fontSize:15,fontWeight:700,color:t.textPrimary}}>Equipe Sua Casa</div>
             {user&&<div style={{fontSize:9,color:t.textSecondary}}>{user.display_name} ({user.role})</div>}
           </div>
         </div>
@@ -636,10 +663,11 @@ export default function EquipePage(){
           </div>
         ))}
 
-        {activeTab==='chat'&&user&&<ChatTab t={t} token={token} user={user} allUsers={cleaners}/>}
-        {activeTab==='contatos'&&<ContactsTab t={t} token={token} userId={user?.id}/>}
-        {activeTab==='gestao'&&<div style={{padding:'40px 20px',textAlign:'center',color:t.textSecondary,fontSize:13}}>Gestão — em breve</div>}
         {activeTab==='custos'&&<div style={{padding:'40px 20px',textAlign:'center',color:t.textSecondary,fontSize:13}}>Custos — em breve</div>}
+        {activeTab==='chat'&&user&&<ChatTab t={t} token={token} user={user} allUsers={cleaners}/>}
+        {activeTab==='config'&&<div style={{maxWidth:600,margin:'0 auto'}}>
+          <ContactsTab t={t} token={token} userId={user?.id}/>
+        </div>}
       </div>
 
       {/* Modals */}
@@ -650,10 +678,9 @@ export default function EquipePage(){
       <div style={{position:'fixed',bottom:0,left:0,right:0,zIndex:30,background:t.bg,borderTop:`1.5px solid ${t.border}`,display:'flex',justifyContent:'space-around',padding:'6px 0 env(safe-area-inset-bottom, 8px)'}}>
         {([
           {key:'agenda',label:'Agenda',icon:CalendarDays},
-          {key:'chat',label:'Chat',icon:MessageSquare},
-          {key:'contatos',label:'Contatos',icon:PhoneIcon},
-          {key:'gestao',label:'Gestão',icon:ClipboardList},
           {key:'custos',label:'Custos',icon:DollarSign},
+          {key:'chat',label:'Chat',icon:MessageSquare},
+          {key:'config',label:'Config',icon:Settings},
         ] as const).map(tab=>{
           const active=activeTab===tab.key
           return(

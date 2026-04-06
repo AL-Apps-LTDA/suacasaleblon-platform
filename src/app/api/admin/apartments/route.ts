@@ -10,7 +10,7 @@ function getSupabase() {
   )
 }
 
-const FIELDS = 'id, code, title, subtitle, slug, owner_name, owner_email, owner_phone, commission_pct, commission_valid_from, address, hospitable_uuid, show_on_site, active, max_guests, base_guests, extra_per_guest_per_night, created_at'
+const FIELDS = 'id, code, title, subtitle, slug, owner_name, owner_email, owner_phone, commission_pct, commission_valid_from, address, hospitable_uuid, show_on_site, active, max_guests, base_guests, extra_per_guest_per_night, cleaning_fee, created_at'
 
 export async function GET() {
   const supabase = getSupabase()
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   const supabase = getSupabase()
   const body = await request.json()
 
-  const { code, title, subtitle, slug, owner_name, owner_email, owner_phone, commission_pct, commission_valid_from, address, hospitable_uuid, show_on_site, max_guests, base_guests, extra_per_guest_per_night } = body
+  const { code, title, subtitle, slug, owner_name, owner_email, owner_phone, commission_pct, commission_valid_from, address, hospitable_uuid, show_on_site, max_guests, base_guests, extra_per_guest_per_night, cleaning_fee } = body
 
   if (!code || !title) {
     return NextResponse.json({ error: 'Codigo e titulo sao obrigatorios' }, { status: 400 })
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
     max_guests: max_guests || 2,
     base_guests: base_guests || 2,
     extra_per_guest_per_night: extra_per_guest_per_night || 0,
+    cleaning_fee: cleaning_fee != null ? Number(cleaning_fee) : 150,
   }).select(FIELDS).single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

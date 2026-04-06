@@ -5,10 +5,23 @@ import {
   Loader2, RefreshCw, Building2, TrendingUp, TrendingDown,
   ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
   Calendar, Users, DollarSign, Briefcase, UserCheck, ExternalLink,
-  BarChart3, Hotel, Percent, BedDouble
+  BarChart3, Hotel, Percent, BedDouble, Search
 } from 'lucide-react'
 import type { ApartmentSummary, MonthData, BizExpense } from '@/lib/types'
 import { parseBRL, fmtBRL, getMonthIndex, MONTHS_SHORT, MONTHS_FULL, APARTMENTS } from '@/lib/types'
+
+// Format a date value: "2026-03-05" → "05/03/2026", or day number "5" + month context → "05/03/2026"
+function fmtDate(val: string, monthIdx?: number, year = 2026): string {
+  if (val.includes('-')) {
+    const [y, m, d] = val.split('-')
+    return `${d}/${m}/${y}`
+  }
+  const day = parseInt(val)
+  if (!isNaN(day) && monthIdx !== undefined) {
+    return `${String(day).padStart(2, '0')}/${String(monthIdx + 1).padStart(2, '0')}/${year}`
+  }
+  return val
+}
 
 function filterMonths(months: MonthData[], filter: string, sel: number): MonthData[] {
   if (filter === 'all') return months
@@ -98,6 +111,106 @@ function MiniChart({ data, label }: { data: { month: string; value: number }[]; 
   )
 }
 
+function DualBarChart({ revenueData, expenseData, label }: { revenueData: { month: string; value: number }[]; expenseData: { month: string; value: number }[]; label: string }) {
+  const allVals = [...revenueData.map(d => d.value), ...expenseData.map(d => Math.abs(d.value))]
+  const max = Math.max(...allVals, 1)
+  const gridLines = [0.25, 0.5, 0.75, 1].map(pct => Math.round(max * pct))
+  return (
+    <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl p-5">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-[10px] text-[rgb(var(--adm-muted))] font-medium uppercase tracking-wider">{label}</p>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1 text-[9px] text-[rgb(var(--adm-muted))]"><span className="w-2 h-2 rounded-sm bg-emerald-400/70" />Receita</span>
+          <span className="flex items-center gap-1 text-[9px] text-[rgb(var(--adm-muted))]"><span className="w-2 h-2 rounded-sm bg-red-400/70" />Despesa</span>
+        </div>
+      </div>
+      <div className="relative">
+        {/* Grid lines */}
+        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none" style={{ bottom: '20px' }}>
+          {gridLines.reverse().map((v, i) => (
+            <div key={i} className="flex items-center gap-2 border-b border-[rgb(var(--adm-border)/0.15)]">
+              <span className="text-[8px] text-[rgb(var(--adm-muted)/0.50)] font-mono w-10 text-right shrink-0">{v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v.toFixed(0)}</span>
+            </div>
+          ))}
+        </div>
+        {/* Bars */}
+        <div className="flex items-end gap-1 h-40 pl-12">
+          {revenueData.map((d, i) => {
+            const rH = max > 0 ? Math.max((d.value / max) * 100, d.value > 0 ? 3 : 0) : 0
+            const eH = max > 0 ? Math.max((Math.abs(expenseData[i]?.value || 0) / max) * 100, expenseData[i]?.value ? 3 : 0) : 0
+            const cm = new Date().getMonth()
+            const isCurrent = i === cm
+            return (
+              <div key={i} className={`flex-1 flex flex-col items-center justify-end gap-0.5 ${isCurrent ? 'opacity-100' : 'opacity-80'}`} title={`${d.month}: Rec ${fmtBRL(d.value)} | Desp ${fmtBRL(Math.abs(expenseData[i]?.value || 0))}`}>
+                <div className="flex items-end gap-[2px] w-full justify-center" style={{ height: '100%' }}>
+                  <div className={`flex-1 max-w-[14px] rounded-t transition-all ${isCurrent ? 'bg-emerald-400' : 'bg-emerald-400/60'}`} style={{ height: `${rH}%` }} />
+                  <div className={`flex-1 max-w-[14px] rounded-t transition-all ${isCurrent ? 'bg-red-400' : 'bg-red-400/50'}`} style={{ height: `${eH}%` }} />
+                </div>
+                <span className={`text-[8px] leading-none mt-1 ${isCurrent ? 'text-[rgb(var(--adm-accent))] font-bold' : 'text-[rgb(var(--adm-muted))]'}`}>{d.month.slice(0, 3)}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AptBreakdownChart({ apts, filter, sel }: { apts: ApartmentSummary[]; filter: string; sel: number }) {
+  const aptData = apts.map(a => {
+    const f = filterMonths(a.months || [], filter, sel)
+    return { name: a.name, rec: sumF(f, 'receitaTotal'), desp: sumF(f, 'despesaTotal') }
+  }).sort((a, b) => b.rec - a.rec)
+  const max = Math.max(...aptData.map(d => d.rec), 1)
+  const colors = ['bg-emerald-400', 'bg-sky-400', 'bg-violet-400', 'bg-amber-400', 'bg-rose-400', 'bg-teal-400']
+  return (
+    <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl p-5">
+      <p className="text-[10px] text-[rgb(var(--adm-muted))] font-medium uppercase tracking-wider mb-4">Receita por Apartamento</p>
+      <div className="space-y-2.5">
+        {aptData.map((d, i) => {
+          const pct = max > 0 ? (d.rec / max) * 100 : 0
+          return (
+            <div key={d.name} className="flex items-center gap-3">
+              <span className="text-[11px] font-medium text-[rgb(var(--adm-text))] w-10 shrink-0">{d.name}</span>
+              <div className="flex-1 h-5 bg-[rgb(var(--adm-elevated))] rounded overflow-hidden relative">
+                <div className={`h-full rounded ${colors[i % colors.length]}/60 transition-all`} style={{ width: `${Math.max(pct, 2)}%` }} />
+                {pct > 20 && <span className="absolute inset-y-0 left-2 flex items-center text-[9px] font-mono font-bold text-white/90">{fmtBRL(d.rec)}</span>}
+              </div>
+              {pct <= 20 && <span className="text-[9px] font-mono text-[rgb(var(--adm-muted))] shrink-0">{fmtBRL(d.rec)}</span>}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function fmtDateCol(val: string, monthIdx?: number): string {
+  // If val looks like a full date (YYYY-MM-DD or DD/MM/YYYY), parse it
+  if (val.includes('-') || val.includes('/')) {
+    const d = new Date(val)
+    if (!isNaN(d.getTime())) {
+      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
+    }
+  }
+  // If val is just a day number, combine with month index
+  const day = parseInt(val)
+  if (!isNaN(day) && day >= 1 && day <= 31 && monthIdx !== undefined && monthIdx >= 0) {
+    return `${String(day).padStart(2, '0')}/${String(monthIdx + 1).padStart(2, '0')}`
+  }
+  return val
+}
+
+function sourceBadge(source: string) {
+  const label = source === 'airbnb_csv' ? 'CSV' : source
+  const cls = source === 'whatsapp'
+    ? 'bg-green-500/15 text-green-400'
+    : source === 'site'
+    ? 'bg-[rgb(var(--adm-accent)/0.15)] text-[rgb(var(--adm-accent))]'
+    : 'bg-blue-500/15 text-blue-400'
+  return <span className={`text-[8px] px-1.5 py-0.5 rounded font-semibold inline-block ${cls}`}>{label}</span>
+}
+
 function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; sel: number }) {
   const [open, setOpen] = useState(false)
   const fm = useMemo(() => filterMonths(apt.months || [], filter, sel), [apt.months, filter, sel])
@@ -105,6 +218,9 @@ function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; 
   const com = sumF(fm, 'managerCommission'), own = fm.reduce((s, m) => s + ownerPart(m), 0)
   const pct = (apt as any).commissionPct
   const dr = apt.directReservations || []
+
+  const thCls = 'py-1.5 px-2 text-[9px] text-[rgb(var(--adm-muted))] font-semibold uppercase tracking-wider'
+  const tdCls = 'py-1.5 px-2 text-[11px]'
 
   return (
     <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl hover:border-[rgb(var(--adm-accent)/0.30)] transition-all">
@@ -149,50 +265,126 @@ function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; 
         </div>
       </div>
       {open && (
-        <div className="px-4 pb-4 space-y-2 border-t border-[rgb(var(--adm-border))] pt-3">
+        <div className="px-4 pb-4 space-y-3 border-t border-[rgb(var(--adm-border))] pt-3">
+          {/* Direct Reservations Table */}
           {dr.length > 0 && (
             <div className="bg-[rgb(var(--adm-accent)/0.5)] border border-[rgb(var(--adm-accent)/0.20)] rounded-xl p-3">
               <h5 className="text-[10px] text-[rgb(var(--adm-accent))] font-semibold mb-2 uppercase flex items-center gap-1"><UserCheck className="h-3 w-3" /> Reservas Diretas ({dr.length})</h5>
-              {dr.map((r, i) => (
-                <div key={i} className="bg-[rgb(var(--adm-surface)/0.60)] rounded-lg p-2 border border-[rgb(var(--adm-border)/0.50)] mb-1">
-                  <div className="flex items-center gap-2 text-[10px] text-[rgb(var(--adm-muted))]"><Calendar className="h-3 w-3" />{r.checkin} → {r.checkout}</div>
-                  <div className="flex justify-between mt-1"><span className="text-[11px] text-[rgb(var(--adm-text))]">{r.guest}</span><span className="font-mono text-xs font-bold text-[rgb(var(--adm-accent))]">{r.totalValue}</span></div>
-                </div>
-              ))}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[rgb(var(--adm-accent)/0.15)]">
+                      <th className={`${thCls} text-left`}>Check-in / Check-out</th>
+                      <th className={`${thCls} text-left`}>Hóspede</th>
+                      <th className={`${thCls} text-right`}>Receita</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dr.map((r, i) => (
+                      <tr key={i} className="border-b border-[rgb(var(--adm-border)/0.20)] last:border-0">
+                        <td className={`${tdCls} font-mono text-[rgb(var(--adm-muted))]`}>
+                          <Calendar className="h-3 w-3 inline mr-1 opacity-50" />{fmtDateCol(r.checkin)} → {fmtDateCol(r.checkout)}
+                        </td>
+                        <td className={`${tdCls} text-[rgb(var(--adm-text))]`}>{r.guest}</td>
+                        <td className={`${tdCls} text-right font-mono font-bold text-[rgb(var(--adm-accent))]`}>{r.totalValue}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
+
+          {/* Monthly Breakdown */}
           {fm.map(md => {
             const mi = getMonthIndex(md.month), ml = mi >= 0 ? MONTHS_FULL[mi] : md.month
             const r = parseBRL(md.receitaTotal), rs = parseBRL(md.resultado)
             if (r === 0 && md.expenses.length === 0 && md.reservations.length === 0) return null
+            const reservationsCount = md.reservations.filter(rv => rv.source !== 'adjustment').length
             return (
-              <div key={md.month} className="bg-[rgb(var(--adm-elevated)/0.50)] rounded-lg p-3 border border-[rgb(var(--adm-border)/0.50)]">
-                <div className="flex justify-between mb-2"><h4 className="text-xs font-semibold text-[rgb(var(--adm-accent))] flex items-center gap-1"><Calendar className="h-3 w-3" />{ml}</h4><span className={`text-xs font-bold font-mono ${rs >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{fmtBRL(rs)}</span></div>
+              <div key={md.month} className="bg-[rgb(var(--adm-elevated)/0.50)] rounded-xl p-3 border border-[rgb(var(--adm-border)/0.50)]">
+                <div className="flex justify-between mb-3">
+                  <h4 className="text-xs font-semibold text-[rgb(var(--adm-accent))] flex items-center gap-1"><Calendar className="h-3 w-3" />{ml}</h4>
+                  <span className={`text-xs font-bold font-mono ${rs >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{fmtBRL(rs)}</span>
+                </div>
+
+                {/* Reservations Table */}
                 {md.reservations.length > 0 && (
-                  <div className="mb-2">
-                    <h5 className="text-[10px] text-emerald-400 font-semibold mb-1 uppercase flex items-center gap-1"><Users className="h-3 w-3" />Reservas ({md.reservations.filter(r => r.source !== 'adjustment').length})</h5>
-                    {md.reservations.map((rv, ri) => {
-                      const isAdj = rv.source === 'adjustment'
-                      return (
-                        <div key={ri} className={`flex items-center text-[11px] py-1 border-b border-[rgb(var(--adm-border)/0.30)] last:border-0 gap-2 ${isAdj ? 'pl-4 opacity-80' : ''}`}>
-                          {!isAdj ? <span className="font-mono text-[rgb(var(--adm-muted))] w-14 shrink-0">{rv.checkin}→{rv.checkout}</span> : <span className="w-14 shrink-0" />}
-                          <span className={`flex-1 truncate ${isAdj ? 'text-orange-400/80 text-[10px] italic' : 'text-[rgb(var(--adm-text))]'}`}>{rv.guest || '—'}</span>
-                          {rv.source && !isAdj && rv.source !== 'hospitable' && <span className={`text-[8px] px-1 py-0.5 rounded font-semibold ${rv.source === 'whatsapp' ? 'bg-green-500/15 text-green-400' : rv.source === 'site' ? 'bg-[rgb(var(--adm-accent)/0.15)] text-[rgb(var(--adm-accent))]' : 'bg-blue-500/15 text-blue-400'}`}>{rv.source === 'airbnb_csv' ? 'CSV' : rv.source}</span>}
-                          {rv.guestOrigin && !isAdj && <span className="text-[9px] text-[rgb(var(--adm-muted))] max-w-[80px] truncate">{rv.guestOrigin}</span>}
-                          <span className={`font-mono font-medium shrink-0 ${isAdj ? 'text-orange-400' : 'text-emerald-400'}`}>{rv.revenue}</span>
-                        </div>
-                      )
-                    })}
-                    <div className="flex justify-between mt-1.5 pt-1.5 border-t border-[rgb(var(--adm-border)/0.50)] text-[11px]"><span className="text-[rgb(var(--adm-muted))]">Receita Total</span><span className="font-mono font-bold text-emerald-400">{md.receitaTotal}</span></div>
+                  <div className="mb-3">
+                    <h5 className="text-[10px] text-emerald-400 font-semibold mb-1.5 uppercase flex items-center gap-1"><Users className="h-3 w-3" />Reservas ({reservationsCount})</h5>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-[rgb(var(--adm-border)/0.40)]">
+                            <th className={`${thCls} text-left`}>Data</th>
+                            <th className={`${thCls} text-left`}>Hóspede</th>
+                            <th className={`${thCls} text-left`}>Fonte</th>
+                            <th className={`${thCls} text-right`}>Receita</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {md.reservations.map((rv, ri) => {
+                            const isAdj = rv.source === 'adjustment'
+                            return (
+                              <tr key={ri} className={`border-b border-[rgb(var(--adm-border)/0.20)] last:border-0 ${isAdj ? 'opacity-75' : ''} ${ri % 2 === 0 ? '' : 'bg-[rgb(var(--adm-surface)/0.30)]'}`}>
+                                <td className={`${tdCls} font-mono text-[rgb(var(--adm-muted))] whitespace-nowrap`}>
+                                  {!isAdj ? `${fmtDateCol(rv.checkin, mi)} → ${fmtDateCol(rv.checkout, mi)}` : ''}
+                                </td>
+                                <td className={`${tdCls} ${isAdj ? 'text-orange-400/80 italic text-[10px]' : 'text-[rgb(var(--adm-text))]'} max-w-[160px] truncate`}>
+                                  {rv.guest || '\u2014'}
+                                  {rv.guestOrigin && !isAdj && <span className="ml-1 text-[9px] text-[rgb(var(--adm-muted))]">({rv.guestOrigin})</span>}
+                                </td>
+                                <td className={`${tdCls}`}>
+                                  {rv.source && !isAdj && rv.source !== 'hospitable' ? sourceBadge(rv.source) : null}
+                                </td>
+                                <td className={`${tdCls} text-right font-mono font-medium whitespace-nowrap ${isAdj ? 'text-orange-400' : 'text-emerald-400'}`}>
+                                  {rv.revenue}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t border-[rgb(var(--adm-border)/0.50)]">
+                            <td className={`${tdCls} font-bold text-[rgb(var(--adm-muted))]`} colSpan={3}>Total</td>
+                            <td className={`${tdCls} text-right font-mono font-bold text-emerald-400`}>{md.receitaTotal}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
                   </div>
                 )}
+
+                {/* Expenses Table */}
                 {md.expenses.length > 0 && (
                   <div>
-                    <h5 className="text-[10px] text-red-400 font-semibold mb-1 uppercase flex items-center gap-1"><DollarSign className="h-3 w-3" />Despesas ({md.expenses.length})</h5>
-                    {md.expenses.map((e, ei) => (
-                      <div key={ei} className="flex items-center text-[11px] py-1 border-b border-[rgb(var(--adm-border)/0.30)] last:border-0 gap-2"><span className="text-[rgb(var(--adm-text))] flex-1 truncate">{e.label}{e.obs ? ` (${e.obs})` : ''}</span><span className="font-mono text-red-400 font-medium shrink-0">{e.value}</span></div>
-                    ))}
-                    <div className="flex justify-between mt-1.5 pt-1.5 border-t border-[rgb(var(--adm-border)/0.50)] text-[11px]"><span className="text-[rgb(var(--adm-muted))]">Despesa Total</span><span className="font-mono font-bold text-red-400">{md.despesaTotal}</span></div>
+                    <h5 className="text-[10px] text-red-400 font-semibold mb-1.5 uppercase flex items-center gap-1"><DollarSign className="h-3 w-3" />Despesas ({md.expenses.length})</h5>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-[rgb(var(--adm-border)/0.40)]">
+                            <th className={`${thCls} text-left`}>Descrição</th>
+                            <th className={`${thCls} text-right`}>Valor</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {md.expenses.map((e, ei) => (
+                            <tr key={ei} className={`border-b border-[rgb(var(--adm-border)/0.20)] last:border-0 ${ei % 2 === 0 ? '' : 'bg-[rgb(var(--adm-surface)/0.30)]'}`}>
+                              <td className={`${tdCls} text-[rgb(var(--adm-text))]`}>
+                                {e.label}{e.obs ? <span className="ml-1 text-[9px] text-[rgb(var(--adm-muted))]">({e.obs})</span> : ''}
+                              </td>
+                              <td className={`${tdCls} text-right font-mono text-red-400 font-medium whitespace-nowrap`}>{e.value}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t border-[rgb(var(--adm-border)/0.50)]">
+                            <td className={`${tdCls} font-bold text-[rgb(var(--adm-muted))]`}>Total</td>
+                            <td className={`${tdCls} text-right font-mono font-bold text-red-400`}>{md.despesaTotal}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
                   </div>
                 )}
               </div>
@@ -213,6 +405,11 @@ export default function AdminDashboard() {
   const [sel, setSel] = useState(new Date().getMonth() > 0 ? new Date().getMonth() - 1 : 0)
   const [syncing, setSyncing] = useState(false)
   const [lastSync, setLastSync] = useState('')
+  const [activeTab, setActiveTab] = useState<'visao' | 'apartamentos'>('visao')
+  const [aptFilter, setAptFilter] = useState<string>('todos')
+  const [aptTabFilter, setAptTabFilter] = useState<string>('todos')
+  const [aptTabMonth, setAptTabMonth] = useState<number>(-1) // -1 = all months
+  const [aptSearch, setAptSearch] = useState('')
 
   async function loadData() {
     setLoading(true)
@@ -245,16 +442,23 @@ export default function AdminDashboard() {
   useEffect(() => { loadData(); loadLastSync() }, [])
 
   const valid = apts.filter(a => !a.error)
-  const aptCount = valid.length || APARTMENTS.length
+
+  // Filtered apartments for Visao Geral tab (by aptFilter)
+  const filteredValid = useMemo(() => {
+    if (aptFilter === 'todos') return valid
+    return valid.filter(a => a.name === aptFilter)
+  }, [valid, aptFilter])
+
+  const aptCount = aptFilter === 'todos' ? (valid.length || APARTMENTS.length) : filteredValid.length
 
   const totals = useMemo(() => {
     let rec = 0, desp = 0, res = 0, com = 0, own = 0, nights = 0
-    for (const a of valid) {
+    for (const a of filteredValid) {
       const f = filterMonths(a.months || [], filter, sel)
       rec += sumF(f, 'receitaTotal'); desp += sumF(f, 'despesaTotal'); res += sumF(f, 'resultado'); com += sumF(f, 'managerCommission'); own += f.reduce((s, m) => s + ownerPart(m), 0); nights += countNights(f)
     }
     return { rec, desp, res, com, own, nights }
-  }, [valid, filter, sel])
+  }, [filteredValid, filter, sel])
 
   const avail = availableNights(filter, sel, aptCount)
   const occupancy = avail > 0 ? (totals.nights / avail) * 100 : 0
@@ -266,24 +470,46 @@ export default function AdminDashboard() {
   const chartData = useMemo(() => {
     return MONTHS_SHORT.map((label, i) => {
       let revenue = 0
-      for (const a of valid) {
+      for (const a of filteredValid) {
         const md = (a.months || []).find(m => getMonthIndex(m.month) === i)
         if (md) revenue += parseBRL(md.receitaTotal)
       }
       return { month: label, value: revenue }
     })
-  }, [valid])
+  }, [filteredValid])
+
+  const expenseChartData = useMemo(() => {
+    return MONTHS_SHORT.map((label, i) => {
+      let expense = 0
+      for (const a of filteredValid) {
+        const md = (a.months || []).find(m => getMonthIndex(m.month) === i)
+        if (md) expense += parseBRL(md.despesaTotal)
+      }
+      return { month: label, value: expense }
+    })
+  }, [filteredValid])
 
   const commissionChart = useMemo(() => {
     return MONTHS_SHORT.map((label, i) => {
       let com = 0
-      for (const a of valid) {
+      for (const a of filteredValid) {
         const md = (a.months || []).find(m => getMonthIndex(m.month) === i)
         if (md) com += parseBRL(md.managerCommission)
       }
       return { month: label, value: com }
     })
-  }, [valid])
+  }, [filteredValid])
+
+  const resultChart = useMemo(() => {
+    return MONTHS_SHORT.map((label, i) => {
+      let result = 0
+      for (const a of filteredValid) {
+        const md = (a.months || []).find(m => getMonthIndex(m.month) === i)
+        if (md) result += parseBRL(md.resultado)
+      }
+      return { month: label, value: result }
+    })
+  }, [filteredValid])
 
   const bizTotal = useMemo(() => {
     if (!op?.expenses) return 0
@@ -294,6 +520,35 @@ export default function AdminDashboard() {
   }, [op, filter, sel])
 
   const filterLabel = filter === 'all' ? '2026' : filter === 'ytd' ? 'YTD 2026' : MONTHS_FULL[sel]
+
+  // Apartments tab: filtered list
+  const aptTabList = useMemo(() => {
+    let list = valid
+    if (aptTabFilter !== 'todos') list = list.filter(a => a.name === aptTabFilter)
+    if (aptSearch.trim()) {
+      const q = aptSearch.trim().toLowerCase()
+      list = list.filter(a => {
+        if (a.name.toLowerCase().includes(q)) return true
+        // Search in reservations guest names
+        return (a.months || []).some(m =>
+          m.reservations.some(r => r.guest?.toLowerCase().includes(q))
+        )
+      })
+    }
+    return list
+  }, [valid, aptTabFilter, aptSearch])
+
+  // Effective filter/sel for Apartments tab (override month if aptTabMonth is set)
+  const aptTabEffectiveFilter = aptTabMonth >= 0 ? 'month' as const : filter
+  const aptTabEffectiveSel = aptTabMonth >= 0 ? aptTabMonth : sel
+
+  // Pill button style helper
+  const pillBtn = (active: boolean) =>
+    `px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+      active
+        ? 'bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))]'
+        : 'bg-[rgb(var(--adm-elevated))] text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))] border border-[rgb(var(--adm-border))]'
+    }`
 
   return (
     <div className="p-4 md:p-6 space-y-5">
@@ -311,7 +566,27 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Tabs */}
+      <div className="flex items-center gap-1 border-b border-[rgb(var(--adm-border))]">
+        {([{ k: 'visao' as const, l: 'Visão Geral' }, { k: 'apartamentos' as const, l: 'Apartamentos' }]).map(t => (
+          <button
+            key={t.k}
+            onClick={() => setActiveTab(t.k)}
+            className={`px-4 py-2.5 text-sm font-medium transition-all relative ${
+              activeTab === t.k
+                ? 'text-[rgb(var(--adm-accent))]'
+                : 'text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]'
+            }`}
+          >
+            {t.l}
+            {activeTab === t.k && (
+              <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[rgb(var(--adm-accent))] rounded-t" />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Time Filters (shared) */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex rounded-lg border border-[rgb(var(--adm-border))] overflow-hidden text-xs">
           {([{ k: 'month' as const, l: 'Mês' }, { k: 'ytd' as const, l: 'YTD' }, { k: 'all' as const, l: 'Ano' }]).map(f => (
@@ -325,16 +600,31 @@ export default function AdminDashboard() {
             <button onClick={() => setSel(s => s < 11 ? s + 1 : 0)} className="p-1.5 text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]"><ChevronRight className="h-4 w-4" /></button>
           </div>
         )}
+
+        {/* Apartment filter pills — only on Visao Geral tab */}
+        {activeTab === 'visao' && valid.length > 0 && (
+          <>
+            <span className="text-[rgb(var(--adm-border))] hidden sm:inline">|</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button onClick={() => setAptFilter('todos')} className={pillBtn(aptFilter === 'todos')}>Todos</button>
+              {valid.map(a => (
+                <button key={a.name} onClick={() => setAptFilter(a.name)} className={pillBtn(aptFilter === a.name)}>
+                  {a.name}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {loading && <div className="flex items-center justify-center py-20"><Loader2 className="h-5 w-5 animate-spin text-[rgb(var(--adm-accent))]" /><span className="ml-2 text-sm text-[rgb(var(--adm-muted))]">Carregando dados...</span></div>}
       {err && <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-sm text-red-400">{err}</div>}
 
-      {!loading && !err && (<>
+      {!loading && !err && activeTab === 'visao' && (<>
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <MetricCard label="Receita Total" value={fmtBRL(totals.rec)} sub={`${aptCount} imóveis ativos`} icon={DollarSign} color="text-emerald-400" />
-          <MetricCard label="Minha Comissão" value={fmtBRL(totals.com)} sub={`Resultado: ${fmtBRL(totals.com - bizTotal)}`} icon={Briefcase} color="text-[rgb(var(--adm-accent))]" />
+          <MetricCard label="Receita Total" value={fmtBRL(totals.rec)} sub={`${aptCount} imóve${aptCount === 1 ? 'l' : 'is'} ${aptFilter === 'todos' ? 'ativos' : ''}`} icon={DollarSign} color="text-emerald-400" />
+          <MetricCard label="Minha Comissão" value={fmtBRL(totals.com)} sub={aptFilter === 'todos' ? `Resultado: ${fmtBRL(totals.com - bizTotal)}` : undefined} icon={Briefcase} color="text-[rgb(var(--adm-accent))]" />
           <MetricCard label="Despesas Apts" value={fmtBRL(totals.desp)} icon={TrendingDown} color="text-red-400" />
           <MetricCard label="Resultado Líquido" value={fmtBRL(totals.res)} sub={`Repassar: ${fmtBRL(totals.own)}`} icon={BarChart3} color={totals.res >= 0 ? 'text-emerald-400' : 'text-red-400'} />
         </div>
@@ -347,20 +637,22 @@ export default function AdminDashboard() {
           <MetricCard label="RevPAN" value={fmtBRL(revpan)} sub="Receita por apt (período)" icon={Building2} color="text-[rgb(var(--adm-text))]" />
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <MiniChart data={chartData} label="Receita Mensal (todos os apts)" />
-          <MiniChart data={commissionChart} label="Minha Comissão Mensal" />
+        {/* Charts — Expanded */}
+        <DualBarChart revenueData={chartData} expenseData={expenseChartData} label={`Receita vs Despesa Mensal${aptFilter !== 'todos' ? ` — Apt ${aptFilter}` : ''}`} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <AptBreakdownChart apts={filteredValid} filter={filter} sel={sel} />
+          <MiniChart data={commissionChart} label={`Comissão Mensal${aptFilter !== 'todos' ? ` — Apt ${aptFilter}` : ''}`} />
+          <MiniChart data={resultChart} label={`Resultado Mensal${aptFilter !== 'todos' ? ` — Apt ${aptFilter}` : ''}`} />
         </div>
 
         {/* Monthly breakdown table */}
-        {valid.length > 0 && (
+        {filteredValid.length > 0 && (
           <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-accent)/0.20)] rounded-xl p-4">
             <h3 className="text-sm text-[rgb(var(--adm-text))] flex items-center gap-2 mb-3 font-semibold"><Calendar className="h-4 w-4 text-[rgb(var(--adm-accent))]" />Resumo por Apt — {filterLabel}</h3>
             <div className="overflow-x-auto"><table className="w-full text-xs"><thead><tr className="border-b border-[rgb(var(--adm-border))]">
               {['Apt', '% Com.', 'Receita', 'Despesa', 'Comissão', 'Proprietário', 'Resultado'].map(h => <th key={h} className={`py-2 px-2 text-[rgb(var(--adm-muted))] font-medium ${h === 'Apt' || h === '% Com.' ? 'text-left' : 'text-right'}`}>{h}</th>)}
             </tr></thead><tbody>
-              {valid.map(a => {
+              {filteredValid.map(a => {
                 const f = filterMonths(a.months || [], filter, sel), r = sumF(f, 'receitaTotal'), d = sumF(f, 'despesaTotal'), rs = sumF(f, 'resultado'), c = sumF(f, 'managerCommission'), o = f.reduce((s, m) => s + ownerPart(m), 0)
                 const pct = (a as any).commissionPct
                 return (
@@ -375,20 +667,22 @@ export default function AdminDashboard() {
                   </tr>
                 )
               })}
-              <tr className="border-t-2 border-[rgb(var(--adm-accent)/0.30)] font-bold">
-                <td className="py-2 px-2 text-[rgb(var(--adm-accent))]" colSpan={2}>TOTAL</td>
-                <td className="py-2 px-2 text-right font-mono text-emerald-400">{fmtBRL(totals.rec)}</td>
-                <td className="py-2 px-2 text-right font-mono text-red-400">{fmtBRL(totals.desp)}</td>
-                <td className="py-2 px-2 text-right font-mono text-[rgb(var(--adm-accent))]">{fmtBRL(totals.com)}</td>
-                <td className="py-2 px-2 text-right font-mono text-emerald-400">{fmtBRL(totals.own)}</td>
-                <td className={`py-2 px-2 text-right font-mono ${totals.res >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{fmtBRL(totals.res)}</td>
-              </tr>
+              {filteredValid.length > 1 && (
+                <tr className="border-t-2 border-[rgb(var(--adm-accent)/0.30)] font-bold">
+                  <td className="py-2 px-2 text-[rgb(var(--adm-accent))]" colSpan={2}>TOTAL</td>
+                  <td className="py-2 px-2 text-right font-mono text-emerald-400">{fmtBRL(totals.rec)}</td>
+                  <td className="py-2 px-2 text-right font-mono text-red-400">{fmtBRL(totals.desp)}</td>
+                  <td className="py-2 px-2 text-right font-mono text-[rgb(var(--adm-accent))]">{fmtBRL(totals.com)}</td>
+                  <td className="py-2 px-2 text-right font-mono text-emerald-400">{fmtBRL(totals.own)}</td>
+                  <td className={`py-2 px-2 text-right font-mono ${totals.res >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{fmtBRL(totals.res)}</td>
+                </tr>
+              )}
             </tbody></table></div>
           </div>
         )}
 
         {/* Operational costs */}
-        {op?.expenses && op.expenses.length > 0 && (
+        {aptFilter === 'todos' && op?.expenses && op.expenses.length > 0 && (
           <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl p-4">
             <div className="flex items-center justify-between mb-3"><h3 className="text-sm text-[rgb(var(--adm-text))] flex items-center gap-2 font-semibold"><Briefcase className="h-4 w-4 text-[rgb(var(--adm-accent))]" />Custos Operação</h3><span className="text-sm font-bold font-mono text-red-400">{fmtBRL(bizTotal)}</span></div>
             {op.expenses.filter(e => { if (filter === 'all') return parseBRL(e.total) !== 0; if (filter === 'month') return parseBRL(e.values[MONTHS_FULL[sel]] || '0') !== 0; return true }).map((e, i) => {
@@ -397,14 +691,55 @@ export default function AdminDashboard() {
             })}
           </div>
         )}
+      </>)}
 
-        {/* Apartment cards */}
-        <div>
-          <h2 className="text-sm font-semibold mb-3 text-[rgb(var(--adm-muted))] uppercase tracking-wider">Apartamentos</h2>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {valid.map(a => <AptCard key={a.name} apt={a} filter={filter} sel={sel} />)}
+      {/* === APARTAMENTOS TAB === */}
+      {!loading && !err && activeTab === 'apartamentos' && (<>
+        {/* Apartment tab filters */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Apartment filter pills */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button onClick={() => setAptTabFilter('todos')} className={pillBtn(aptTabFilter === 'todos')}>Todos</button>
+            {valid.map(a => (
+              <button key={a.name} onClick={() => setAptTabFilter(a.name)} className={pillBtn(aptTabFilter === a.name)}>
+                {a.name}
+              </button>
+            ))}
+          </div>
+
+          <span className="text-[rgb(var(--adm-border))] hidden sm:inline">|</span>
+
+          {/* Month override filter */}
+          <select
+            value={aptTabMonth}
+            onChange={e => setAptTabMonth(Number(e.target.value))}
+            className="bg-[rgb(var(--adm-elevated))] border border-[rgb(var(--adm-border))] text-[rgb(var(--adm-text))] text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-[rgb(var(--adm-accent))]"
+          >
+            <option value={-1}>Período geral</option>
+            {MONTHS_FULL.map((m, i) => <option key={m} value={i}>{m}</option>)}
+          </select>
+
+          {/* Search */}
+          <div className="relative flex-1 min-w-[160px] max-w-[280px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[rgb(var(--adm-muted))]" />
+            <input
+              type="text"
+              placeholder="Buscar apt ou hóspede..."
+              value={aptSearch}
+              onChange={e => setAptSearch(e.target.value)}
+              className="w-full bg-[rgb(var(--adm-elevated))] border border-[rgb(var(--adm-border))] text-[rgb(var(--adm-text))] text-xs rounded-lg pl-8 pr-3 py-1.5 placeholder:text-[rgb(var(--adm-muted))] focus:outline-none focus:border-[rgb(var(--adm-accent))]"
+            />
           </div>
         </div>
+
+        {/* Apartment cards */}
+        {aptTabList.length === 0 ? (
+          <div className="text-center py-12 text-sm text-[rgb(var(--adm-muted))]">Nenhum apartamento encontrado.</div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {aptTabList.map(a => <AptCard key={a.name} apt={a} filter={aptTabEffectiveFilter} sel={aptTabEffectiveSel} />)}
+          </div>
+        )}
       </>)}
     </div>
   )
