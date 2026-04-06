@@ -10,6 +10,19 @@ import {
 import type { ApartmentSummary, MonthData, BizExpense } from '@/lib/types'
 import { parseBRL, fmtBRL, getMonthIndex, MONTHS_SHORT, MONTHS_FULL, APARTMENTS } from '@/lib/types'
 
+// Format a date value: "2026-03-05" → "05/03/2026", or day number "5" + month context → "05/03/2026"
+function fmtDate(val: string, monthIdx?: number, year = 2026): string {
+  if (val.includes('-')) {
+    const [y, m, d] = val.split('-')
+    return `${d}/${m}/${y}`
+  }
+  const day = parseInt(val)
+  if (!isNaN(day) && monthIdx !== undefined) {
+    return `${String(day).padStart(2, '0')}/${String(monthIdx + 1).padStart(2, '0')}/${year}`
+  }
+  return val
+}
+
 function filterMonths(months: MonthData[], filter: string, sel: number): MonthData[] {
   if (filter === 'all') return months
   if (filter === 'ytd') return months.filter(m => getMonthIndex(m.month) <= new Date().getMonth())
@@ -172,7 +185,7 @@ function AptBreakdownChart({ apts, filter, sel }: { apts: ApartmentSummary[]; fi
   )
 }
 
-function fmtDateCol(val: string, monthIdx: number): string {
+function fmtDateCol(val: string, monthIdx?: number): string {
   // If val looks like a full date (YYYY-MM-DD or DD/MM/YYYY), parse it
   if (val.includes('-') || val.includes('/')) {
     const d = new Date(val)
@@ -182,7 +195,7 @@ function fmtDateCol(val: string, monthIdx: number): string {
   }
   // If val is just a day number, combine with month index
   const day = parseInt(val)
-  if (!isNaN(day) && day >= 1 && day <= 31 && monthIdx >= 0) {
+  if (!isNaN(day) && day >= 1 && day <= 31 && monthIdx !== undefined && monthIdx >= 0) {
     return `${String(day).padStart(2, '0')}/${String(monthIdx + 1).padStart(2, '0')}`
   }
   return val
@@ -270,7 +283,7 @@ function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; 
                     {dr.map((r, i) => (
                       <tr key={i} className="border-b border-[rgb(var(--adm-border)/0.20)] last:border-0">
                         <td className={`${tdCls} font-mono text-[rgb(var(--adm-muted))]`}>
-                          <Calendar className="h-3 w-3 inline mr-1 opacity-50" />{r.checkin} → {r.checkout}
+                          <Calendar className="h-3 w-3 inline mr-1 opacity-50" />{fmtDateCol(r.checkin)} → {fmtDateCol(r.checkout)}
                         </td>
                         <td className={`${tdCls} text-[rgb(var(--adm-text))]`}>{r.guest}</td>
                         <td className={`${tdCls} text-right font-mono font-bold text-[rgb(var(--adm-accent))]`}>{r.totalValue}</td>

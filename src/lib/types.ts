@@ -23,11 +23,12 @@ export const PROPERTY_HOSPITABLE_MAP: Record<string, string> = {
   '403': 'e438f8b5-095a-45b8-b2b7-adf9c21bceb7',
   '102': '23e27636-efcf-4a02-84c2-90a26f03c723',
   '303': '7eba4fb5-0a14-40b9-b510-0588fe5a9247',
+  'BZ01': '695842d4-9d6c-40e6-bf3e-71a1d7e24a79',
   'BZ02': '51948efe-5925-4e6a-ac2c-f4079986b0c4',
   '334A': 'b389a395-63ce-453f-8b24-f35654262d45',
 }
 
-export const APARTMENTS = ['103', '102', '403', '303', '334A', 'BZ02'] as const
+export const APARTMENTS = ['103', '102', '403', '303', '334A', 'BZ01', 'BZ02'] as const
 export const LEBLON_APARTMENTS = ['103', '102', '403', '303', '334A'] as const
 export type ApartmentCode = typeof APARTMENTS[number]
 

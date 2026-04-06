@@ -125,5 +125,26 @@ async function handleCompletedCheckout(session: any) {
 
   console.log(`✅ Reservation saved: ${data?.id} for ${meta.guestName} at ${meta.propertyCode}`)
 
+  // Block dates on Hospitable → syncs to Airbnb/Booking (prevents overbooking)
+  try {
+    const { blockCalendarDates } = await import('@/lib/hospitable')
+    const blockResult = await blockCalendarDates(
+      meta.propertyCode,
+      meta.checkin,
+      meta.checkout,
+      `Reserva direta site — ${meta.guestName}`
+    )
+    if (!blockResult.ok) {
+      console.error(`⚠️ Calendar block failed for ${meta.propertyCode}: ${blockResult.error}`)
+      // Reservation is saved but dates not blocked — needs manual intervention
+      // Update reservation notes to flag this
+      await sb.from('direct_reservations')
+        .update({ obs: (data?.obs || '') + ' | ⚠️ DATAS NÃO BLOQUEADAS NO AIRBNB — verificar manualmente' })
+        .eq('id', data?.id)
+    }
+  } catch (e: any) {
+    console.error(`⚠️ Calendar block error: ${e.message}`)
+  }
+
   // TODO: Send confirmation email / WhatsApp notification to Diego
 }

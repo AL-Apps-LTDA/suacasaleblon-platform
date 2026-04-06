@@ -206,17 +206,22 @@ export async function POST(req: NextRequest) {
 
   // === AUTH (no user needed) ===
   if (action === 'login') {
-    const { username, password } = body
+    const { username, password, context } = body
     if (!username || !password) return err('Missing credentials')
     const { data } = await supabase
       .from('app_users')
-      .select('id, username, display_name, role, pix_key')
+      .select('id, username, display_name, role, pix_key, access')
       .eq('username', username)
       .eq('password', hash(password))
       .single()
     if (!data) return err('Invalid credentials', 401)
+    // Check access restriction: context = 'leblon' | 'buzios'
+    if (context && Array.isArray(data.access) && !data.access.includes(context)) {
+      return err('Sem acesso a esta área', 403)
+    }
     await supabase.from('login_logs').insert({ user_id: data.id, username: data.username, display_name: data.display_name })
-    return json(data)
+    const { access: _, ...safeData } = data
+    return json(safeData)
   }
 
   const user = await getUser(req)

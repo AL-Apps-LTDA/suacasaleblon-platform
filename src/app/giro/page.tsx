@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Loader2, KeyRound, RefreshCw, Eye, EyeOff, X, Camera, Trash2, Plus, Edit3, ChevronDown, CalendarDays, MessageSquare, Phone as PhoneIcon, Settings, DollarSign } from 'lucide-react'
-import { LEBLON_APARTMENTS } from '@/lib/types'
 import ContactsTab from './ContactsTab'
 import ChatTab from './ChatTab'
 
 // ─── CONSTANTS ─────────────────────────────────────────
-const APTS: string[] = [...LEBLON_APARTMENTS]
+// Apartments are loaded dynamically per client — no hardcoded list
+const APTS: string[] = []
 const DAYS_L = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
 const CHECKIN_H = 15
 const COST_CATEGORIES = [
@@ -373,7 +373,7 @@ function CleaningModal({cell,t,token,user,cleaners,reservations,onClose,onSaved}
 
 // ─── CREATE CLEANING MODAL (admin) ─────────────────────
 function CreateModal({date,t,token,onClose,onSaved}:{date:string;t:T;token:string;onClose:()=>void;onSaved:()=>void}){
-  const [apt,setApt]=useState(APTS[0])
+  const [apt,setApt]=useState(APTS[0]||'')
   const [saving,setSaving]=useState(false)
   const [error,setError]=useState('')
   const handleCreate=async()=>{
@@ -500,7 +500,7 @@ function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isA
                 if(cell.cleaning)onCellClick(cell)
                 else if(cell.type==='empty'&&isAdm)onEmptyClick(cell.date)
               }}
-              style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:52,padding:'2px 0',borderRight:ci<6?`1px solid ${t.borderInner}40`:'none',position:'relative',overflow:'hidden',
+              style={{display:'flex',alignItems:'center',justifyContent:'center',height:52,borderRight:ci<6?`1px solid ${t.borderInner}40`:'none',position:'relative',overflow:'hidden',
                 cursor:reordering?'default':cell.cleaning||(cell.type==='empty'&&isAdm)?'pointer':'default',
                 background:reordering?t.gold+'08':'transparent',transition:'background 0.2s'}}>
               {reordering?(
@@ -509,20 +509,7 @@ function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isA
                   <Cell cell={cell} t={t}/>
                   {ri<APTS.length-1&&<button onClick={(e)=>{e.stopPropagation();moveRow(ri,1)}} style={{width:16,height:16,borderRadius:4,border:'none',background:t.btnBg,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:t.textSecondary,padding:0}}>↓</button>}
                 </div>
-              ):(
-                <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:1}}>
-                  <Cell cell={cell} t={t}/>
-                  {cell.cleaning&&(()=>{
-                    const d=cell.date
-                    const guest=reservations.find(r=>r.apartment_code===cell.apt&&r.checkout===d)
-                      ||reservations.find(r=>r.apartment_code===cell.apt&&r.checkin===d)
-                    if(!guest)return null
-                    const firstName=guest.guest_name.split(' ')[0]
-                    const isOut=guest.checkout===d
-                    return<span style={{fontSize:7,lineHeight:'1',color:isOut?'#ef4444':'#22c55e',fontWeight:600,maxWidth:46,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',textAlign:'center'}}>{isOut?'🔴':'🟢'} {firstName}</span>
-                  })()}
-                </div>
-              )}
+              ):(<Cell cell={cell} t={t}/>)}
             </div>)})}
         </div>))}
     </div>)
@@ -548,13 +535,13 @@ function Login({onLogin,t}:{onLogin:(u:string,p:string)=>void;t:T}){
     setLd(true);setEr('')
     try{const r=await fetch('/api/limpezas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'login',username:u,password:p,context:'leblon'})})
       const d=await r.json();if(!r.ok||d.error){setEr(d.error||'Credenciais inválidas');setLd(false);return}
-      localStorage.setItem('equipe_auth',btoa(`${u}:${p}`));localStorage.setItem('equipe_user',JSON.stringify(d));onLogin(u,p)
+      localStorage.setItem('giro_auth',btoa(`${u}:${p}`));localStorage.setItem('giro_user',JSON.stringify(d));onLogin(u,p)
     }catch{setEr('Erro de conexão')};setLd(false)}
   return(
     <div style={{minHeight:'100vh',background:t.bg,display:'flex',alignItems:'center',justifyContent:'center',padding:24}}>
       <div style={{width:'100%',maxWidth:320,textAlign:'center'}}>
-        <img src="/images/logo.png" alt="Equipe Sua Casa" style={{width:56,height:56,borderRadius:16,margin:'0 auto 16px'}} />
-        <h1 style={{fontSize:18,fontWeight:700,color:t.textPrimary,marginBottom:4}}>Equipe Sua Casa</h1>
+        <img src="/images/logo.png" alt="Giro Temporada" style={{width:56,height:56,borderRadius:16,margin:'0 auto 16px'}} />
+        <h1 style={{fontSize:18,fontWeight:700,color:t.textPrimary,marginBottom:4}}>Giro Temporada</h1>
         <p style={{fontSize:12,color:t.textSecondary,marginBottom:24}}>Faça login para acessar</p>
         <div style={{display:'flex',flexDirection:'column',gap:12}}>
           <input type="text" placeholder="Usuário" value={u} onChange={e=>{setU(e.target.value);setEr('')}} onKeyDown={e=>e.key==='Enter'&&go()}
@@ -573,7 +560,7 @@ function Login({onLogin,t}:{onLogin:(u:string,p:string)=>void;t:T}){
     </div>)}
 
 // ─── MAIN PAGE ─────────────────────────────────────────
-export default function EquipePage(){
+export default function GiroPage(){
   const [authed,setAuthed]=useState(false);const [token,setToken]=useState('')
   const [dark,setDark]=useState(false);const [loading,setLoading]=useState(true);const [refreshing,setRefreshing]=useState(false)
   const [activeTab,setActiveTab]=useState<'agenda'|'custos'|'chat'|'config'>('agenda')
@@ -584,21 +571,21 @@ export default function EquipePage(){
   const isAdm=user?.role==='admin'
 
   useEffect(()=>{
-    const s=localStorage.getItem('equipe_auth'),tp=localStorage.getItem('equipe_theme'),u=localStorage.getItem('equipe_user')
+    const s=localStorage.getItem('giro_auth'),tp=localStorage.getItem('giro_theme'),u=localStorage.getItem('giro_user')
     if(tp==='dark')setDark(true)
     if(s){setToken(s);setAuthed(true);if(u)try{setUser(JSON.parse(u))}catch{}}else{setLoading(false)}
   },[])
-  useEffect(()=>{localStorage.setItem('equipe_theme',dark?'dark':'light')},[dark])
+  useEffect(()=>{localStorage.setItem('giro_theme',dark?'dark':'light')},[dark])
 
   // PWA: override manifest and meta tags for Giro Temporada
   useEffect(()=>{
     const ml=document.querySelector('link[rel="manifest"]')
-    if(ml)ml.setAttribute('href','/manifest-equipe.json')
+    if(ml)ml.setAttribute('href','/manifest-giro.json')
     const tc=document.querySelector('meta[name="theme-color"]')
     if(tc)tc.setAttribute('content','#b08a40')
     const at=document.querySelector('meta[name="apple-mobile-web-app-title"]')
-    if(at)at.setAttribute('content','Equipe Sua Casa')
-    document.title='Equipe Sua Casa'
+    if(at)at.setAttribute('content','Giro Temporada')
+    document.title='Giro Temporada'
   },[])
 
   const fetchData=useCallback(async(tk:string)=>{
@@ -616,7 +603,7 @@ export default function EquipePage(){
 
   const handleLogin=(u:string,p:string)=>{const tk=btoa(`${u}:${p}`);setToken(tk);setAuthed(true)}
   const refresh=()=>{if(token)fetchData(token)}
-  const logout=()=>{localStorage.removeItem('equipe_auth');localStorage.removeItem('equipe_user');setAuthed(false);setToken('');setUser(null);setLoading(false)}
+  const logout=()=>{localStorage.removeItem('giro_auth');localStorage.removeItem('giro_user');setAuthed(false);setToken('');setUser(null);setLoading(false)}
 
   if(!authed)return<Login onLogin={handleLogin} t={t}/>
   const w1=weekDates(0),w2=weekDates(1)
@@ -629,9 +616,9 @@ export default function EquipePage(){
       {/* Header */}
       <div style={{position:'sticky',top:0,zIndex:20,background:t.bg+'f2',backdropFilter:'blur(10px)',borderBottom:`2px solid ${t.border}`,padding:'10px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <div style={{display:'flex',alignItems:'center',gap:8}}>
-          <img src="/images/logo.png" alt="Equipe" style={{width:32,height:32,borderRadius:8}} />
+          <img src="/images/logo.png" alt="Giro" style={{width:32,height:32,borderRadius:8}} />
           <div>
-            <div style={{fontSize:15,fontWeight:700,color:t.textPrimary}}>Equipe Sua Casa</div>
+            <div style={{fontSize:15,fontWeight:700,color:t.textPrimary}}>Giro Temporada</div>
             {user&&<div style={{fontSize:9,color:t.textSecondary}}>{user.display_name} ({user.role})</div>}
           </div>
         </div>
