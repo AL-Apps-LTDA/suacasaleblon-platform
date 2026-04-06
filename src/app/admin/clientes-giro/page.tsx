@@ -46,7 +46,9 @@ export default function ClientesGiroPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/giro/admin/tenants')
+      const res = await fetch('/api/giro/admin/tenants', {
+        headers: { 'x-admin-auth': sessionStorage.getItem('admin_auth') === 'true' ? 'suacasa2026' : '' },
+      })
       if (!res.ok) throw new Error('Erro ao carregar clientes')
       const data = await res.json()
       setTenants(data.tenants || [])

@@ -56,7 +56,7 @@ function AuthScreen() {
         if (error) throw error
       } else if (mode === 'forgot') {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/giro`,
+          redirectTo: `${window.location.origin}`,
         })
         if (error) throw error
         setMessage('Email de recuperacao enviado. Verifique sua caixa de entrada.')
@@ -77,7 +77,7 @@ function AuthScreen() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/api/giro/auth/callback`,
+        redirectTo: `${window.location.origin.replace('giro.', '')}/api/giro/auth/callback`,
       },
     })
     if (error) setError(error.message)

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getStripe } from '@/lib/stripe'
 
@@ -9,8 +9,13 @@ function getSupabase() {
   )
 }
 
-// GET — list all Giro tenants with stats + Stripe payments (admin-only)
-export async function GET() {
+// GET — list all Giro tenants with stats + Stripe payments
+// Protected: requires admin password in x-admin-auth header (same as admin layout)
+export async function GET(request: NextRequest) {
+  const adminAuth = request.headers.get('x-admin-auth')
+  if (adminAuth !== 'suacasa2026') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
   const supabase = getSupabase()
   const stripe = getStripe()
 
