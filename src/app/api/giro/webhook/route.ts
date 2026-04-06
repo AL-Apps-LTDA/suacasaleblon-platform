@@ -37,11 +37,13 @@ export async function POST(request: NextRequest) {
       const tenantId = obj.metadata?.tenant_id
       const subscriptionId = obj.subscription
       if (tenantId && subscriptionId) {
+        // Status is 'trialing' when trial_period_days is set, 'active' otherwise
+        const sub = await stripe.subscriptions.retrieve(subscriptionId as string)
         await supabase
           .from('giro_tenants')
           .update({
             stripe_subscription_id: subscriptionId,
-            subscription_status: 'active',
+            subscription_status: sub.status,
             updated_at: new Date().toISOString(),
           })
           .eq('id', tenantId)

@@ -292,10 +292,10 @@ function Paywall({ user, onSuccess }: { user: User; onSuccess: () => void }) {
           background: T.surface, border: `1px solid ${T.border}`, borderRadius: 16, padding: 32,
         }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: T.text, margin: '0 0 8px', textAlign: 'center' }}>
-            Ative sua assinatura
+            Experimente gratis por 3 dias
           </h2>
-          <p style={{ fontSize: 13, color: T.muted, textAlign: 'center', margin: '0 0 24px' }}>
-            Gestao completa de temporada por um preco acessivel
+          <p style={{ fontSize: 13, color: T.muted, textAlign: 'center', margin: '0 0 24px', lineHeight: 1.5 }}>
+            Teste tudo sem compromisso. So sera cobrado apos o periodo de teste. Cancele a qualquer momento.
           </p>
 
           {/* Price card */}
@@ -327,10 +327,10 @@ function Paywall({ user, onSuccess }: { user: User; onSuccess: () => void }) {
               cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? 'Redirecionando...' : 'Assinar agora'}
+            {loading ? 'Redirecionando...' : 'Comecar teste gratis'}
           </button>
           <p style={{ fontSize: 11, color: T.muted, textAlign: 'center', marginTop: 12 }}>
-            Cartao ou Pix. Cancele quando quiser.
+            Cadastre seu cartao agora, cobranca so apos 3 dias. Cancele quando quiser.
           </p>
 
           {/* Coupon — discreto */}

@@ -139,6 +139,10 @@ export async function POST(request: NextRequest) {
         quantity: 1,
       },
     ],
+    subscription_data: {
+      trial_period_days: 3,
+      metadata: { tenant_id: tenant.id },
+    },
     success_url: `${origin}/giro?checkout=success`,
     cancel_url: `${origin}/giro?checkout=cancel`,
     metadata: { tenant_id: tenant.id },
