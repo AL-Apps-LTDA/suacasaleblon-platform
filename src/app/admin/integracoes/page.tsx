@@ -22,6 +22,16 @@ export default function IntegracoesPage() {
     finally { setTesting('') }
   }
 
+  async function testBeds24() {
+    setTesting('beds24')
+    try {
+      const r = await fetch('/api/beds24/test')
+      const d = await r.json()
+      alert(d.ok ? `Beds24 OK — ${d.propertyCount || 0} propriedades` : `Erro: ${d.error}`)
+    } catch (e: any) { alert(e.message) }
+    finally { setTesting('') }
+  }
+
   return (
     <div className="p-4 md:p-6 space-y-5">
       <h1 className="text-xl font-bold text-[rgb(var(--adm-text))]">Integrações</h1>
@@ -78,6 +88,26 @@ export default function IntegracoesPage() {
             </div>
           </div>
 
+          {/* Beds24 — Channel Manager (Giro SaaS) */}
+          <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {status?.beds24?.connected ? <CheckCircle2 className="h-5 w-5 text-emerald-400" /> : <XCircle className="h-5 w-5 text-red-400" />}
+                <div>
+                  <h3 className="text-sm font-semibold text-[rgb(var(--adm-text))]">Beds24</h3>
+                  <p className="text-[11px] text-[rgb(var(--adm-muted))]">
+                    {status?.beds24?.connected
+                      ? `Channel Manager — ${status.beds24.propertyCount || 0} propriedades`
+                      : 'BEDS24_REFRESH_TOKEN não configurado'}
+                  </p>
+                </div>
+              </div>
+              <button onClick={testBeds24} disabled={testing === 'beds24'} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-[rgb(var(--adm-border))] text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))] disabled:opacity-50">
+                {testing === 'beds24' ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />} Testar
+              </button>
+            </div>
+          </div>
+
           {/* Beyond Pricing */}
           <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl p-4">
             <div className="flex items-center gap-3">
@@ -100,6 +130,7 @@ export default function IntegracoesPage() {
           <p>NEXT_PUBLIC_SUPABASE_URL — URL do projeto Supabase</p>
           <p>NEXT_PUBLIC_SUPABASE_ANON_KEY — chave anon do Supabase</p>
           <p>SUPABASE_SERVICE_ROLE_KEY — chave service role do Supabase</p>
+          <p>BEDS24_REFRESH_TOKEN — refresh token da Master Account Beds24 (Giro)</p>
         </div>
       </div>
     </div>
