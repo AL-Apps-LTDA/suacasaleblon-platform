@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, CalendarDays, FileText, Settings, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2, Menu, X, TrendingUp, Palmtree } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, FileText, Settings, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2, Menu, X, TrendingUp, Palmtree, Users } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { AdminThemeToggle } from '@/components/AdminThemeToggle'
 import { AdminPWAHead } from '@/components/AdminPWAHead'
@@ -14,7 +14,7 @@ const navItems = [
   { name: 'Apartamentos', path: '/admin/apartamentos', icon: Building2 },
   { name: 'Agenda', path: '/admin/agenda', icon: CalendarRange },
   { name: 'Despesas', path: '/admin/despesas', icon: DollarSign },
-  { name: 'Giro', path: '/admin/limpezas', icon: Sparkles },
+  { name: 'Equipe', path: '/admin/limpezas', icon: Sparkles },
   { name: 'Agenda Búzios', path: '/admin/agenda-buzios', icon: Palmtree },
   { name: 'Reservas Diretas', path: '/admin/reservas-diretas', icon: CalendarDays },
   { name: 'Importar CSV', path: '/admin/importar', icon: Upload },
@@ -22,6 +22,7 @@ const navItems = [
   { name: 'Contador', path: '/admin/contador', icon: Calculator },
   { name: 'Prospecção', path: '/admin/prospeccao', icon: Search },
   { name: 'Cupons', path: '/admin/cupons', icon: Tag },
+  { name: 'Clientes Giro', path: '/admin/clientes-giro', icon: Users },
   { name: 'Dynamic Pricing', path: '/admin/dynamic-pricing', icon: TrendingUp },
   { name: 'Integrações', path: '/admin/integracoes', icon: Settings },
 ]
