@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, CalendarDays, FileText, Settings, Activity, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2 } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, FileText, Settings, Activity, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2, Users } from 'lucide-react'
 import { AdminThemeToggle } from '@/components/AdminThemeToggle'
 
 const ADMIN_PASSWORD = 'suacasa2026'
@@ -12,13 +12,14 @@ const navItems = [
   { name: 'Apartamentos', path: '/admin/apartamentos', icon: Building2 },
   { name: 'Agenda', path: '/admin/agenda', icon: CalendarRange },
   { name: 'Despesas', path: '/admin/despesas', icon: DollarSign },
-  { name: 'Giro', path: '/admin/limpezas', icon: Sparkles },
+  { name: 'Equipe', path: '/admin/limpezas', icon: Sparkles },
   { name: 'Reservas Diretas', path: '/admin/reservas-diretas', icon: CalendarDays },
   { name: 'Importar CSV', path: '/admin/importar', icon: Upload },
   { name: 'Relatórios', path: '/admin/relatorios', icon: FileText },
   { name: 'Contador', path: '/admin/contador', icon: Calculator },
   { name: 'Prospecção', path: '/admin/prospeccao', icon: Search },
   { name: 'Cupons', path: '/admin/cupons', icon: Tag },
+  { name: 'Clientes Giro', path: '/admin/clientes-giro', icon: Users },
   { name: 'Integrações', path: '/admin/integracoes', icon: Settings },
 ]
 

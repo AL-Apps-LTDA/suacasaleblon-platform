@@ -1,16 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
 // Subdomain → path mapping
 const SUBDOMAIN_MAP: Record<string, string> = {
-  giro: '/equipe',
-  equipe: '/equipe', // alias — ambos funcionam
+  giro: '/giro',           // SaaS product — separate from /equipe
+  equipe: '/equipe',       // Diego's internal team tool
   admin: '/admin',
   proprietarios: '/proprietarios',
 }
 
 const ROOT_DOMAIN = 'suacasaleblon.com'
 
-export function middleware(request: NextRequest) {
+function updateSupabaseSession(request: NextRequest, response: NextResponse) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !supabaseAnonKey) return response
+
+  createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll()
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          request.cookies.set(name, value)
+          response.cookies.set(name, value, options)
+        })
+      },
+    },
+  })
+  return response
+}
+
+export async function middleware(request: NextRequest) {
   const host = request.headers.get('host') || ''
   const url = request.nextUrl.clone()
 
@@ -20,7 +42,6 @@ export function middleware(request: NextRequest) {
   }
 
   // Extract subdomain: "equipe.suacasaleblon.com" → "equipe"
-  // Also handle Vercel preview URLs: "equipe.suacasaleblon-platform-*.vercel.app"
   let subdomain: string | null = null
 
   if (host.endsWith(`.${ROOT_DOMAIN}`)) {
@@ -39,13 +60,20 @@ export function middleware(request: NextRequest) {
 
   // If already on the right path, skip (avoid infinite rewrite)
   if (url.pathname.startsWith(basePath)) {
-    return NextResponse.next()
+    const response = NextResponse.next()
+    // Refresh Supabase Auth session for Giro routes
+    if (basePath === '/giro') return updateSupabaseSession(request, response)
+    return response
   }
 
+  // Rewrite: giro.suacasaleblon.com/ → /giro
   // Rewrite: equipe.suacasaleblon.com/ → /equipe
-  // Rewrite: equipe.suacasaleblon.com/foo → /equipe/foo
   url.pathname = url.pathname === '/' ? basePath : `${basePath}${url.pathname}`
-  return NextResponse.rewrite(url)
+  const response = NextResponse.rewrite(url)
+
+  // Refresh Supabase Auth session for Giro routes
+  if (basePath === '/giro') return updateSupabaseSession(request, response)
+  return response
 }
 
 export const config = {
