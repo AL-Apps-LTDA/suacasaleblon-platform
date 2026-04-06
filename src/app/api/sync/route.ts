@@ -12,5 +12,8 @@ export async function GET() {
       connected: !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
       spreadsheetId: '1gSJBIJGlqgSezhtM22kDJ-zl2E0ELKB3rjDRqmN0Vsk',
     },
+    beds24: {
+      connected: !!process.env.BEDS24_REFRESH_TOKEN,
+    },
   })
 }
