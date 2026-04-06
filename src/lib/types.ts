@@ -11,6 +11,7 @@ export interface Property {
   max_guests: number
   base_guests: number
   extra_per_guest_per_night: number
+  cleaning_fee?: number // per-apartment cleaning fee; falls back to DEFAULTS.cleaning_fee
   docs_required: boolean
   demo_beyond_nightly: number
   images: string[]

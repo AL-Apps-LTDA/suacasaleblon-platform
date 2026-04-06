@@ -13,15 +13,31 @@ export default function ReservasDiretasPage() {
   const [reservas, setReservas] = useState<DirectRes[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [aptCleaningFees, setAptCleaningFees] = useState<Record<string, number>>({})
   const [form, setForm] = useState<Partial<DirectRes>>({ apartment_code: '103', guest_name: '', guest_phone: '', guest_email: '', checkin: '', checkout: '', guests: 2, total_value: 0, cleaning_fee: DEFAULTS.cleaning_fee, payment_method: 'pix', payment_status: 'pendente', notes: '' })
 
+  // Load per-apartment cleaning fees from Supabase
+  async function loadCleaningFees() {
+    const { data } = await supabase.from('apartments').select('code, cleaning_fee').eq('active', true)
+    if (data) {
+      const fees: Record<string, number> = {}
+      for (const a of data) { if (a.cleaning_fee != null) fees[a.code] = Number(a.cleaning_fee) }
+      setAptCleaningFees(fees)
+    }
+  }
+
+  function getCleaningFeeForApt(code: string): number {
+    return aptCleaningFees[code] ?? DEFAULTS.cleaning_fee
+  }
+
   async function load() { setLoading(true); const { data } = await supabase.from('direct_reservations').select('*').order('checkin', { ascending: false }); if (data) setReservas(data); setLoading(false) }
-  useEffect(() => { load() }, [])
+  useEffect(() => { load(); loadCleaningFees() }, [])
 
   async function save() {
     if (!form.guest_name || !form.checkin || !form.checkout) return
     await supabase.from('direct_reservations').insert(form)
-    setShowForm(false); setForm({ apartment_code: '103', guest_name: '', guest_phone: '', guest_email: '', checkin: '', checkout: '', guests: 2, total_value: 0, cleaning_fee: DEFAULTS.cleaning_fee, payment_method: 'pix', payment_status: 'pendente', notes: '' }); load()
+    const defaultApt = '103'
+    setShowForm(false); setForm({ apartment_code: defaultApt, guest_name: '', guest_phone: '', guest_email: '', checkin: '', checkout: '', guests: 2, total_value: 0, cleaning_fee: getCleaningFeeForApt(defaultApt), payment_method: 'pix', payment_status: 'pendente', notes: '' }); load()
   }
 
   async function updatePayment(id: number, status: string) { await supabase.from('direct_reservations').update({ payment_status: status }).eq('id', id); load() }
@@ -46,7 +62,7 @@ export default function ReservasDiretasPage() {
         <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-accent)/0.20)] rounded-xl p-5 space-y-4">
           <h3 className="text-sm font-semibold text-[rgb(var(--adm-text))]">Nova reserva manual</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div><label className="text-[10px] text-[rgb(var(--adm-muted))] uppercase block mb-1">Apartamento</label><select value={form.apartment_code} onChange={e => setForm(f => ({ ...f, apartment_code: e.target.value }))} className="w-full bg-[rgb(var(--adm-elevated))] border border-[rgb(var(--adm-border))] rounded-lg px-3 py-2 text-xs text-[rgb(var(--adm-text))]">{APARTMENTS.map(a => <option key={a} value={a}>{a}</option>)}</select></div>
+            <div><label className="text-[10px] text-[rgb(var(--adm-muted))] uppercase block mb-1">Apartamento</label><select value={form.apartment_code} onChange={e => { const code = e.target.value; setForm(f => ({ ...f, apartment_code: code, cleaning_fee: getCleaningFeeForApt(code) })) }} className="w-full bg-[rgb(var(--adm-elevated))] border border-[rgb(var(--adm-border))] rounded-lg px-3 py-2 text-xs text-[rgb(var(--adm-text))]">{APARTMENTS.map(a => <option key={a} value={a}>{a}</option>)}</select></div>
             <div><label className="text-[10px] text-[rgb(var(--adm-muted))] uppercase block mb-1">Hóspede</label><input type="text" value={form.guest_name} onChange={e => setForm(f => ({ ...f, guest_name: e.target.value }))} placeholder="Nome" className="w-full bg-[rgb(var(--adm-elevated))] border border-[rgb(var(--adm-border))] rounded-lg px-3 py-2 text-xs text-[rgb(var(--adm-text))]" /></div>
             <div><label className="text-[10px] text-[rgb(var(--adm-muted))] uppercase block mb-1">WhatsApp</label><input type="tel" value={form.guest_phone} onChange={e => setForm(f => ({ ...f, guest_phone: e.target.value }))} placeholder="+5521..." className="w-full bg-[rgb(var(--adm-elevated))] border border-[rgb(var(--adm-border))] rounded-lg px-3 py-2 text-xs text-[rgb(var(--adm-text))]" /></div>
             <div><label className="text-[10px] text-[rgb(var(--adm-muted))] uppercase block mb-1">Email</label><input type="email" value={form.guest_email} onChange={e => setForm(f => ({ ...f, guest_email: e.target.value }))} className="w-full bg-[rgb(var(--adm-elevated))] border border-[rgb(var(--adm-border))] rounded-lg px-3 py-2 text-xs text-[rgb(var(--adm-text))]" /></div>

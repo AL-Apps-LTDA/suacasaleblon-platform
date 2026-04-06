@@ -23,6 +23,7 @@ export const siteConfig: AppConfig = {
       max_guests: 2,
       base_guests: 2,
       extra_per_guest_per_night: 0,
+      cleaning_fee: 150,
       docs_required: false,
       demo_beyond_nightly: 600,
       images: [
@@ -41,6 +42,7 @@ export const siteConfig: AppConfig = {
       max_guests: 4,
       base_guests: 2,
       extra_per_guest_per_night: 75,
+      cleaning_fee: 150,
       docs_required: true,
       demo_beyond_nightly: 600,
       images: [
@@ -59,6 +61,7 @@ export const siteConfig: AppConfig = {
       max_guests: 2,
       base_guests: 2,
       extra_per_guest_per_night: 0,
+      cleaning_fee: 150,
       docs_required: false,
       demo_beyond_nightly: 600,
       images: [
@@ -77,6 +80,7 @@ export const siteConfig: AppConfig = {
       max_guests: 6,
       base_guests: 4,
       extra_per_guest_per_night: 100,
+      cleaning_fee: 150,
       docs_required: false,
       demo_beyond_nightly: 600,
       images: [
@@ -95,6 +99,7 @@ export const siteConfig: AppConfig = {
       max_guests: 3,
       base_guests: 2,
       extra_per_guest_per_night: 80,
+      cleaning_fee: 150,
       docs_required: true,
       demo_beyond_nightly: 600,
       images: [

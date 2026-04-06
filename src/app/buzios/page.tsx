@@ -5,7 +5,9 @@ import { Eye, EyeOff, Loader2, ChevronLeft, ChevronRight, Phone, Users } from 'l
 import { createClient } from '@supabase/supabase-js'
 import { fmtBRL } from '@/lib/types'
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
+function getSupabase() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '')
+}
 
 // ─── THEMES ────────────────────────────────────
 const LT = {
@@ -146,7 +148,7 @@ export default function BuziosPage(){
       const start=`${year}-${String(month+1).padStart(2,'0')}-01`
       const em=month+2>12?1:month+2, ey=month+2>12?year+1:year
       const end=`${ey}-${String(em).padStart(2,'0')}-01`
-      const{data}=await supabase.from('reservations').select('*').in('apartment_code',BUZIOS_APTS).or(`checkin.gte.${start},checkout.gte.${start}`).lt('checkin',end).order('checkin')
+      const supabase=getSupabase();const{data}=await supabase.from('reservations').select('*').in('apartment_code',BUZIOS_APTS).or(`checkin.gte.${start},checkout.gte.${start}`).lt('checkin',end).order('checkin')
       if(data)setReservations(data)
       setLoading(false)
     }

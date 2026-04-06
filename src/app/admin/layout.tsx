@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { LayoutDashboard, CalendarDays, FileText, Settings, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2, Menu, X, TrendingUp, Palmtree } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { AdminThemeToggle } from '@/components/AdminThemeToggle'
+import { AdminPWAHead } from '@/components/AdminPWAHead'
 
 const ADMIN_PASSWORD = 'suacasa2026'
 
@@ -111,6 +112,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className={`${themeClass} flex h-screen bg-[rgb(var(--adm-bg))] overflow-hidden`}>
+      <AdminPWAHead />
       {/* Mobile drawer overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden" onClick={() => setMobileMenuOpen(false)}>
