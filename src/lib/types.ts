@@ -15,6 +15,7 @@ export interface Property {
   docs_required: boolean
   demo_beyond_nightly: number
   images: string[]
+  location?: 'leblon' | 'buzios'
   hospitable_id?: string
 }
 

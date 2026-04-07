@@ -128,7 +128,7 @@ function parseBankCSV(text: string): ParsedRow[] {
     const type = raw['Descrição'] || raw['Description'] || raw['Histórico'] || raw['Lançamento'] || ''
     const amountStr = raw['Valor'] || raw['Amount'] || raw['Quantia'] || '0'
     const amount = parseFloat(amountStr.replace(/[R$.\s]/g, '').replace(',', '.')) || 0
-    rows.push({ date, type, confirmation: '', guest: '', listing: '', apartmentCode: '', amount, currency: 'BRL', isAdjustment: false, details: type, raw })
+    rows.push({ date, type, confirmation: '', guest: '', listing: '', apartmentCode: '', amount, currency: 'BRL', isAdjustment: false, details: type, start_date: null, end_date: null, raw })
   }
   return rows
 }
