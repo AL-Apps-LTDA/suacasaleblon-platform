@@ -111,7 +111,6 @@ export const siteConfig: AppConfig = {
         'https://a0.muscache.com/im/pictures/hosting/Hosting-1384196502628601923/original/2d2f84c2-2ca5-41d4-bc2a-c6af0603fdeb.jpeg',
       ],
     },
-,
     {
       code: 'BZ01',
       title: 'Búzios BZ01',
