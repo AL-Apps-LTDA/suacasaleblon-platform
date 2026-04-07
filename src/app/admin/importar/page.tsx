@@ -39,7 +39,35 @@ interface ParsedRow {
   date: string; type: string; confirmation: string; guest: string
   listing: string; apartmentCode: string; amount: number
   currency: string; isAdjustment: boolean; details: string
+  start_date: string | null; end_date: string | null
   raw: Record<string, string>
+}
+
+// Pro rata: splits a row across months proportionally based on start_date/end_date
+function splitByMonth(row: ParsedRow & { month: number; year: number }): Array<ParsedRow & { month: number; year: number; amount: number }> {
+  if (!row.start_date || !row.end_date) return [row]
+  const start = new Date(row.start_date + 'T12:00:00')
+  const end = new Date(row.end_date + 'T12:00:00')
+  const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000)
+  if (totalDays <= 0 || (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear())) return [row]
+  const splits: Array<{ month: number; year: number; days: number }> = []
+  let cur = new Date(start)
+  while (cur < end) {
+    const nextMonth = new Date(cur.getFullYear(), cur.getMonth() + 1, 1)
+    const periodEnd = nextMonth < end ? nextMonth : end
+    const days = Math.round((periodEnd.getTime() - cur.getTime()) / 86400000)
+    if (days > 0) splits.push({ month: cur.getMonth() + 1, year: cur.getFullYear(), days })
+    cur = nextMonth
+  }
+  const totalSplitDays = splits.reduce((s, x) => s + x.days, 0)
+  return splits.map((s, i) => {
+    const isLast = i === splits.length - 1
+    // Last split absorbs rounding remainder so total always equals original amount
+    const splitAmount = isLast
+      ? row.amount - splits.slice(0, i).reduce((sum, x) => sum + Math.round(row.amount * x.days / totalSplitDays * 100) / 100, 0)
+      : Math.round(row.amount * s.days / totalSplitDays * 100) / 100
+    return { ...row, month: s.month, year: s.year, amount: splitAmount }
+  })
 }
 
 function parseCSVLine(line: string): string[] {
@@ -74,9 +102,13 @@ function parseAirbnbCSV(text: string): ParsedRow[] {
     const amount = parseFloat(amountStr.replace(/[R$.\s]/g, '').replace(',', '.')) || 0
     const currency = raw['Currency'] || raw['Moeda'] || 'BRL'
     const details = raw['Details'] || raw['Detalhes'] || raw['Description'] || raw['Descrição'] || ''
+    const rawStartDate = raw['Start Date'] || raw['Data de início'] || raw['Check-in'] || ''
+    const rawEndDate = raw['End Date'] || raw['Data de término'] || raw['Check-out'] || ''
+    const start_date = parseDate(rawStartDate)
+    const end_date = parseDate(rawEndDate)
     const tl = type.toLowerCase()
     const isAdjustment = tl.includes('adjust') || tl.includes('ajust') || tl.includes('resolution') || tl.includes('resolução') || tl.includes('host fee') || tl.includes('taxa') || (amount < 0 && !tl.includes('payout') && !tl.includes('repasse'))
-    rows.push({ date, type, confirmation, guest, listing, apartmentCode: matchApartment(listing), amount, currency, isAdjustment, details, raw })
+    rows.push({ date, type, confirmation, guest, listing, apartmentCode: matchApartment(listing), amount, currency, isAdjustment, details, start_date, end_date, raw })
   }
   return rows
 }
@@ -170,21 +202,30 @@ export default function ImportarPage() {
         }
 
         let skipped = 0
-        const txRows = parsed.map((r, i) => {
-          // Skip rows that are manually edited in the DB
+        const rawTxRows = parsed.map((r, i) => {
           const key = `${r.confirmation}|${r.type}`
           if (r.confirmation && protectedCodes.has(key)) { skipped++; return null }
-
           const ds = parseDate(r.date); const dt = ds ? new Date(ds + 'T12:00:00') : null
-          return {
+          const baseRow = {
             import_id: importId, transaction_date: ds || '1970-01-01', type: r.type,
             confirmation_code: r.confirmation || null, guest_name: r.guest || null,
             listing_name: r.listing || null, apartment_code: editCodes[i] || r.apartmentCode || null,
             amount: r.amount, currency: r.currency, details: r.details || null,
             month: dt ? dt.getMonth() + 1 : null, year: dt ? dt.getFullYear() : null,
             is_adjustment: r.isAdjustment, manually_edited: false,
+            checkin_date: r.start_date || null, checkout_date: r.end_date || null,
           }
+          return baseRow
         }).filter(Boolean)
+
+        // Apply pro rata split for rows crossing months
+        const txRows = rawTxRows.flatMap((row: any) => {
+          if (!row.month || !row.year || !row.checkin_date || !row.checkout_date) return [row]
+          const proRataRow = { ...row, start_date: row.checkin_date, end_date: row.checkout_date }
+          const splits = splitByMonth(proRataRow as any)
+          if (splits.length <= 1) return [row]
+          return splits.map(s => ({ ...row, month: s.month, year: s.year, amount: s.amount }))
+        })
 
         for (let i = 0; i < txRows.length; i += 50) {
           const { error: te } = await supabase.from('airbnb_transactions').insert(txRows.slice(i, i + 50))
