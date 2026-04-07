@@ -1,7 +1,69 @@
 # Regras de Sincronizacao — Sua Casa Leblon
 
-Documento de referencia com todas as regras de sync, fontes de dados e timings.
-Atualizado: 2026-04-02
+Documento de referencia com todas as regras de sync, fontes de dados, timings e workflow de desenvolvimento.
+Atualizado: 2026-04-07
+
+---
+
+## ⚠️ WORKFLOW DE DESENVOLVIMENTO — LEIA ANTES DE CODAR
+
+### Regra fundamental
+**A `main` do GitHub é a única fonte oficial do projeto.**
+Toda janela/sessão/agente que for trabalhar no projeto DEVE começar fazendo pull da `main`.
+Nunca edite diretamente na cópia local sem antes sincronizar com o remoto.
+
+### Fluxo obrigatório para qualquer mudança
+
+```
+1. SEMPRE começar pela main remota
+   git checkout main
+   git pull origin main
+
+2. Criar branch para a feature/fix
+   git checkout -b feat/nome-da-feature
+   # ou
+   git checkout -b fix/nome-do-bug
+
+3. Desenvolver e commitar na branch
+   git add .
+   git commit -m "feat: descrição clara do que foi feito"
+
+4. Push da branch → Vercel gera preview automático
+   git push origin feat/nome-da-feature
+   → Vercel cria URL de preview (ex: suacasaleblon-platform-abc123-diego-tavares-projects.vercel.app)
+
+5. Conferir o preview antes de mergear
+   → Abrir a URL de preview e testar
+   → Só avançar se estiver OK
+
+6. Merge na main (via Pull Request no GitHub ou linha de comando)
+   git checkout main
+   git pull origin main
+   git merge feat/nome-da-feature
+   git push origin main
+   → Vercel faz deploy em produção automaticamente
+
+7. Deletar a branch antiga
+   git branch -d feat/nome-da-feature
+   git push origin --delete feat/nome-da-feature
+```
+
+### Por que esse fluxo?
+- Cada janela/sessão do Claude ou editor local pode ter cópias diferentes do código
+- Editar direto na main local sem sync causa conflitos e deploys quebrados (como aconteceu em 2026-04-07)
+- O Vercel só valida o build na nuvem — o build local pode falhar por diferença de Node.js (Mac usa v24, Vercel usa v20)
+- O preview do Vercel é o único ambiente confiável para validar antes de ir pra produção
+
+### Nunca fazer
+- ❌ Editar arquivos direto na `main` local sem `git pull` antes
+- ❌ Dar `git push --force` na main
+- ❌ Rodar `npm run build` localmente como critério de aprovação (Node 24 vs 20 diverge)
+- ❌ Commitar e dar push diretamente na main sem branch + preview
+
+### Ambiente de build oficial
+- **Node.js**: 20.x (Vercel) — não confiar no build local se estiver em versão diferente
+- **Validação de build**: sempre via preview do Vercel, não local
+- **Referência do projeto**: `https://github.com/AL-Apps-LTDA/suacasaleblon-platform`
 
 ---
 
@@ -39,7 +101,6 @@ Atualizado: 2026-04-02
 - **Endpoint**: `/api/webhook/stripe`
 - **Trigger**: Pagamento confirmado (cartao ou PIX)
 - **Acao**: Insere em `direct_reservations`
-- **ATENCAO**: Reservas do site NAO bloqueiam calendario no Airbnb automaticamente (TODO)
 
 ---
 
@@ -50,18 +111,15 @@ Atualizado: 2026-04-02
 - **Fallback**: Supabase `reservations` (cache do cron)
 - **Tambem usa**: `airbnb_transactions` (CSV), `direct_reservations`, `expenses`, `app_expenses`
 - **Refresh**: Manual (botao Sincronizar) ou reload da pagina
-- **Nao tem auto-refresh**
 
 ### /admin/agenda — client-side Supabase
 - **Fonte**: Supabase direto (`reservations` + `direct_reservations` + `cleanings`)
 - **Refresh**: Ao mudar mes ou reload
-- **Nao tem auto-refresh**
 
 ### /equipe (calendario da equipe) — `GET /api/equipe`
 - **Fonte primaria**: Hospitable API live (5 semanas ao redor de hoje)
 - **Fallback**: Supabase `reservations` (cache do cron)
 - **Refresh**: Ao fazer login ou reload
-- **Nao tem auto-refresh**
 
 ### Site de reservas (hospede) — `POST /api/quote` + `GET /api/availability/[code]`
 - **Disponibilidade**: Hospitable calendar API (cache Next.js 5 min)
@@ -75,9 +133,15 @@ Atualizado: 2026-04-02
 
 ### Apartamentos
 - **Arquivo**: `src/lib/types.ts`
-- `APARTMENTS` = todos (incluindo BZ02)
-- `LEBLON_APARTMENTS` = sem BZ02 (usado no admin e equipe)
+- `APARTMENTS` = todos (103, 102, 403, 303, 334A, BZ01, BZ02)
+- `LEBLON_APARTMENTS` = sem Búzios (usado no admin e equipe)
 - `PROPERTY_HOSPITABLE_MAP` = codigo → UUID do Hospitable
+
+### Propriedades do site de reservas
+- **Arquivo**: `src/lib/config.ts` → `siteConfig.properties`
+- Cards editáveis por apartamento: título, subtítulo, hóspedes, fotos, taxa de limpeza
+- BZ01 e BZ02 estão cadastrados como cards em branco — preencher quando disponível
+- Campo `location: 'leblon' | 'buzios'` disponível para filtros futuros
 
 ### Defaults
 - **Arquivo**: `src/lib/types.ts` → `DEFAULTS`
@@ -88,10 +152,6 @@ Atualizado: 2026-04-02
 - **Arquivo**: `src/lib/config.ts` → `siteConfig.pricing`
 - `discount_pct`: 14% (desconto do site vs Airbnb)
 - `cleaning_fee`: R$ 150
-
-### Commission por apto
-- **Fonte primaria**: Supabase tabela `apartments` → `commission_pct`
-- **Fallback**: `DEFAULTS.commission_pct` (15%)
 
 ---
 
@@ -112,6 +172,7 @@ Atualizado: 2026-04-02
 ## TODO / Pendencias
 
 - [ ] Configurar webhook no Hospitable (hospitable.com → Apps → Webhooks)
+- [ ] Preencher dados de BZ01 e BZ02 no `src/lib/config.ts` (título, fotos, hóspedes)
 - [ ] Reservas do site NAO bloqueiam calendario Airbnb — risco de overbooking
 - [ ] Cleaning fee hardcoded — atualizar manualmente quando mudar no Airbnb
 - [ ] Considerar auto-refresh no admin (ex: polling a cada 60s)
