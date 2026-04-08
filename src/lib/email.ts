@@ -52,28 +52,28 @@ export async function sendBookingConfirmationEmail(data: BookingEmailData) {
             <tr><td style="padding:20px 24px;">
               <p style="font-size:13px;color:#999;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Detalhes da Reserva</p>              <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="padding:6px 0;font-size:14px;color:#888;" width="40%">Apartamento</td>
+                  <td style="padding:6px 0;font-size:14px;color:#666;" width="40%">Apartamento</td>
                   <td style="padding:6px 0;font-size:14px;color:#1a3a2a;font-weight:600;">${data.propertyName || data.propertyCode}</td>
                 </tr>
                 <tr>
-                  <td style="padding:6px 0;font-size:14px;color:#888;">Check-in</td>
+                  <td style="padding:6px 0;font-size:14px;color:#666;">Check-in</td>
                   <td style="padding:6px 0;font-size:14px;color:#1a3a2a;font-weight:600;">${formatDate(data.checkin)}</td>
                 </tr>
                 <tr>
-                  <td style="padding:6px 0;font-size:14px;color:#888;">Check-out</td>
+                  <td style="padding:6px 0;font-size:14px;color:#666;">Check-out</td>
                   <td style="padding:6px 0;font-size:14px;color:#1a3a2a;font-weight:600;">${formatDate(data.checkout)}</td>
                 </tr>
                 <tr>
-                  <td style="padding:6px 0;font-size:14px;color:#888;">Noites</td>
+                  <td style="padding:6px 0;font-size:14px;color:#666;">Noites</td>
                   <td style="padding:6px 0;font-size:14px;color:#1a3a2a;font-weight:600;">${nights}</td>
                 </tr>
                 <tr>
-                  <td style="padding:6px 0;font-size:14px;color:#888;">Pagamento</td>
+                  <td style="padding:6px 0;font-size:14px;color:#666;">Pagamento</td>
                   <td style="padding:6px 0;font-size:14px;color:#1a3a2a;font-weight:600;">${data.paymentMethod === 'pix' ? 'PIX' : 'Cartão de Crédito'}</td>
                 </tr>
                 ${data.couponCode ? `
                 <tr>
-                  <td style="padding:6px 0;font-size:14px;color:#888;">Cupom</td>
+                  <td style="padding:6px 0;font-size:14px;color:#666;">Cupom</td>
                   <td style="padding:6px 0;font-size:14px;color:#2a7d4f;font-weight:600;">${data.couponCode} (-R$ ${data.couponDiscount?.toFixed(2)})</td>
                 </tr>` : ''}                <tr>
                   <td colspan="2" style="border-top:1px solid #e8e3da;padding-top:10px;margin-top:10px;"></td>
