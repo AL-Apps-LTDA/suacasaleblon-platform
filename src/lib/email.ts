@@ -109,7 +109,7 @@ export async function sendBookingConfirmationEmail(data: BookingEmailData) {
 </html>`
   try {
     const { data: result, error } = await resend.emails.send({
-      from: 'Sua Casa Leblon <reservas@suacasaleblon.com>',
+      from: 'Sua Casa Leblon <reservas@send.suacasaleblon.com>',
       to: data.guestEmail,
       subject: `Reserva Confirmada — ${data.propertyName || data.propertyCode} · ${formatDate(data.checkin)}`,
       html,
@@ -129,7 +129,7 @@ export async function sendBookingConfirmationEmail(data: BookingEmailData) {
 export async function sendBookingNotificationToDiego(data: BookingEmailData) {
   try {
     await resend.emails.send({
-      from: 'Sua Casa Leblon <sistema@suacasaleblon.com>',
+      from: 'Sua Casa Leblon <sistema@send.suacasaleblon.com>',
       to: 'ditavares@gmail.com',
       subject: `💰 Nova Reserva Direta! ${data.guestName} — ${data.propertyCode}`,
       html: `
