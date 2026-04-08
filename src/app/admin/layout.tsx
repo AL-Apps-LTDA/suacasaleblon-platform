@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, CalendarDays, FileText, Settings, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2, Menu, X, TrendingUp, Palmtree, Users } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, FileText, Settings, Upload, Search, DollarSign, Lock, LogOut, Sparkles, Tag, CalendarRange, Calculator, Building2, Menu, X, TrendingUp, Palmtree, Users, Mail } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { AdminThemeToggle } from '@/components/AdminThemeToggle'
 import { AdminPWAHead } from '@/components/AdminPWAHead'
@@ -23,6 +23,7 @@ const navItems = [
   { name: 'Prospecção', path: '/admin/prospeccao', icon: Search },
   { name: 'Cupons', path: '/admin/cupons', icon: Tag },
   { name: 'Clientes Giro', path: '/admin/clientes-giro', icon: Users },
+  { name: 'Emails Automáticos', path: '/admin/emails', icon: Mail },
   { name: 'Dynamic Pricing', path: '/admin/dynamic-pricing', icon: TrendingUp },
   { name: 'Integrações', path: '/admin/integracoes', icon: Settings },
 ]
