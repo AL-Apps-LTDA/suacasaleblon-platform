@@ -23,7 +23,7 @@ const navItems = [
   { name: 'Prospecção', path: '/admin/prospeccao', icon: Search },
   { name: 'Cupons', path: '/admin/cupons', icon: Tag },
   { name: 'Clientes Giro', path: '/admin/clientes-giro', icon: Users },
-  { name: 'Emails Automáticos', path: '/admin/emails', icon: Mail },
+  { name: 'Emails / Mensagens', path: '/admin/emails', icon: Mail },
   { name: 'Dynamic Pricing', path: '/admin/dynamic-pricing', icon: TrendingUp },
   { name: 'Integrações', path: '/admin/integracoes', icon: Settings },
 ]
