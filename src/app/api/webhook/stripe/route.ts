@@ -146,5 +146,26 @@ async function handleCompletedCheckout(session: any) {
     console.error(`⚠️ Calendar block error: ${e.message}`)
   }
 
-  // TODO: Send confirmation email / WhatsApp notification to Diego
+  // Send confirmation email to guest + notification to Diego
+  try {
+    const { sendBookingConfirmationEmail, sendBookingNotificationToDiego } = await import('@/lib/email')
+    const emailData = {
+      guestName: meta.guestName,
+      guestEmail: meta.guestEmail,
+      propertyCode: meta.propertyCode,
+      propertyName: meta.propertyTitle || meta.propertyCode,
+      checkin: meta.checkin,
+      checkout: meta.checkout,
+      totalValue,
+      paidAmount,
+      paymentMethod: meta.paymentMethod || 'card',
+      couponCode: meta.couponCode,
+      couponDiscount: couponDiscount || undefined,
+    }
+    await sendBookingConfirmationEmail(emailData)
+    await sendBookingNotificationToDiego(emailData)
+  } catch (e: any) {
+    console.error('Email sending error:', e.message)
+    // Non-blocking: reservation is saved even if email fails
+  }
 }
