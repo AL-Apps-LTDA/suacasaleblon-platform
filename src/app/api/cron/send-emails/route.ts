@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY || '')
+}
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00')
@@ -16,19 +18,14 @@ function nightsCount(checkin: string, checkout: string): number {
 
 function buildVarMap(res: any): Record<string, string> {
   return {
-    nome_hospede: res.guest_name || '',
-    email_hospede: res.guest_email || '',
-    telefone_hospede: res.guest_phone || '',
-    apartamento: res.apartment_code || '',
-    nome_apartamento: res.apartment_code || '',
-    checkin: res.checkin ? formatDate(res.checkin) : '',
-    checkout: res.checkout ? formatDate(res.checkout) : '',
-    noites: res.checkin && res.checkout ? String(nightsCount(res.checkin, res.checkout)) : '',
-    valor_total: res.total_value ? `R$ ${Number(res.total_value).toFixed(2)}` : '',
-    valor_pago: res.paid ? `R$ ${Number(res.paid).toFixed(2)}` : '',    metodo_pagamento: res.payment_method === 'pix' ? 'PIX' : 'Cartão de Crédito',
-    cupom: res.coupon_code || '',
-    link_whatsapp: 'https://wa.me/5521995360322',
-    link_site: 'https://suacasaleblon.com',
+    guest_name: res.guest_name || '',
+    guest_email: res.guest_email || '',
+    property_name: res.apartment_code || '',
+    property_code: res.apartment_code || '',
+    checkin_date: res.checkin ? formatDate(res.checkin) : '',
+    checkout_date: res.checkout ? formatDate(res.checkout) : '',
+    nights: res.checkin && res.checkout ? String(nightsCount(res.checkin, res.checkout)) : '',
+    total_value: res.total_value ? `R$ ${Number(res.total_value).toFixed(2)}` : '',
   }
 }
 
@@ -37,7 +34,8 @@ function replaceVars(template: string, vars: Record<string, string>): string {
 }
 
 function todayStr(): string {
-  return new Date().toISOString().split('T')[0]
+  // Use São Paulo timezone
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' })
 }
 
 function addDays(dateStr: string, days: number): string {
@@ -51,13 +49,14 @@ export async function GET() {
   const today = todayStr()
   let sent = 0, errors = 0
 
-  // Get active automations (exclude on_booking — that's handled in webhook)
+  // Get active automations (exclude on_booking — handled in webhook, and manual)
   const { data: automations } = await sb
     .from('email_automations')
     .select('*')
     .eq('is_active', true)
     .neq('trigger_type', 'on_booking')
     .neq('trigger_type', 'manual')
+
   if (!automations?.length) return NextResponse.json({ sent: 0, message: 'No active automations' })
 
   // Get all direct reservations with guest email
@@ -69,9 +68,9 @@ export async function GET() {
   if (!reservations?.length) return NextResponse.json({ sent: 0, message: 'No reservations with email' })
 
   for (const auto of automations) {
-    let targetDate: string | null = null
-
     for (const res of reservations) {
+      let targetDate: string | null = null
+
       // Determine if this reservation matches the trigger
       switch (auto.trigger_type) {
         case 'days_before_checkin':
@@ -87,3 +86,58 @@ export async function GET() {
           targetDate = res.checkout
           break
       }
+
+      if (!targetDate || targetDate !== today) continue
+
+      // Check if already sent (dedup)
+      const logKey = `${auto.id}_${res.id}`
+      const { data: existingLog } = await sb
+        .from('email_send_logs')
+        .select('id')
+        .eq('automation_id', auto.id)
+        .eq('reservation_id', res.id)
+        .limit(1)
+
+      if (existingLog && existingLog.length > 0) continue
+
+      // Build variables and replace in template
+      const vars = buildVarMap(res)
+      const subject = replaceVars(auto.subject_template, vars)
+      const html = replaceVars(auto.body_html, vars)
+
+      // Determine recipients
+      const recipients: string[] = []
+      if (auto.send_to_guest && res.guest_email) recipients.push(res.guest_email)
+      if (auto.send_to_admin) recipients.push('ditavares@gmail.com')
+      if (auto.custom_emails?.length) recipients.push(...auto.custom_emails)
+      // send_to_owner: would need owner email lookup by apartment — future feature
+
+      if (recipients.length === 0) continue
+
+      try {
+        await getResend().emails.send({
+          from: 'Sua Casa Leblon <reservas@send.suacasaleblon.com>',
+          to: recipients,
+          subject,
+          html,
+        })
+
+        // Log successful send
+        await sb.from('email_send_logs').insert({
+          automation_id: auto.id,
+          reservation_id: res.id,
+          sent_to: recipients,
+          subject,
+          sent_at: new Date().toISOString(),
+        })
+
+        sent++
+      } catch (err: any) {
+        console.error(`Email error (auto=${auto.id}, res=${res.id}):`, err.message)
+        errors++
+      }
+    }
+  }
+
+  return NextResponse.json({ sent, errors, date: today })
+}
