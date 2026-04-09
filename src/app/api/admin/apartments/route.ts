@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     owner_name: owner_name || null,
     owner_email: owner_email || null,
     owner_phone: owner_phone || null,
-    commission_pct: commission_pct ? Number(commission_pct) / 100 : 0.15,
+    commission_pct: commission_pct ? Number(commission_pct) / 100 : 0,
     commission_valid_from: commission_valid_from || new Date().toLocaleDateString('sv-SE'),
     address: address || null,
     hospitable_uuid: hospitable_uuid || null,

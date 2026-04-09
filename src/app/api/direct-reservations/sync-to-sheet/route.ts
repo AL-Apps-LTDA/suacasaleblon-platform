@@ -45,7 +45,7 @@ export async function POST() {
       const totalNights = Math.round((checkoutDate.getTime() - checkinDate.getTime()) / 86400000)
       if (totalNights <= 0) continue
 
-      const totalValue = parseBRL(dr.total_value)
+      const totalValue = parseBRL(dr.total_value) - Number(dr.stripe_fee || 0)
       const nightlyRate = totalValue / totalNights
       const aptData = await getSheetData(dr.apartment)
       let cursor = new Date(checkinDate)

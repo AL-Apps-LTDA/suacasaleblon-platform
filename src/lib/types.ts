@@ -33,7 +33,7 @@ export const APARTMENTS = ['103', '102', '403', '303', '334A', 'BZ01', 'BZ02'] a
 export const LEBLON_APARTMENTS = ['103', '102', '403', '303', '334A'] as const
 export type ApartmentCode = typeof APARTMENTS[number]
 
-export const DEFAULTS = { cleaning_fee: 150, commission_pct: 0.15 } as const
+export const DEFAULTS = { cleaning_fee: 150 } as const
 
 // --- RESERVATIONS (from Giro + Leblon) ---
 export interface Reservation {
