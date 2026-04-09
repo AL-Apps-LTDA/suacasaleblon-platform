@@ -201,13 +201,19 @@ function fmtDateCol(val: string, monthIdx?: number): string {
   return val
 }
 
-function sourceBadge(source: string) {
-  const label = source === 'airbnb_csv' ? 'CSV' : source
-  const cls = source === 'whatsapp'
-    ? 'bg-green-500/15 text-green-400'
-    : source === 'site'
-    ? 'bg-[rgb(var(--adm-accent)/0.15)] text-[rgb(var(--adm-accent))]'
-    : 'bg-blue-500/15 text-blue-400'
+function platformBadge(platform: string, source?: string) {
+  // Determine display label and color based on platform or source
+  const p = (platform || source || '').toLowerCase()
+  let label = platform || source || ''
+  let cls = 'bg-blue-500/15 text-blue-400'
+
+  if (p.includes('airbnb')) { label = 'Airbnb'; cls = 'bg-rose-500/15 text-rose-400' }
+  else if (p.includes('booking')) { label = 'Booking'; cls = 'bg-blue-600/15 text-blue-500' }
+  else if (p === 'direct' || p === 'site') { label = 'Site'; cls = 'bg-[rgb(var(--adm-accent)/0.15)] text-[rgb(var(--adm-accent))]' }
+  else if (p === 'whatsapp') { label = 'WhatsApp'; cls = 'bg-green-500/15 text-green-400' }
+  else if (p === 'manual') { label = 'Manual'; cls = 'bg-violet-500/15 text-violet-400' }
+  else if (p === 'airbnb_csv') { label = 'CSV'; cls = 'bg-orange-500/15 text-orange-400' }
+
   return <span className={`text-[8px] px-1.5 py-0.5 rounded font-semibold inline-block ${cls}`}>{label}</span>
 }
 
@@ -344,7 +350,7 @@ function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; 
                                   {rv.guestOrigin && !isAdj && <span className="ml-1 text-[9px] text-[rgb(var(--adm-muted))]">({rv.guestOrigin})</span>}
                                 </td>
                                 <td className={`${tdCls}`}>
-                                  {rv.source && !isAdj && rv.source !== 'hospitable' ? sourceBadge(rv.source) : null}
+                                  {!isAdj ? platformBadge((rv as any).platform, rv.source) : null}
                                 </td>
                                 <td className={`${tdCls} text-right font-mono font-medium whitespace-nowrap ${isAdj ? 'text-orange-400' : 'text-emerald-400'}`}>
                                   {rv.revenue}

@@ -251,6 +251,7 @@ export function splitReservationByMonth(r: HospitableReservation): ProRataEntry[
         revenue: Math.round(nightlyRate * nights * 100) / 100,
         guestName: r.guestName,
         guestCountry: r.guestCountry || '',
+        platform: r.platform || '',
         isPartial: totalNights !== nights,
         adjustments: firstEntry ? (r.adjustments || []) : [],
       })
