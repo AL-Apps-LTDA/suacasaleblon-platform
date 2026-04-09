@@ -27,7 +27,8 @@ function sumF(months: MonthData[], f: 'receitaTotal' | 'despesaTotal' | 'resulta
 }
 function ownerPart(m: MonthData) { return parseBRL(m.resultado) - parseBRL(m.repassar) }
 function countNights(months: MonthData[]): number {
-  let nights = 0  for (const m of months) {
+  let nights = 0
+  for (const m of months) {
     for (const r of m.reservations) {
       if (r.source === 'adjustment') continue
       const n = (r as any).nights
@@ -57,6 +58,7 @@ function fmtDate(val: string, monthIdx?: number, year = 2026): string {
   if (!isNaN(day) && monthIdx !== undefined) return `${String(day).padStart(2, '0')}/${String(monthIdx + 1).padStart(2, '0')}/${year}`
   return val
 }
+
 // ─── THEME ─────────────────────────────────────────────
 const LIGHT = {
   bg: '#faf8f5', surface: '#ffffff', elevated: '#f3efe8', border: '#e0d8cc',
@@ -85,7 +87,8 @@ function LoginScreen({ config, code, onLogin }: { config: { label: string; passw
         onLogin()
       } else {
         setError(true)
-        setLoading(false)      }
+        setLoading(false)
+      }
     }, 400)
   }
 
@@ -114,7 +117,8 @@ function LoginScreen({ config, code, onLogin }: { config: { label: string; passw
               }}
             />
             <button onClick={() => setShow(!show)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-              {show ? <EyeOff size={16} color={LIGHT.muted} /> : <Eye size={16} color={LIGHT.muted} />}            </button>
+              {show ? <EyeOff size={16} color={LIGHT.muted} /> : <Eye size={16} color={LIGHT.muted} />}
+            </button>
           </div>
           {error && <p style={{ color: '#dc2626', fontSize: 12, marginBottom: 12 }}>Senha incorreta</p>}
           <button
@@ -143,7 +147,8 @@ function KPI({ label, value, icon: Icon, color, t }: { label: string; value: str
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
         <Icon size={14} color={color || t.accent} />
         <span style={{ fontSize: 10, fontWeight: 600, color: t.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
-      </div>      <div style={{ fontSize: 18, fontWeight: 700, color: color || t.text, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+      </div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: color || t.text, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
     </div>
   )
 }
@@ -173,6 +178,7 @@ function MonthRow({ m, idx, t }: { m: MonthData; idx: number; t: typeof LIGHT })
         <span style={{ fontSize: 12, fontWeight: 700, color: t.text, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(repasse)}</span>
         {open ? <ChevronUp size={14} color={t.muted} /> : <ChevronDown size={14} color={t.muted} />}
       </div>
+
       {open && (
         <div style={{ padding: '0 16px 16px', background: t.elevated }}>
           {/* Reservations */}
@@ -196,12 +202,13 @@ function MonthRow({ m, idx, t }: { m: MonthData; idx: number; t: typeof LIGHT })
                         <td style={{ padding: '6px 10px', color: t.text, fontWeight: 500 }}>{r.guest}</td>
                         <td style={{ padding: '6px 10px', textAlign: 'center', color: t.muted }}>{fmtDate(r.checkin, getMonthIndex(m.month))}</td>
                         <td style={{ padding: '6px 10px', textAlign: 'center', color: t.muted }}>{fmtDate(r.checkout, getMonthIndex(m.month))}</td>
-                        <td style={{ padding: '6px 10px', textAlign: 'center', color: t.accent, fontSize: 10 }}>{r.source || '—'}</td>
+                        <td style={{ padding: '6px 10px', textAlign: 'center', color: t.accent, fontSize: 10 }}>{r.source || '\u2014'}</td>
                         <td style={{ padding: '6px 10px', textAlign: 'right', color: t.green, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{r.revenue}</td>
                       </tr>
                     ))}
                   </tbody>
-                </table>              </div>
+                </table>
+              </div>
             </div>
           )}
 
@@ -221,7 +228,7 @@ function MonthRow({ m, idx, t }: { m: MonthData; idx: number; t: typeof LIGHT })
                   <tbody>
                     {m.expenses.map((e, i) => (
                       <tr key={i} style={{ borderTop: `1px solid ${t.border}` }}>
-                        <td style={{ padding: '6px 10px', color: t.text }}>{e.label}{e.obs ? ` — ${e.obs}` : ''}</td>
+                        <td style={{ padding: '6px 10px', color: t.text }}>{e.label}{e.obs ? ` \u2014 ${e.obs}` : ''}</td>
                         <td style={{ padding: '6px 10px', textAlign: 'center', color: t.muted }}>{fmtDate(e.date, getMonthIndex(m.month))}</td>
                         <td style={{ padding: '6px 10px', textAlign: 'right', color: t.red, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{e.value}</td>
                       </tr>
@@ -230,7 +237,8 @@ function MonthRow({ m, idx, t }: { m: MonthData; idx: number; t: typeof LIGHT })
                 </table>
               </div>
             </div>
-          )}        </div>
+          )}
+        </div>
       )}
     </div>
   )
@@ -258,6 +266,7 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
     if (savedTheme === 'dark') setDark(true)
     setChecking(false)
   }, [code])
+
   useEffect(() => {
     if (!authed) return
     setLoading(true)
@@ -289,6 +298,7 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
 
   if (checking) return <div style={{ minHeight: '100vh', background: t.bg }} />
   if (!authed) return <LoginScreen config={config} code={code} onLogin={() => setAuthed(true)} />
+
   // Filtered data
   const months = apt ? filterMonths(apt.months || [], filter, sel) : []
   const totals = useMemo(() => {
@@ -317,7 +327,8 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
     <div style={{ minHeight: '100vh', background: t.bg, fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif", transition: 'background 0.3s' }}>
       {/* Header */}
       <div style={{
-        position: 'sticky', top: 0, zIndex: 20, background: t.surface + 'f2', backdropFilter: 'blur(12px)',        borderBottom: `1.5px solid ${t.border}`, padding: '12px 16px',
+        position: 'sticky', top: 0, zIndex: 20, background: t.surface + 'f2', backdropFilter: 'blur(12px)',
+        borderBottom: `1.5px solid ${t.border}`, padding: '12px 16px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -346,7 +357,8 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
         </div>
       ) : err ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: t.red, fontSize: 14 }}>{err}</div>
-      ) : apt && (        <div style={{ maxWidth: 900, margin: '0 auto', padding: '20px 16px 60px' }}>
+      ) : apt && (
+        <div style={{ maxWidth: 900, margin: '0 auto', padding: '20px 16px 60px' }}>
           {/* Filters */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20, alignItems: 'center' }}>
             {/* Year */}
@@ -375,7 +387,8 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
                   transition: 'all 0.15s',
                 }}
               >
-                {f === 'all' ? 'Ano' : f === 'ytd' ? 'YTD' : 'Mês'}              </button>
+                {f === 'all' ? 'Ano' : f === 'ytd' ? 'YTD' : 'Mês'}
+              </button>
             ))}
 
             {/* Month picker — always visible */}
@@ -392,7 +405,7 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
 
           {/* Period label */}
           <h2 style={{ fontSize: 16, fontWeight: 700, color: t.text, marginBottom: 16 }}>
-            {config.label} — {filterLabel}
+            {config.label} \u2014 {filterLabel}
           </h2>
 
           {/* KPIs */}
@@ -404,7 +417,8 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
             <KPI label="Repasse Proprietário" value={fmtBRL(totals.repasse)} icon={DollarSign} t={t} />
             <KPI label="Noites Ocupadas" value={`${totals.nights} / ${avail}`} icon={BedDouble} t={t} />
             <KPI label="Ocupação" value={`${occupancy.toFixed(1)}%`} icon={Percent} color={occupancy > 70 ? t.green : occupancy > 40 ? t.accent : t.red} t={t} />
-            <KPI label="Diária Média" value={fmtBRL(adr)} icon={Hotel} t={t} />          </div>
+            <KPI label="Diária Média" value={fmtBRL(adr)} icon={Hotel} t={t} />
+          </div>
 
           {/* Monthly breakdown */}
           <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
@@ -433,7 +447,8 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
             {/* Totals row */}
             {months.length > 0 && (
               <div style={{
-                display: 'grid', gridTemplateColumns: '1fr repeat(5, 1fr) 28px', gap: 8,                padding: '14px 16px', background: t.accentBg, borderTop: `2px solid ${t.accent}`,
+                display: 'grid', gridTemplateColumns: '1fr repeat(5, 1fr) 28px', gap: 8,
+                padding: '14px 16px', background: t.accentBg, borderTop: `2px solid ${t.accent}`,
               }}>
                 <span style={{ fontSize: 13, fontWeight: 800, color: t.accent }}>TOTAL</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: t.green, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(totals.rec)}</span>
