@@ -1,6 +1,8 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY || '')
+}
 
 interface BookingEmailData {
   guestName: string
@@ -50,7 +52,8 @@ export async function sendBookingConfirmationEmail(data: BookingEmailData) {
           </p>
           <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5;border:1px solid #e8e3da;border-radius:8px;margin-bottom:24px;">
             <tr><td style="padding:20px 24px;">
-              <p style="font-size:13px;color:#999;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Detalhes da Reserva</p>              <table width="100%" cellpadding="0" cellspacing="0">
+              <p style="font-size:13px;color:#999;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Detalhes da Reserva</p>
+              <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="padding:6px 0;font-size:14px;color:#666;" width="40%">Apartamento</td>
                   <td style="padding:6px 0;font-size:14px;color:#1a3a2a;font-weight:600;">${data.propertyName || data.propertyCode}</td>
@@ -75,7 +78,8 @@ export async function sendBookingConfirmationEmail(data: BookingEmailData) {
                 <tr>
                   <td style="padding:6px 0;font-size:14px;color:#666;">Cupom</td>
                   <td style="padding:6px 0;font-size:14px;color:#2a7d4f;font-weight:600;">${data.couponCode} (-R$ ${data.couponDiscount?.toFixed(2)})</td>
-                </tr>` : ''}                <tr>
+                </tr>` : ''}
+                <tr>
                   <td colspan="2" style="border-top:1px solid #e8e3da;padding-top:10px;margin-top:10px;"></td>
                 </tr>
                 <tr>
@@ -108,7 +112,7 @@ export async function sendBookingConfirmationEmail(data: BookingEmailData) {
 </body>
 </html>`
   try {
-    const { data: result, error } = await resend.emails.send({
+    const { data: result, error } = await getResend().emails.send({
       from: 'Sua Casa Leblon <reservas@send.suacasaleblon.com>',
       to: data.guestEmail,
       subject: `Reserva Confirmada — ${data.propertyName || data.propertyCode} · ${formatDate(data.checkin)}`,
@@ -128,13 +132,14 @@ export async function sendBookingConfirmationEmail(data: BookingEmailData) {
 
 export async function sendBookingNotificationToDiego(data: BookingEmailData) {
   try {
-    await resend.emails.send({
+    await getResend().emails.send({
       from: 'Sua Casa Leblon <sistema@send.suacasaleblon.com>',
       to: 'ditavares@gmail.com',
       subject: `💰 Nova Reserva Direta! ${data.guestName} — ${data.propertyCode}`,
       html: `
         <h2>Nova reserva pelo site!</h2>
-        <p><strong>Hóspede:</strong> ${data.guestName} (${data.guestEmail})</p>        <p><strong>Apartamento:</strong> ${data.propertyCode}</p>
+        <p><strong>Hóspede:</strong> ${data.guestName} (${data.guestEmail})</p>
+        <p><strong>Apartamento:</strong> ${data.propertyCode}</p>
         <p><strong>Check-in:</strong> ${data.checkin} → <strong>Check-out:</strong> ${data.checkout}</p>
         <p><strong>Valor pago:</strong> R$ ${data.paidAmount.toFixed(2)} (${data.paymentMethod})</p>
         ${data.couponCode ? `<p><strong>Cupom:</strong> ${data.couponCode} (-R$${data.couponDiscount?.toFixed(2)})</p>` : ''}
