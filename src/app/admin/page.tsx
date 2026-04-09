@@ -416,7 +416,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState('')
   const [filter, setFilter] = useState<'all' | 'ytd' | 'month'>('month')
-  const [sel, setSel] = useState(new Date().getMonth())
+  const [sel, setSel] = useState(() => { const m = new Date().getMonth(); return m > 0 ? m - 1 : 11 })
   const [syncing, setSyncing] = useState(false)
   const [lastSync, setLastSync] = useState('')
   const [activeTab, setActiveTab] = useState<'visao' | 'apartamentos'>('visao')
@@ -709,20 +709,6 @@ export default function AdminDashboard() {
       {!loading && !err && activeTab === 'apartamentos' && (<>
         {/* Apartment tab filters */}
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Search */}
-          <div className="relative min-w-[160px] max-w-[280px]">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[rgb(var(--adm-muted))]" />
-            <input
-              type="text"
-              placeholder="Buscar apt ou hóspede..."
-              value={aptSearch}
-              onChange={e => setAptSearch(e.target.value)}
-              className="w-full bg-[rgb(var(--adm-elevated))] border border-[rgb(var(--adm-border))] text-[rgb(var(--adm-text))] text-xs rounded-lg pl-8 pr-3 py-1.5 placeholder:text-[rgb(var(--adm-muted))] focus:outline-none focus:border-[rgb(var(--adm-accent))]"
-            />
-          </div>
-
-          <span className="text-[rgb(var(--adm-border))] hidden sm:inline">|</span>
-
           {/* Apartment filter pills */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <button onClick={() => setAptTabFilter('todos')} className={pillBtn(aptTabFilter === 'todos')}>Todos</button>
@@ -731,6 +717,20 @@ export default function AdminDashboard() {
                 {a.name}
               </button>
             ))}
+          </div>
+
+          <span className="text-[rgb(var(--adm-border))] hidden sm:inline">|</span>
+
+          {/* Search */}
+          <div className="relative min-w-[220px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[rgb(var(--adm-muted))]" />
+            <input
+              type="text"
+              placeholder="Buscar apartamento ou hóspede..."
+              value={aptSearch}
+              onChange={e => setAptSearch(e.target.value)}
+              className="w-full bg-[rgb(var(--adm-elevated))] border border-[rgb(var(--adm-border))] text-[rgb(var(--adm-text))] text-xs rounded-lg pl-8 pr-3 py-1.5 placeholder:text-[rgb(var(--adm-muted))] focus:outline-none focus:border-[rgb(var(--adm-accent))]"
+            />
           </div>
         </div>
 

@@ -12,10 +12,10 @@ const ADMIN_PASSWORD = 'suacasa2026'
 const navItems = [
   { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
   { name: 'Apartamentos', path: '/admin/apartamentos', icon: Building2 },
-  { name: 'Agenda', path: '/admin/agenda', icon: CalendarRange },
+  // { name: 'Agenda', path: '/admin/agenda', icon: CalendarRange }, // escondido — código mantido em app/admin/agenda/page.tsx
   { name: 'Despesas', path: '/admin/despesas', icon: DollarSign },
   { name: 'Equipe', path: '/admin/limpezas', icon: Sparkles },
-  { name: 'Agenda Búzios', path: '/admin/agenda-buzios', icon: Palmtree },
+  // { name: 'Agenda Búzios', path: '/admin/agenda-buzios', icon: Palmtree }, // escondido — código mantido
   { name: 'Reservas Diretas', path: '/admin/reservas-diretas', icon: CalendarDays },
   { name: 'Importar CSV', path: '/admin/importar', icon: Upload },
   { name: 'Relatórios', path: '/admin/relatorios', icon: FileText },
