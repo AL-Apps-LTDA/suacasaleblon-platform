@@ -140,9 +140,9 @@ async function handleCompletedCheckout(session: any) {
       checkout: meta.checkout,
       guestName: meta.guestName,
       guestEmail: meta.guestEmail,
-      guestPhone: meta.guestPhone ? `+55${meta.guestPhone}` : undefined,
-      guests: parseInt(meta.guests) || 2,
-      totalPaidCents: session.amount_total || 0,
+      guestPhone: meta.guestPhone ? (meta.guestPhone.startsWith('+') ? meta.guestPhone.replace(/[^\d+]/g, '') : `+${meta.guestPhone.replace(/\D/g, '')}`) : undefined,
+      guests: Math.max(1, Number(meta.guests) || 2),
+      totalPaidCents: session.amount_total ?? 0,
       notes: `Reserva direta via suacasaleblon.com — ${meta.paymentMethod === 'pix' ? 'PIX' : 'Cartão'}${meta.couponCode ? ` — Cupom ${meta.couponCode}` : ''}`,
     })
     if (!hospResult.ok) {
