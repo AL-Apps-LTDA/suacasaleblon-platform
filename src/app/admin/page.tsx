@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import {
   Loader2, RefreshCw, Building2, TrendingUp, TrendingDown,
-  ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight,
   Calendar, Users, DollarSign, Briefcase, UserCheck, ExternalLink,
   BarChart3, Hotel, Percent, BedDouble, Search
 } from 'lucide-react'
@@ -212,19 +212,30 @@ function sourceBadge(source: string) {
 }
 
 function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; sel: number }) {
-  const [open, setOpen] = useState(false)
   const fm = useMemo(() => filterMonths(apt.months || [], filter, sel), [apt.months, filter, sel])
   const rec = sumF(fm, 'receitaTotal'), desp = sumF(fm, 'despesaTotal'), res = sumF(fm, 'resultado')
   const com = sumF(fm, 'managerCommission'), own = fm.reduce((s, m) => s + ownerPart(m), 0)
   const pct = (apt as any).commissionPct
-  const dr = apt.directReservations || []
+  // Filter direct reservations by selected month (pro-rata overlap)
+  const allDr = apt.directReservations || []
+  const dr = useMemo(() => {
+    if (filter !== 'month') return allDr
+    return allDr.filter(r => {
+      if (!r.checkin || !r.checkout) return false
+      const ci = new Date(r.checkin.includes('/') ? r.checkin.split('/').reverse().join('-') : r.checkin)
+      const co = new Date(r.checkout.includes('/') ? r.checkout.split('/').reverse().join('-') : r.checkout)
+      const mStart = new Date(2026, sel, 1)
+      const mEnd = new Date(2026, sel + 1, 0)
+      return ci <= mEnd && co >= mStart
+    })
+  }, [allDr, filter, sel])
 
   const thCls = 'py-1.5 px-2 text-[9px] text-[rgb(var(--adm-muted))] font-semibold uppercase tracking-wider'
   const tdCls = 'py-1.5 px-2 text-[11px]'
 
   return (
     <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl hover:border-[rgb(var(--adm-accent)/0.30)] transition-all">
-      <div className="p-4 cursor-pointer" onClick={() => setOpen(!open)}>
+      <div className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-md bg-[rgb(var(--adm-accent)/0.15)] flex items-center justify-center"><Building2 className="h-3.5 w-3.5 text-[rgb(var(--adm-accent))]" /></div>
@@ -234,7 +245,6 @@ function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; 
             </div>
             {dr.length > 0 && <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-[rgb(var(--adm-accent)/0.15)] text-[rgb(var(--adm-accent))] font-bold">{dr.length} diretas</span>}
           </div>
-          {open ? <ChevronUp className="h-4 w-4 text-[rgb(var(--adm-muted))]" /> : <ChevronDown className="h-4 w-4 text-[rgb(var(--adm-muted))]" />}
         </div>
         <div className="grid grid-cols-3 gap-2 mb-2">
           {[{ l: 'Receita', v: rec, c: 'text-emerald-400' }, { l: 'Despesa', v: desp, c: 'text-red-400' }, { l: 'Resultado', v: res, c: res >= 0 ? 'text-emerald-400' : 'text-red-400' }].map(({ l, v, c }) => (
@@ -264,7 +274,6 @@ function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; 
           })}
         </div>
       </div>
-      {open && (
         <div className="px-4 pb-4 space-y-3 border-t border-[rgb(var(--adm-border))] pt-3">
           {/* Direct Reservations Table */}
           {dr.length > 0 && (
@@ -281,7 +290,7 @@ function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; 
                   </thead>
                   <tbody>
                     {dr.map((r, i) => (
-                      <tr key={i} className="border-b border-[rgb(var(--adm-border)/0.20)] last:border-0">
+                      <tr key={i} className="border-b border-[rgb(var(--adm-border)/0.40)] last:border-0">
                         <td className={`${tdCls} font-mono text-[rgb(var(--adm-muted))]`}>
                           <Calendar className="h-3 w-3 inline mr-1 opacity-50" />{fmtDateCol(r.checkin)} → {fmtDateCol(r.checkout)}
                         </td>
@@ -326,7 +335,7 @@ function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; 
                           {md.reservations.map((rv, ri) => {
                             const isAdj = rv.source === 'adjustment'
                             return (
-                              <tr key={ri} className={`border-b border-[rgb(var(--adm-border)/0.20)] last:border-0 ${isAdj ? 'opacity-75' : ''} ${ri % 2 === 0 ? '' : 'bg-[rgb(var(--adm-surface)/0.30)]'}`}>
+                              <tr key={ri} className={`border-b border-[rgb(var(--adm-border)/0.40)] last:border-0 ${isAdj ? 'opacity-75' : ''} ${ri % 2 === 0 ? '' : 'bg-[rgb(var(--adm-surface)/0.30)]'}`}>
                                 <td className={`${tdCls} font-mono text-[rgb(var(--adm-muted))] whitespace-nowrap`}>
                                   {!isAdj ? `${fmtDateCol(rv.checkin, mi)} → ${fmtDateCol(rv.checkout, mi)}` : ''}
                                 </td>
@@ -369,7 +378,7 @@ function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; 
                         </thead>
                         <tbody>
                           {md.expenses.map((e, ei) => (
-                            <tr key={ei} className={`border-b border-[rgb(var(--adm-border)/0.20)] last:border-0 ${ei % 2 === 0 ? '' : 'bg-[rgb(var(--adm-surface)/0.30)]'}`}>
+                            <tr key={ei} className={`border-b border-[rgb(var(--adm-border)/0.40)] last:border-0 ${ei % 2 === 0 ? '' : 'bg-[rgb(var(--adm-surface)/0.30)]'}`}>
                               <td className={`${tdCls} text-[rgb(var(--adm-text))]`}>
                                 {e.label}{e.obs ? <span className="ml-1 text-[9px] text-[rgb(var(--adm-muted))]">({e.obs})</span> : ''}
                               </td>
@@ -391,7 +400,6 @@ function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; 
             )
           })}
         </div>
-      )}
     </div>
   )
 }
@@ -408,7 +416,6 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'visao' | 'apartamentos'>('visao')
   const [aptFilter, setAptFilter] = useState<string>('todos')
   const [aptTabFilter, setAptTabFilter] = useState<string>('todos')
-  const [aptTabMonth, setAptTabMonth] = useState<number>(new Date().getMonth()) // default = current month
   const [aptSearch, setAptSearch] = useState('')
 
   async function loadData() {
@@ -538,9 +545,9 @@ export default function AdminDashboard() {
     return list
   }, [valid, aptTabFilter, aptSearch])
 
-  // Effective filter/sel for Apartments tab (override month if aptTabMonth is set)
-  const aptTabEffectiveFilter = aptTabMonth >= 0 ? 'month' as const : filter
-  const aptTabEffectiveSel = aptTabMonth >= 0 ? aptTabMonth : sel
+  // Apartments tab uses shared filter/sel
+  const aptTabEffectiveFilter = filter
+  const aptTabEffectiveSel = sel
 
   // Pill button style helper
   const pillBtn = (active: boolean) =>
@@ -588,18 +595,17 @@ export default function AdminDashboard() {
 
       {/* Time Filters (shared) */}
       <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 bg-[rgb(var(--adm-elevated))] rounded-lg border border-[rgb(var(--adm-border))] px-1">
+          <button onClick={() => setSel(s => s > 0 ? s - 1 : 11)} className="p-1.5 text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]"><ChevronLeft className="h-4 w-4" /></button>
+          <span className="text-sm font-medium text-[rgb(var(--adm-text))] min-w-[80px] text-center">{MONTHS_FULL[sel]}</span>
+          <button onClick={() => setSel(s => s < 11 ? s + 1 : 0)} className="p-1.5 text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]"><ChevronRight className="h-4 w-4" /></button>
+        </div>
+
         <div className="flex rounded-lg border border-[rgb(var(--adm-border))] overflow-hidden text-xs">
           {([{ k: 'month' as const, l: 'Mês' }, { k: 'ytd' as const, l: 'YTD' }, { k: 'all' as const, l: 'Ano' }]).map(f => (
             <button key={f.k} onClick={() => setFilter(f.k)} className={`px-4 py-2 font-medium transition-all ${filter === f.k ? 'bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))]' : 'bg-[rgb(var(--adm-elevated))] text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]'}`}>{f.l}</button>
           ))}
         </div>
-        {filter === 'month' && (
-          <div className="flex items-center gap-1.5 bg-[rgb(var(--adm-elevated))] rounded-lg border border-[rgb(var(--adm-border))] px-1">
-            <button onClick={() => setSel(s => s > 0 ? s - 1 : 11)} className="p-1.5 text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]"><ChevronLeft className="h-4 w-4" /></button>
-            <span className="text-sm font-medium text-[rgb(var(--adm-text))] min-w-[80px] text-center">{MONTHS_FULL[sel]}</span>
-            <button onClick={() => setSel(s => s < 11 ? s + 1 : 0)} className="p-1.5 text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]"><ChevronRight className="h-4 w-4" /></button>
-          </div>
-        )}
 
         {/* Apartment filter pills — only on Visao Geral tab */}
         {activeTab === 'visao' && valid.length > 0 && (
@@ -697,30 +703,8 @@ export default function AdminDashboard() {
       {!loading && !err && activeTab === 'apartamentos' && (<>
         {/* Apartment tab filters */}
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Apartment filter pills */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button onClick={() => setAptTabFilter('todos')} className={pillBtn(aptTabFilter === 'todos')}>Todos</button>
-            {valid.map(a => (
-              <button key={a.name} onClick={() => setAptTabFilter(a.name)} className={pillBtn(aptTabFilter === a.name)}>
-                {a.name}
-              </button>
-            ))}
-          </div>
-
-          <span className="text-[rgb(var(--adm-border))] hidden sm:inline">|</span>
-
-          {/* Month override filter */}
-          <select
-            value={aptTabMonth}
-            onChange={e => setAptTabMonth(Number(e.target.value))}
-            className="bg-[rgb(var(--adm-elevated))] border border-[rgb(var(--adm-border))] text-[rgb(var(--adm-text))] text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-[rgb(var(--adm-accent))]"
-          >
-            <option value={-1}>Período geral</option>
-            {MONTHS_FULL.map((m, i) => <option key={m} value={i}>{m}</option>)}
-          </select>
-
           {/* Search */}
-          <div className="relative flex-1 min-w-[160px] max-w-[280px]">
+          <div className="relative min-w-[160px] max-w-[280px]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[rgb(var(--adm-muted))]" />
             <input
               type="text"
@@ -729,6 +713,18 @@ export default function AdminDashboard() {
               onChange={e => setAptSearch(e.target.value)}
               className="w-full bg-[rgb(var(--adm-elevated))] border border-[rgb(var(--adm-border))] text-[rgb(var(--adm-text))] text-xs rounded-lg pl-8 pr-3 py-1.5 placeholder:text-[rgb(var(--adm-muted))] focus:outline-none focus:border-[rgb(var(--adm-accent))]"
             />
+          </div>
+
+          <span className="text-[rgb(var(--adm-border))] hidden sm:inline">|</span>
+
+          {/* Apartment filter pills */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button onClick={() => setAptTabFilter('todos')} className={pillBtn(aptTabFilter === 'todos')}>Todos</button>
+            {valid.map(a => (
+              <button key={a.name} onClick={() => setAptTabFilter(a.name)} className={pillBtn(aptTabFilter === a.name)}>
+                {a.name}
+              </button>
+            ))}
           </div>
         </div>
 
