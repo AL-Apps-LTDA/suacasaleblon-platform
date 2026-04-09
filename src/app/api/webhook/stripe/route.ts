@@ -85,6 +85,9 @@ async function handleCompletedCheckout(session: any) {
   const couponDiscount = parseFloat(meta.couponDiscount || '0')
   const paidAmount = (session.amount_total || 0) / 100 // cents to BRL
 
+  // Estimate Stripe fee (3.99% + R$0.39 for domestic cards)
+  const stripeFee = Math.round((paidAmount * 0.0399 + 0.39) * 100) / 100
+
   // Insert direct reservation
   const { data, error } = await sb.from('direct_reservations').insert({
     apartment_code: meta.propertyCode,
@@ -92,6 +95,7 @@ async function handleCompletedCheckout(session: any) {
     checkin: meta.checkin,
     checkout: meta.checkout,
     total_value: totalValue,
+    stripe_fee: stripeFee,
     payment_status: 'pago',
     payment_method: meta.paymentMethod || 'card',
     notes: [
@@ -99,7 +103,7 @@ async function handleCompletedCheckout(session: any) {
       meta.couponCode ? `Cupom: ${meta.couponCode} (-R$${couponDiscount.toFixed(2)})` : null,
       `Email: ${meta.guestEmail}`,
       meta.guestPhone ? `Tel: ${meta.guestPhone}` : null,
-      `Valor pago: R$${paidAmount.toFixed(2)}`,
+      `Valor pago: R$${paidAmount.toFixed(2)} (taxa Stripe: R$${stripeFee.toFixed(2)})`,
       `Stripe: ${session.id}`,
     ].filter(Boolean).join(' | '),
     source: 'site',

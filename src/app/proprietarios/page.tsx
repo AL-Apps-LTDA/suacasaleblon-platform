@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, ArrowRight, Calculator, MessageCircle, CheckCircle2, TrendingUp, Shield, Clock, Building2, Star, Zap, BarChart3 } from 'lucide-react'
-import { fmtBRL, WHATSAPP_NUMBER, DEFAULTS } from '@/lib/types'
+import { fmtBRL, WHATSAPP_NUMBER } from '@/lib/types'
 
 const CALCULATOR_PRESETS = [
   { type: 'Studio', avgDaily: 450, occupancy: 0.72, expenses: 1800 },
@@ -21,7 +21,7 @@ export default function ProprietariosPage() {
   const [formLink, setFormLink] = useState('')
 
   const preset = CALCULATOR_PRESETS[selectedType]
-  const commissionPct = DEFAULTS.commission_pct
+  const commissionPct = 0.20 // Simulação para novos proprietários
 
   const daysInMonth = 30
   const occupiedNights = Math.round(daysInMonth * preset.occupancy)

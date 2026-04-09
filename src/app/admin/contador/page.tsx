@@ -71,7 +71,7 @@ export default function ContadorPage() {
     for (const dr of directRes) {
       if (dr.checkin?.startsWith(monthStr) && dr.payment_status === 'pago') {
         const apt = dr.apartment_code
-        if (apt && result[apt]) result[apt].directRevenue += Number(dr.total_value || 0)
+        if (apt && result[apt]) result[apt].directRevenue += Number(dr.total_value || 0) - Number(dr.stripe_fee || 0)
       }
     }
 

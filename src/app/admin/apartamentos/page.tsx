@@ -13,7 +13,7 @@ interface Apartment {
 
 const EMPTY: Partial<Apartment> = {
   code: '', title: '', subtitle: '', slug: '', owner_name: '', owner_email: '', owner_phone: '',
-  commission_pct: 0.15, commission_valid_from: new Date().toLocaleDateString('sv-SE'),
+  commission_pct: 0, commission_valid_from: new Date().toLocaleDateString('sv-SE'),
   address: '', hospitable_uuid: '', show_on_site: true, active: true,
   max_guests: 2, base_guests: 2, extra_per_guest_per_night: 0, cleaning_fee: 150,
 }

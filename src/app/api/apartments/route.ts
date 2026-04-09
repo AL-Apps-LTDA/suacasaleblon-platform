@@ -58,7 +58,7 @@ export async function GET() {
     const summaries = []
     for (const name of [...APARTMENTS]) {
       const config = configMap[name]
-      const commPct = config?.commission_pct ? Number(config.commission_pct) : DEFAULTS.commission_pct
+      const commPct = config?.commission_pct ? Number(config.commission_pct) : 0
 
       // Per-apartment: use Hospitable API data, fallback to Supabase cache if empty for THIS apartment
       let aptRes = hospReservations.filter(r => r.apartmentName === name)
@@ -127,12 +127,13 @@ export async function GET() {
           }
         }
 
-        // Direct reservations with PRO RATA across months
+        // Direct reservations with PRO RATA across months (revenue = total - stripe fee)
         for (const dr of aptDirect) {
           const [ciy,cim,cid] = dr.checkin.split('-').map(Number), [coy,com,cod] = dr.checkout.split('-').map(Number)
           const ci = new Date(ciy, cim-1, cid), co = new Date(coy, com-1, cod)
           const totalNights = Math.max(1, Math.round((co.getTime() - ci.getTime()) / 86400000))
-          const nightly = Number(dr.total_value) / totalNights
+          const netValue = Number(dr.total_value) - Number(dr.stripe_fee || 0)
+          const nightly = netValue / totalNights
           const mStart = new Date(currentYear, mi, 1), mEnd = new Date(currentYear, mi + 1, 0)
           const oStart = new Date(Math.max(ci.getTime(), mStart.getTime()))
           const oEnd = new Date(Math.min(co.getTime(), mEnd.getTime()))
@@ -172,7 +173,7 @@ export async function GET() {
       summaries.push({
         name, hospitableId: PROPERTY_HOSPITABLE_MAP[name],
         ownerName: config?.owner_name || null, commissionPct: commPct,
-        months, directReservations: aptDirect.map(r => ({ checkin: r.checkin, checkout: r.checkout, guest: r.guest_name, totalValue: fmtBRL(Number(r.total_value)), paid: r.payment_status, obs: r.notes || '' })),
+        months, directReservations: aptDirect.map(r => ({ checkin: r.checkin, checkout: r.checkout, guest: r.guest_name, totalValue: fmtBRL(Number(r.total_value) - Number(r.stripe_fee || 0)), paid: r.payment_status, obs: r.notes || '' })),
       })
     }
     return NextResponse.json(summaries)
@@ -183,5 +184,5 @@ export async function GET() {
 }
 
 function emptyMonth(label: string) {
-  return { month: `${label}/26`, reservations: [], receitaTotal: 'R$ 0,00', expenses: [], despesaTotal: 'R$ 0,00', resultado: 'R$ 0,00', managerCommission: 'R$ 0,00', managerName: 'Diego', repassar: 'R$ 0,00', _raw: { revenue: 0, expenses: 0, result: 0, commission: 0, ownerPart: 0, commissionPct: DEFAULTS.commission_pct } }
+  return { month: `${label}/26`, reservations: [], receitaTotal: 'R$ 0,00', expenses: [], despesaTotal: 'R$ 0,00', resultado: 'R$ 0,00', managerCommission: 'R$ 0,00', managerName: 'Diego', repassar: 'R$ 0,00', _raw: { revenue: 0, expenses: 0, result: 0, commission: 0, ownerPart: 0, commissionPct: 0 } }
 }
