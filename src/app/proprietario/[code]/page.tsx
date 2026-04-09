@@ -255,8 +255,8 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
   const [loading, setLoading] = useState(true)
   const [apt, setApt] = useState<ApartmentSummary | null>(null)
   const [err, setErr] = useState('')
-  const [filter, setFilter] = useState<'all' | 'ytd' | 'month'>('ytd')
-  const [sel, setSel] = useState(new Date().getMonth() > 0 ? new Date().getMonth() - 1 : 0)
+  const [filter, setFilter] = useState<'all' | 'ytd' | 'month'>('month')
+  const [sel, setSel] = useState(new Date().getMonth())
   const [year, setYear] = useState(2026)
 
   useEffect(() => {
@@ -283,23 +283,7 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
 
   const t = dark ? DARK : LIGHT
 
-  // Not a valid apartment
-  if (!config) {
-    return (
-      <div style={{ minHeight: '100vh', background: LIGHT.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
-        <div style={{ textAlign: 'center' }}>
-          <Lock size={32} color={LIGHT.muted} style={{ margin: '0 auto 12px' }} />
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: LIGHT.text }}>Apartamento não encontrado</h1>
-          <p style={{ fontSize: 13, color: LIGHT.muted, marginTop: 8 }}>Verifique o link de acesso com a administração.</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (checking) return <div style={{ minHeight: '100vh', background: t.bg }} />
-  if (!authed) return <LoginScreen config={config} code={code} onLogin={() => setAuthed(true)} />
-
-  // Filtered data
+  // ─── ALL HOOKS MUST BE ABOVE ANY EARLY RETURN ───────
   const months = apt ? filterMonths(apt.months || [], filter, sel) : []
   const totals = useMemo(() => {
     if (!months.length) return { rec: 0, desp: 0, res: 0, com: 0, repasse: 0, nights: 0 }
@@ -315,13 +299,28 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
   const avail = availableNights(filter, sel, year)
   const occupancy = avail > 0 ? (totals.nights / avail) * 100 : 0
   const adr = totals.nights > 0 ? totals.rec / totals.nights : 0
-
   const filterLabel = filter === 'all' ? `${year}` : filter === 'ytd' ? `YTD ${year}` : MONTHS_FULL[sel]
 
   function handleLogout() {
     sessionStorage.removeItem(`prop_auth_${code}`)
     setAuthed(false)
   }
+
+  // ─── EARLY RETURNS (after all hooks) ────────────────
+  if (!config) {
+    return (
+      <div style={{ minHeight: '100vh', background: LIGHT.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+        <div style={{ textAlign: 'center' }}>
+          <Lock size={32} color={LIGHT.muted} style={{ margin: '0 auto 12px' }} />
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: LIGHT.text }}>Apartamento não encontrado</h1>
+          <p style={{ fontSize: 13, color: LIGHT.muted, marginTop: 8 }}>Verifique o link de acesso com a administração.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (checking) return <div style={{ minHeight: '100vh', background: t.bg }} />
+  if (!authed) return <LoginScreen config={config} code={code} onLogin={() => setAuthed(true)} />
 
   return (
     <div style={{ minHeight: '100vh', background: t.bg, fontFamily: "'DM Sans', system-ui, -apple-system, sans-serif", transition: 'background 0.3s' }}>

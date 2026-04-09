@@ -401,14 +401,14 @@ export default function AdminDashboard() {
   const [op, setOp] = useState<{ expenses: BizExpense[]; totalRow: BizExpense | null; resultadoRow: Record<string, string> } | null>(null)
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState('')
-  const [filter, setFilter] = useState<'all' | 'ytd' | 'month'>('ytd')
-  const [sel, setSel] = useState(new Date().getMonth() > 0 ? new Date().getMonth() - 1 : 0)
+  const [filter, setFilter] = useState<'all' | 'ytd' | 'month'>('month')
+  const [sel, setSel] = useState(new Date().getMonth())
   const [syncing, setSyncing] = useState(false)
   const [lastSync, setLastSync] = useState('')
   const [activeTab, setActiveTab] = useState<'visao' | 'apartamentos'>('visao')
   const [aptFilter, setAptFilter] = useState<string>('todos')
   const [aptTabFilter, setAptTabFilter] = useState<string>('todos')
-  const [aptTabMonth, setAptTabMonth] = useState<number>(-1) // -1 = all months
+  const [aptTabMonth, setAptTabMonth] = useState<number>(new Date().getMonth()) // default = current month
   const [aptSearch, setAptSearch] = useState('')
 
   async function loadData() {

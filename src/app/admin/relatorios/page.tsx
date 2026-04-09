@@ -16,7 +16,7 @@ function ownerPart(m: MonthData) { return parseBRL(m.resultado) - parseBRL(m.rep
 export default function RelatoriosPage() {
   const [apartments, setApartments] = useState<ApartmentSummary[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() - 1 >= 0 ? new Date().getMonth() - 1 : 0)
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [generating, setGenerating] = useState<string | null>(null)
 
   useEffect(() => {
