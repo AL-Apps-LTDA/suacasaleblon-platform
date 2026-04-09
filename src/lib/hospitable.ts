@@ -309,6 +309,71 @@ export async function blockCalendarDates(
   return { ok: true, blocked: dates.length }
 }
 
+/**
+ * Create a full reservation on Hospitable (syncs to Airbnb/Booking as blocked dates).
+ * Better than blockCalendarDates because it stores guest info and triggers
+ * automated check-in instructions via Hospitable.
+ */
+export async function createDirectReservation(params: {
+  apartmentCode: string
+  checkin: string
+  checkout: string
+  guestName: string
+  guestEmail: string
+  guestPhone?: string
+  guests?: number
+  totalPaidCents: number
+  notes?: string
+}): Promise<{ ok: boolean; reservationId?: string; code?: string; error?: string }> {
+  const uuid = PROPERTY_HOSPITABLE_MAP[params.apartmentCode]
+  if (!uuid) return { ok: false, error: `Unknown apartment: ${params.apartmentCode}` }
+
+  const nameParts = params.guestName.trim().split(' ')
+  const firstName = nameParts[0]
+  const lastName = nameParts.slice(1).join(' ') || firstName
+
+  const res = await fetch(`${HOSPITABLE_BASE_URL}/reservations`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${getApiKey()}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      property_id: uuid,
+      check_in: params.checkin,
+      check_out: params.checkout,
+      guests: { adults: params.guests || 2 },
+      guest: {
+        first_name: firstName,
+        last_name: lastName,
+        email: params.guestEmail,
+        ...(params.guestPhone ? { phone: params.guestPhone } : {}),
+      },
+      language: 'pt',
+      platform: 'direct',
+      status: 'accepted',
+      source: 'Website',
+      financials: {
+        currency: 'BRL',
+        accommodation: params.totalPaidCents,
+      },
+      ...(params.notes ? { notes: params.notes } : {}),
+    }),
+  })
+
+  if (!res.ok) {
+    const body = await res.text()
+    console.error(`Failed to create Hospitable reservation for ${params.apartmentCode}: ${res.status} ${body}`)
+    return { ok: false, error: `Hospitable API ${res.status}: ${body}` }
+  }
+
+  const data = await res.json()
+  const reservation = data?.data
+  console.log(`✅ Hospitable reservation created: ${reservation?.code} for ${params.guestName} at apt ${params.apartmentCode} (${params.checkin} → ${params.checkout})`)
+  return { ok: true, reservationId: reservation?.id, code: reservation?.code }
+}
+
 export async function testConnection(): Promise<{ ok: boolean; error?: string }> {
   try {
     await hospitableFetch('/reservations', {
