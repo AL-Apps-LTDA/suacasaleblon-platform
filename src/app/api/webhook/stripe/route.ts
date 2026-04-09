@@ -92,19 +92,21 @@ async function handleCompletedCheckout(session: any) {
     checkin: meta.checkin,
     checkout: meta.checkout,
     total_value: totalValue,
-    paid: paidAmount,
-    obs: [
+    payment_status: 'pago',
+    payment_method: meta.paymentMethod || 'card',
+    notes: [
       `Reserva online via ${meta.paymentMethod === 'pix' ? 'PIX' : 'Cartão'}`,
       meta.couponCode ? `Cupom: ${meta.couponCode} (-R$${couponDiscount.toFixed(2)})` : null,
       `Email: ${meta.guestEmail}`,
       meta.guestPhone ? `Tel: ${meta.guestPhone}` : null,
+      `Valor pago: R$${paidAmount.toFixed(2)}`,
       `Stripe: ${session.id}`,
     ].filter(Boolean).join(' | '),
     source: 'site',
     stripe_session_id: session.id,
-    payment_method: meta.paymentMethod || 'card',
     coupon_code: meta.couponCode || null,
     coupon_discount: couponDiscount || null,
+    discount_amount: couponDiscount || 0,
     guest_email: meta.guestEmail,
     guest_phone: meta.guestPhone || null,
   }).select().single()
@@ -139,7 +141,7 @@ async function handleCompletedCheckout(session: any) {
       // Reservation is saved but dates not blocked — needs manual intervention
       // Update reservation notes to flag this
       await sb.from('direct_reservations')
-        .update({ obs: (data?.obs || '') + ' | ⚠️ DATAS NÃO BLOQUEADAS NO AIRBNB — verificar manualmente' })
+        .update({ notes: (data?.notes || '') + ' | ⚠️ DATAS NÃO BLOQUEADAS NO AIRBNB — verificar manualmente' })
         .eq('id', data?.id)
     }
   } catch (e: any) {
