@@ -262,7 +262,7 @@ function AptCard({ apt, filter, sel }: { apt: ApartmentSummary; filter: string; 
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-[rgb(var(--adm-accent)/0.5)] border border-[rgb(var(--adm-accent)/0.10)] rounded-lg p-1.5 text-center">
-            <p className="text-[8px] text-[rgb(var(--adm-muted))] uppercase">Minha Comissão</p>
+            <p className="text-[8px] text-[rgb(var(--adm-muted))] uppercase">Comissão Sua Casa</p>
             <p className="text-[10px] font-bold text-[rgb(var(--adm-accent))] font-mono">{fmtBRL(com)}</p>
           </div>
           <div className="bg-emerald-400/5 border border-emerald-400/10 rounded-lg p-1.5 text-center">
@@ -636,9 +636,9 @@ export default function AdminDashboard() {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <MetricCard label="Receita Total" value={fmtBRL(totals.rec)} sub={`${aptCount} imóve${aptCount === 1 ? 'l' : 'is'} ${aptFilter === 'todos' ? 'ativos' : ''}`} icon={DollarSign} color="text-emerald-400" />
-          <MetricCard label="Minha Comissão" value={fmtBRL(totals.com)} sub={aptFilter === 'todos' ? `Resultado: ${fmtBRL(totals.com - bizTotal)}` : undefined} icon={Briefcase} color="text-[rgb(var(--adm-accent))]" />
+          <MetricCard label="Comissão Sua Casa" value={fmtBRL(totals.com)} sub={aptFilter === 'todos' ? `Resultado: ${fmtBRL(totals.com - bizTotal)}` : undefined} icon={Briefcase} color="text-[rgb(var(--adm-accent))]" />
           <MetricCard label="Despesas Apts" value={fmtBRL(totals.desp)} icon={TrendingDown} color="text-red-400" />
-          <MetricCard label="Resultado Líquido" value={fmtBRL(totals.res)} sub={`Repassar: ${fmtBRL(totals.own)}`} icon={BarChart3} color={totals.res >= 0 ? 'text-emerald-400' : 'text-red-400'} />
+          <MetricCard label="Resultado Líquido" value={fmtBRL(totals.res - totals.com)} sub={`Repassar: ${fmtBRL(totals.own)}`} icon={BarChart3} color={(totals.res - totals.com) >= 0 ? 'text-emerald-400' : 'text-red-400'} />
         </div>
 
         {/* Performance Metrics */}
