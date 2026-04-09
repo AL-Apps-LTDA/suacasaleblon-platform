@@ -127,25 +127,30 @@ async function handleCompletedCheckout(session: any) {
 
   console.log(`✅ Reservation saved: ${data?.id} for ${meta.guestName} at ${meta.propertyCode}`)
 
-  // Block dates on Hospitable → syncs to Airbnb/Booking (prevents overbooking)
+  // Create reservation on Hospitable → syncs to Airbnb/Booking + sends check-in instructions
   try {
-    const { blockCalendarDates } = await import('@/lib/hospitable')
-    const blockResult = await blockCalendarDates(
-      meta.propertyCode,
-      meta.checkin,
-      meta.checkout,
-      `Reserva direta site — ${meta.guestName}`
-    )
-    if (!blockResult.ok) {
-      console.error(`⚠️ Calendar block failed for ${meta.propertyCode}: ${blockResult.error}`)
-      // Reservation is saved but dates not blocked — needs manual intervention
-      // Update reservation notes to flag this
+    const { createDirectReservation } = await import('@/lib/hospitable')
+    const hospResult = await createDirectReservation({
+      apartmentCode: meta.propertyCode,
+      checkin: meta.checkin,
+      checkout: meta.checkout,
+      guestName: meta.guestName,
+      guestEmail: meta.guestEmail,
+      guestPhone: meta.guestPhone ? `+55${meta.guestPhone}` : undefined,
+      guests: parseInt(meta.guests) || 2,
+      totalPaidCents: session.amount_total || 0,
+      notes: `Reserva direta via suacasaleblon.com — ${meta.paymentMethod === 'pix' ? 'PIX' : 'Cartão'}${meta.couponCode ? ` — Cupom ${meta.couponCode}` : ''}`,
+    })
+    if (!hospResult.ok) {
+      console.error(`⚠️ Hospitable reservation failed for ${meta.propertyCode}: ${hospResult.error}`)
       await sb.from('direct_reservations')
-        .update({ notes: (data?.notes || '') + ' | ⚠️ DATAS NÃO BLOQUEADAS NO AIRBNB — verificar manualmente' })
+        .update({ notes: (data?.notes || '') + ' | ⚠️ RESERVA NÃO CRIADA NO HOSPITABLE — verificar manualmente' })
         .eq('id', data?.id)
+    } else {
+      console.log(`✅ Hospitable reservation ${hospResult.code} created for apt ${meta.propertyCode}`)
     }
   } catch (e: any) {
-    console.error(`⚠️ Calendar block error: ${e.message}`)
+    console.error(`⚠️ Hospitable reservation error: ${e.message}`)
   }
 
   // Send confirmation email to guest + notification to Diego
