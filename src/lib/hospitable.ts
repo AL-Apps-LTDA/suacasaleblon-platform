@@ -328,12 +328,17 @@ export async function createDirectReservation(params: {
   const uuid = PROPERTY_HOSPITABLE_MAP[params.apartmentCode]
   if (!uuid) return { ok: false, error: `Unknown apartment: ${params.apartmentCode}` }
 
-  const nameParts = params.guestName.trim().split(' ')
+  const normalizedGuestName = params.guestName.trim()
+  const nameParts = normalizedGuestName ? normalizedGuestName.split(/\s+/).filter(Boolean) : []
+  if (nameParts.length === 0) {
+    return { ok: false, error: 'Guest name is required' }
+  }
   const firstName = nameParts[0]
   const lastName = nameParts.slice(1).join(' ') || firstName
 
   const res = await fetch(`${HOSPITABLE_BASE_URL}/reservations`, {
     method: 'POST',
+    cache: 'no-store',
     headers: {
       'Authorization': `Bearer ${getApiKey()}`,
       'Content-Type': 'application/json',
