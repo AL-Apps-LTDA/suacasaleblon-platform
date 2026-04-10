@@ -470,7 +470,7 @@ function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isA
   const handlePointerUp=()=>{if(longPressTimer.current){clearTimeout(longPressTimer.current);longPressTimer.current=null}}
 
   return(
-    <div style={{background:t.cardBg,borderRadius:12,border:`2px solid ${t.border}`,overflow:'hidden',marginBottom:14}}>
+    <div style={{background:t.cardBg,borderRadius:12,border:`2px solid ${t.border}`,overflowX:'auto',overflowY:'hidden',marginBottom:14}}>
       <div style={{padding:'8px 12px',borderBottom:`1.5px solid ${t.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <span style={{fontSize:12,fontWeight:800,color:t.labelColor,textTransform:'uppercase',letterSpacing:'0.06em'}}>{label}</span>
         {reorderCol!==null&&<div style={{display:'flex',gap:6}}>
@@ -478,7 +478,7 @@ function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isA
           <button onClick={cancelReorder} style={{fontSize:9,fontWeight:600,padding:'3px 10px',borderRadius:6,border:`1px solid ${t.border}`,background:'transparent',color:t.textSecondary,cursor:'pointer'}}>Cancelar</button>
         </div>}
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:`1.5px solid ${t.border}`}}>
+      <div style={{minWidth:420,display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:`1.5px solid ${t.border}`}}>
         {dates.map((day,i)=>{const td=isToday(day);const reordering=reorderCol===i;return(
           <div key={i} style={{textAlign:'center',padding:'6px 2px',background:reordering?t.gold+'20':td?t.goldBg:'transparent',borderRight:i<6?`1px solid ${t.borderInner}`:'none',transition:'background 0.2s'}}>
             <div style={{fontSize:9,fontWeight:700,color:reordering?t.gold:td?t.gold:t.textSecondary}}>{DAYS_L[day.getDay()]}</div>
@@ -487,7 +487,7 @@ function Grid({dates,label,reservations,cleanings,t,onCellClick,onEmptyClick,isA
           </div>)})}
       </div>
       {grid.map((row,ri)=>(
-        <div key={ri} style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:ri<grid.length-1?`1.5px solid ${t.borderInner}`:'none',minHeight:52}}>
+        <div key={ri} style={{minWidth:420,display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:ri<grid.length-1?`1.5px solid ${t.borderInner}`:'none',minHeight:52}}>
           {row.map((cell,ci)=>{
             const reordering=reorderCol===ci
             return(

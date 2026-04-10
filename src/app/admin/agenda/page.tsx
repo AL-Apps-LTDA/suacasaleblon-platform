@@ -117,7 +117,7 @@ export default function AgendaPage() {
 
       {/* Apartment filter */}
       <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex rounded-lg border border-[rgb(var(--adm-border))] overflow-hidden text-xs">
+        <div className="flex rounded-lg border border-[rgb(var(--adm-border))] overflow-x-auto text-xs">
           <button onClick={() => setFilterApt('all')} className={`px-4 py-2 font-medium ${filterApt === 'all' ? 'bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))]' : 'bg-[rgb(var(--adm-elevated))] text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]'}`}>Todos</button>
           {APARTMENTS.map(a => (
             <button key={a} onClick={() => setFilterApt(a)} className={`px-3 py-2 font-medium ${filterApt === a ? 'bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))]' : 'bg-[rgb(var(--adm-elevated))] text-[rgb(var(--adm-muted))] hover:text-[rgb(var(--adm-text))]'}`}>{a}</button>
@@ -140,7 +140,8 @@ export default function AgendaPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-5 w-5 animate-spin text-[rgb(var(--adm-accent))]" /></div>
       ) : (
-        <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl overflow-hidden">
+        <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl overflow-x-auto">
+          <div className="min-w-[500px]">
           {/* Day headers */}
           <div className="grid grid-cols-7 border-b border-[rgb(var(--adm-border))]">
             {DAYS.map(d => (
@@ -177,6 +178,7 @@ export default function AgendaPage() {
                 </div>
               )
             })}
+          </div>
           </div>
         </div>
       )}
