@@ -477,7 +477,8 @@ export default function AdminDashboard() {
   const occupancy = avail > 0 ? (totals.nights / avail) * 100 : 0
   const adr = totals.nights > 0 ? totals.rec / totals.nights : 0
   const revpar = avail > 0 ? totals.rec / avail : 0
-  const revpan = aptCount > 0 ? totals.rec / aptCount : 0
+  // RevPAN: receita / noites disponíveis pra venda (sem bloqueios). Por enquanto = RevPAR até puxarmos bloqueios do Hospitable.
+  const revpan = avail > 0 ? totals.rec / avail : 0
 
   // Monthly chart data
   const chartData = useMemo(() => {
@@ -645,8 +646,8 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <MetricCard label="Tx. Ocupação" value={`${occupancy.toFixed(1)}%`} sub={`${totals.nights} de ${avail} noites`} icon={Hotel} color={occupancy > 60 ? 'text-emerald-400' : occupancy > 40 ? 'text-yellow-400' : 'text-red-400'} />
           <MetricCard label="ADR" value={fmtBRL(adr)} sub="Diária média" icon={BedDouble} color="text-[rgb(var(--adm-text))]" />
-          <MetricCard label="RevPAR" value={fmtBRL(revpar)} sub="Receita por noite disponível" icon={BarChart3} color="text-[rgb(var(--adm-text))]" />
-          <MetricCard label="RevPAN" value={fmtBRL(revpan)} sub="Receita por apt (período)" icon={Building2} color="text-[rgb(var(--adm-text))]" />
+          <MetricCard label="RevPAR" value={fmtBRL(revpar)} sub="Receita / noites totais" icon={BarChart3} color="text-[rgb(var(--adm-text))]" />
+          <MetricCard label="RevPAN" value={fmtBRL(revpan)} sub="Receita / noites à venda" icon={Building2} color="text-[rgb(var(--adm-text))]" />
         </div>
 
         {/* Resumo por Apt — logo após métricas */}
