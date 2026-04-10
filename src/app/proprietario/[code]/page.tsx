@@ -4,12 +4,14 @@ import { useState, useMemo, useEffect, use } from 'react'
 import {
   Loader2, Lock, LogOut, Eye, EyeOff, ChevronLeft, ChevronRight,
   DollarSign, TrendingUp, Percent, BedDouble,
-  Hotel, BarChart3, Sun, Moon
+  Hotel, BarChart3, Building2, Sun, Moon
 } from 'lucide-react'
 import type { ApartmentSummary, MonthData } from '@/lib/types'
 import { parseBRL, fmtBRL, getMonthIndex, MONTHS_SHORT, MONTHS_FULL } from '@/lib/types'
 
 // ─── CONFIG ────────────────────────────────────────────
+const MANAGER_PIX = { name: 'AL Temporada', key: '62.628.386/0001-38' }
+
 const OWNER_CONFIG: Record<string, { password: string; label: string }> = {
   '103': { password: 'prop103', label: 'Apartamento 103 — Leblon' },
   '102': { password: 'prop102', label: 'Apartamento 102 — Leblon' },
@@ -145,7 +147,7 @@ function LoginScreen({ config, code, onLogin }: { config: { label: string; passw
 }
 
 // ─── KPI CARD ──────────────────────────────────────────
-function KPI({ label, value, icon: Icon, color, t }: { label: string; value: string; icon: any; color?: string; t: typeof LIGHT }) {
+function KPI({ label, value, icon: Icon, color, sub, t }: { label: string; value: string; icon: any; color?: string; sub?: string; t: typeof LIGHT }) {
   return (
     <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 16px', flex: '1 1 140px', minWidth: 140 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
@@ -153,15 +155,17 @@ function KPI({ label, value, icon: Icon, color, t }: { label: string; value: str
         <span style={{ fontSize: 10, fontWeight: 600, color: t.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
       </div>
       <div style={{ fontSize: 18, fontWeight: 700, color: color || t.text, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+      {sub && <div style={{ fontSize: 10, color: t.muted, marginTop: 2 }}>{sub}</div>}
     </div>
   )
 }
 
-// ─── MONTH ROW (always open, no commission) ───────────
-function MonthRow({ m, t }: { m: MonthData; t: typeof LIGHT }) {
+// ─── MONTH ROW (shows commission as expense) ─────────
+function MonthRow({ m, t, commPct }: { m: MonthData; t: typeof LIGHT; commPct: number }) {
   const rec = parseBRL(m.receitaTotal)
-  const desp = parseBRL(m.despesaTotal)
-  const res = parseBRL(m.resultado)
+  const commission = rec * commPct
+  const desp = parseBRL(m.despesaTotal) + commission
+  const res = rec - desp
 
   return (
     <div style={{ borderBottom: `1px solid ${t.border}` }}>
@@ -204,8 +208,8 @@ function MonthRow({ m, t }: { m: MonthData; t: typeof LIGHT }) {
           </div>
         )}
 
-        {/* Expenses */}
-        {m.expenses.length > 0 && (
+        {/* Expenses (always show — at minimum has commission) */}
+        {(m.expenses.length > 0 || commission > 0) && (
           <div>
             <p style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Despesas</p>
             <div style={{ background: t.surface, borderRadius: 8, border: `1px solid ${t.border}`, overflow: 'hidden' }}>
@@ -218,6 +222,16 @@ function MonthRow({ m, t }: { m: MonthData; t: typeof LIGHT }) {
                   </tr>
                 </thead>
                 <tbody>
+                  {commission > 0 && (
+                    <tr style={{ borderTop: `1px solid ${t.border}`, background: `${t.accent}08` }}>
+                      <td style={{ padding: '5px 6px', color: t.accent, fontWeight: 600 }}>
+                        Comissão Sua Casa
+                        <span style={{ marginLeft: 4, fontSize: 8, fontWeight: 700, opacity: 0.7 }}>({(commPct * 100).toFixed(0)}%)</span>
+                      </td>
+                      <td style={{ padding: '5px 6px', textAlign: 'center', color: t.muted }}>—</td>
+                      <td style={{ padding: '5px 6px', textAlign: 'right', color: t.red, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(commission)}</td>
+                    </tr>
+                  )}
                   {m.expenses.map((e, i) => (
                     <tr key={i} style={{ borderTop: `1px solid ${t.border}` }}>
                       <td style={{ padding: '5px 6px', color: t.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -283,18 +297,25 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
 
   // ─── ALL HOOKS MUST BE ABOVE ANY EARLY RETURN ───────
   const months = apt ? filterMonths(apt.months || [], filter, sel) : []
+  const commPct = apt?.commissionPct || 0
   const totals = useMemo(() => {
-    if (!months.length) return { rec: 0, desp: 0, res: 0, nights: 0 }
+    if (!months.length) return { rec: 0, desp: 0, com: 0, res: 0, nights: 0, blocked: 0 }
     const rec = sumF(months, 'receitaTotal')
-    const desp = sumF(months, 'despesaTotal')
-    const res = sumF(months, 'resultado')
+    const rawDesp = sumF(months, 'despesaTotal')
+    const com = rec * commPct
+    const desp = rawDesp + com
+    const res = rec - desp
     const nights = countNights(months)
-    return { rec, desp, res, nights }
-  }, [months])
+    const blocked = months.reduce((s, m) => s + ((m as any).blockedNights || 0), 0)
+    return { rec, desp, com, res, nights, blocked }
+  }, [months, commPct])
 
   const avail = availableNights(filter, sel, year)
   const occupancy = avail > 0 ? (totals.nights / avail) * 100 : 0
   const adr = totals.nights > 0 ? totals.rec / totals.nights : 0
+  const revpar = avail > 0 ? totals.rec / avail : 0
+  const availForSale = avail - totals.blocked
+  const revpan = availForSale > 0 ? totals.rec / availForSale : 0
   const filterLabel = filter === 'all' ? `${year}` : filter === 'ytd' ? `YTD ${year}` : MONTHS_FULL[sel]
 
   function handleLogout() {
@@ -408,6 +429,8 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
             <KPI label="Noites Ocupadas" value={`${totals.nights} / ${avail}`} icon={BedDouble} t={t} />
             <KPI label="Ocupação" value={`${occupancy.toFixed(1)}%`} icon={Percent} color={occupancy > 70 ? t.green : occupancy > 40 ? t.accent : t.red} t={t} />
             <KPI label="Diária Média" value={fmtBRL(adr)} icon={Hotel} t={t} />
+            <KPI label="RevPAR" value={fmtBRL(revpar)} icon={BarChart3} sub="Receita / noites totais" t={t} />
+            <KPI label="RevPAN" value={fmtBRL(revpan)} icon={Building2} sub={totals.blocked > 0 ? `${availForSale} à venda (${totals.blocked} bloq.)` : 'Receita / noites à venda'} t={t} />
           </div>
 
           {/* Monthly breakdown — always open, 4 columns, no commission */}
@@ -424,7 +447,7 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
             </div>
 
             {months.length > 0 ? (
-              months.map((m, i) => <MonthRow key={m.month} m={m} t={t} />)
+              months.map((m, i) => <MonthRow key={m.month} m={m} t={t} commPct={apt?.commissionPct || 0} />)
             ) : (
               <div style={{ padding: '40px 12px', textAlign: 'center', color: t.muted, fontSize: 13 }}>
                 Nenhum dado para o período selecionado
@@ -445,30 +468,58 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
             )}
           </div>
 
-          {/* PIX info */}
-          {(apt.pixKey || apt.ownerName) && (
-            <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 16px', marginTop: 16 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Dados para repasse</p>
-              {apt.ownerName && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: 12, color: t.muted }}>Titular</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: t.text }}>{apt.ownerName}</span>
-                </div>
-              )}
-              {apt.pixName && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: 12, color: t.muted }}>Nome PIX</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: t.text }}>{apt.pixName}</span>
-                </div>
-              )}
-              {apt.pixKey && (
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 12, color: t.muted }}>Chave PIX</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: t.accent, wordBreak: 'break-all' }}>{apt.pixKey}</span>
-                </div>
-              )}
+          {/* Conciliação */}
+          <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 16px', marginTop: 16 }}>
+            <p style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Conciliação — {filterLabel}</p>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 12, color: t.muted }}>Receita bruta</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: t.green, fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(totals.rec)}</span>
             </div>
-          )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 12, color: t.muted }}>Comissão Sua Casa ({(commPct * 100).toFixed(0)}%)</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: t.red, fontVariantNumeric: 'tabular-nums' }}>- {fmtBRL(totals.com)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 12, color: t.muted }}>Despesas do imóvel</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: t.red, fontVariantNumeric: 'tabular-nums' }}>- {fmtBRL(totals.desp - totals.com)}</span>
+            </div>
+            <div style={{ height: 1, background: t.border, margin: '8px 0' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: t.text }}>Resultado proprietário</span>
+              <span style={{ fontSize: 13, fontWeight: 800, color: totals.res >= 0 ? t.green : t.red, fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(totals.res)}</span>
+            </div>
+
+            {/* Credor do período — PIX de quem deve receber */}
+            {totals.res !== 0 && (() => {
+              const ownerIsCreditor = totals.res > 0
+              const creditorName = ownerIsCreditor ? (apt.pixName || apt.ownerName || 'Proprietário') : MANAGER_PIX.name
+              const creditorPix = ownerIsCreditor ? apt.pixKey : MANAGER_PIX.key
+              const debtorLabel = ownerIsCreditor ? 'Sua Casa → Proprietário' : 'Proprietário → Sua Casa'
+              return (
+                <>
+                  <div style={{ height: 1, background: t.border, margin: '4px 0 10px' }} />
+                  <p style={{ fontSize: 9, fontWeight: 700, color: t.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+                    Credor: {creditorName}
+                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, color: t.muted }}>Sentido</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: t.text }}>{debtorLabel}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, color: t.muted }}>Valor</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: t.accent, fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(Math.abs(totals.res))}</span>
+                  </div>
+                  {creditorPix && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 12, color: t.muted }}>PIX do credor</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: t.accent, wordBreak: 'break-all' }}>{creditorPix}</span>
+                    </div>
+                  )}
+                </>
+              )
+            })()}
+          </div>
 
           {/* Footer */}
           <div style={{ textAlign: 'center', marginTop: 40, paddingBottom: 20 }}>

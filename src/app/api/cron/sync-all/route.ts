@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getAllReservations, splitReservationByMonth } from '@/lib/hospitable'
+import { getAllReservations, splitReservationByMonth, getManualBlocks } from '@/lib/hospitable'
 import { PROPERTY_HOSPITABLE_MAP, APARTMENTS } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -210,7 +210,40 @@ export async function GET(request: NextRequest) {
     results.installments = { error: err.message }
   }
 
-  // ─── 4. Log the sync ──────────────────────────────────────
+  // ─── 4. Sync Calendar Blocks (for RevPAN) ─────────────────
+  try {
+    if (process.env.HOSPITABLE_API_KEY) {
+      const startDate = `${new Date().getFullYear()}-01-01`
+      const endDate = `${new Date().getFullYear()}-12-31`
+      let totalBlocks = 0
+
+      for (const aptCode of Object.keys(PROPERTY_HOSPITABLE_MAP)) {
+        const blocks = await getManualBlocks(aptCode, startDate, endDate)
+
+        // Delete old blocks for this apt, then insert fresh ones
+        await supabase.from('calendar_blocks').delete().eq('apartment_code', aptCode)
+
+        if (blocks.length > 0) {
+          const rows = blocks.map(b => ({
+            apartment_code: aptCode,
+            blocked_date: b.date,
+            reason: b.reason,
+            synced_at: new Date().toISOString(),
+          }))
+          const { error: blockErr } = await supabase.from('calendar_blocks').insert(rows)
+          if (blockErr) errors.push(`Calendar blocks ${aptCode}: ${blockErr.message}`)
+          totalBlocks += blocks.length
+        }
+      }
+
+      results.calendar_blocks = { total: totalBlocks, apartments: Object.keys(PROPERTY_HOSPITABLE_MAP).length }
+    }
+  } catch (err: any) {
+    errors.push(`Calendar blocks: ${err.message}`)
+    results.calendar_blocks = { error: err.message }
+  }
+
+  // ─── 5. Log the sync ──────────────────────────────────────
   try {
     await supabase.from('sync_logs').insert({
       source: 'cron',
