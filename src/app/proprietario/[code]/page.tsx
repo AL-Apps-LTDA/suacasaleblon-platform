@@ -256,7 +256,7 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
   const [apt, setApt] = useState<ApartmentSummary | null>(null)
   const [err, setErr] = useState('')
   const [filter, setFilter] = useState<'all' | 'ytd' | 'month'>('month')
-  const [sel, setSel] = useState(new Date().getMonth())
+  const [sel, setSel] = useState(() => { const m = new Date().getMonth(); return m > 0 ? m - 1 : 11 })
   const [year, setYear] = useState(2026)
 
   useEffect(() => {
