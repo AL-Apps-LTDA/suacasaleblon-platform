@@ -7,8 +7,8 @@ import { usePathname } from 'next/navigation'
 import { AdminThemeToggle } from '@/components/AdminThemeToggle'
 import { AdminPWAHead } from '@/components/AdminPWAHead'
 
-const ADMIN_USER = 'Diego'
-const ADMIN_PASSWORD = '291'
+const ADMIN_USER = 'diego'
+const ADMIN_PASSWORD = '2911'
 
 const navItems = [
   { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
@@ -29,10 +29,11 @@ const navItems = [
   { name: 'Integrações', path: '/admin/integracoes', icon: Settings },
 ]
 
-function LoginScreen({ onLogin }: { onLogin: () => void }) {
+function LoginScreen({ onLogin, dark }: { onLogin: () => void; dark: boolean }) {
   const [user, setUser] = useState('')
   const [pw, setPw] = useState('')
   const [error, setError] = useState(false)
+  const themeClass = `admin-theme${dark ? '' : ' admin-light'}`
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -46,7 +47,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   }
 
   return (
-    <div className="admin-theme min-h-screen bg-[rgb(var(--adm-bg))] flex items-center justify-center px-4">
+    <div className={`${themeClass} min-h-screen bg-[rgb(var(--adm-bg))] flex items-center justify-center px-4`}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-[rgb(var(--adm-accent)/0.10)] border border-[rgb(var(--adm-accent)/0.20)] flex items-center justify-center mx-auto mb-4">
@@ -121,7 +122,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const themeClass = `admin-theme${dark ? '' : ' admin-light'}`
 
   if (checking) return <div className={`${themeClass} min-h-screen bg-[rgb(var(--adm-bg))]`} />
-  if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} />
+  if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} dark={dark} />
 
   return (
     <div className={`${themeClass} flex h-screen bg-[rgb(var(--adm-bg))] overflow-hidden`}>
