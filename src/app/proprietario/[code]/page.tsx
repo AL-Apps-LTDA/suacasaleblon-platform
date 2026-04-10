@@ -10,7 +10,7 @@ import type { ApartmentSummary, MonthData } from '@/lib/types'
 import { parseBRL, fmtBRL, getMonthIndex, MONTHS_SHORT, MONTHS_FULL } from '@/lib/types'
 
 // ─── CONFIG ────────────────────────────────────────────
-const MANAGER_PIX = { name: 'AL Apps LTDA', key: '62.628.386/0001-38' }
+const MANAGER_PIX = { name: 'AL Temporada', key: '62.628.386/0001-38' }
 
 const OWNER_CONFIG: Record<string, { password: string; label: string }> = {
   '103': { password: 'prop103', label: 'Apartamento 103 — Leblon' },
