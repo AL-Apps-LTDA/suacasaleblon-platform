@@ -63,6 +63,9 @@ export interface Expense {
   label: string
   obs: string
   value: string
+  installment_num?: number | null
+  total_installments?: number | null
+  original_amount?: string | null
 }
 
 export interface MonthData {

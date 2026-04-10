@@ -149,7 +149,15 @@ export async function GET() {
         const expenses: any[] = []
         let totalExpenses = 0
         for (const exp of aptExpenses.filter(e => e.month === mi + 1)) {
-          expenses.push({ date: `${mi + 1}/${currentYear}`, label: exp.label, obs: exp.notes || '', value: fmtBRL(Number(exp.amount)) })
+          expenses.push({
+            date: exp.original_date || `${mi + 1}/${currentYear}`,
+            label: exp.label, obs: exp.notes || '', value: fmtBRL(Number(exp.amount)),
+            ...(exp.total_installments && exp.total_installments > 1 ? {
+              installment_num: exp.installment_num,
+              total_installments: exp.total_installments,
+              original_amount: fmtBRL(Number(exp.original_amount)),
+            } : {}),
+          })
           totalExpenses += Number(exp.amount)
         }
         for (const ae of aptAppExp) {

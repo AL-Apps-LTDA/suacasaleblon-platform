@@ -11,8 +11,11 @@ import { parseBRL, fmtBRL, getMonthIndex, MONTHS_SHORT, MONTHS_FULL } from '@/li
 
 // ─── CONFIG ────────────────────────────────────────────
 const OWNER_CONFIG: Record<string, { password: string; label: string }> = {
+  '103': { password: 'prop103', label: 'Apartamento 103 — Leblon' },
   '102': { password: 'prop102', label: 'Apartamento 102 — Leblon' },
+  '403': { password: 'prop403', label: 'Apartamento 403 — Leblon' },
   '303': { password: 'prop303', label: 'Apartamento 303 — Leblon' },
+  '334A': { password: 'prop334A', label: 'Apartamento 334A — Leblon' },
 }
 
 // ─── HELPERS ───────────────────────────────────────────
@@ -228,9 +231,16 @@ function MonthRow({ m, idx, t }: { m: MonthData; idx: number; t: typeof LIGHT })
                   <tbody>
                     {m.expenses.map((e, i) => (
                       <tr key={i} style={{ borderTop: `1px solid ${t.border}` }}>
-                        <td style={{ padding: '6px 10px', color: t.text }}>{e.label}{e.obs ? ` \u2014 ${e.obs}` : ''}</td>
+                        <td style={{ padding: '6px 10px', color: t.text }}>
+                          {e.label}{e.obs ? ` \u2014 ${e.obs}` : ''}
+                          {e.total_installments && e.total_installments > 1 && (
+                            <span style={{ marginLeft: 6, display: 'inline-block', padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: `${t.accent}20`, color: t.accent }}>
+                              {e.installment_num}/{e.total_installments}
+                            </span>
+                          )}
+                        </td>
                         <td style={{ padding: '6px 10px', textAlign: 'center', color: t.muted }}>{fmtDate(e.date, getMonthIndex(m.month))}</td>
-                        <td style={{ padding: '6px 10px', textAlign: 'right', color: t.red, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{e.value}</td>
+                        <td style={{ padding: '6px 10px', textAlign: 'right', color: t.red, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }} title={e.original_amount ? `Total: ${e.original_amount}` : undefined}>{e.value}</td>
                       </tr>
                     ))}
                   </tbody>
