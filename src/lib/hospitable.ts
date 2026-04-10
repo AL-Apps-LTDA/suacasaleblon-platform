@@ -176,6 +176,49 @@ export async function getCalendarAvailability(propertyCode: string): Promise<str
   }
 }
 
+/**
+ * Get manual blocks (owner use, maintenance) from Hospitable calendar.
+ * Excludes dates blocked by reservations — those are already counted as occupied nights.
+ * Returns dates for the full year so the cron can cache them.
+ */
+export async function getManualBlocks(propertyCode: string, startDate: string, endDate: string): Promise<{ date: string; reason: string }[]> {
+  const uuid = PROPERTY_HOSPITABLE_MAP[propertyCode]
+  if (!uuid) return []
+
+  try {
+    const url = `${HOSPITABLE_BASE_URL}/properties/${uuid}/calendar?start_date=${startDate}&end_date=${endDate}`
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${getApiKey()}`,
+        'Accept': 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    if (!res.ok) return []
+
+    const data = await res.json()
+    const days = data?.data?.days || data?.days || []
+
+    // Filter: unavailable AND not because of a reservation
+    return days
+      .filter((d: any) => {
+        if (d.status?.available !== false) return false
+        const reason = (d.status?.reason || '').toLowerCase()
+        // Hospitable uses "reservation" for booked dates — exclude those
+        if (reason === 'reservation' || reason === 'booked') return false
+        return true
+      })
+      .map((d: any) => ({
+        date: d.date,
+        reason: d.status?.reason || 'manual_block',
+      }))
+  } catch (e) {
+    console.error(`[getManualBlocks] Error for ${propertyCode}:`, e)
+    return []
+  }
+}
+
 export async function getDailyRates(
   propertyCode: string,
   checkIn: string,

@@ -38,12 +38,14 @@ export async function GET() {
       { data: dbDirect },
       { data: dbAppExpenses },
       { data: dbReservations },
+      { data: dbBlocks },
     ] = await Promise.all([
       supabase.from('expenses').select('*').eq('year', currentYear),
       supabase.from('airbnb_transactions').select('*').eq('year', currentYear),
       supabase.from('direct_reservations').select('*').gte('checkin', `${currentYear}-01-01`).lte('checkin', `${currentYear}-12-31`),
       supabase.from('app_expenses').select('*').gte('expense_date', `${currentYear}-01-01`),
       supabase.from('reservations').select('*').gte('checkin', `${currentYear}-01-01`).lte('checkin', `${currentYear}-12-31`).eq('status', 'accepted'),
+      supabase.from('calendar_blocks').select('apartment_code, blocked_date').gte('blocked_date', `${currentYear}-01-01`).lte('blocked_date', `${currentYear}-12-31`),
     ])
 
     // 3. Fetch Hospitable reservations (live API), fallback to Supabase cache
@@ -54,7 +56,16 @@ export async function GET() {
       }
     } catch (e: any) { console.error('[Hospitable fetch error]', e.message) }
 
-    // 4. Build summaries
+    // 4. Build blocked nights index: { "103": { 0: 5, 1: 3, ... }, ... }
+    const blockedByAptMonth: Record<string, Record<number, number>> = {}
+    for (const b of (dbBlocks || [])) {
+      const apt = b.apartment_code
+      const month = new Date(b.blocked_date + 'T00:00:00').getMonth() // 0-based
+      if (!blockedByAptMonth[apt]) blockedByAptMonth[apt] = {}
+      blockedByAptMonth[apt][month] = (blockedByAptMonth[apt][month] || 0) + 1
+    }
+
+    // 5. Build summaries
     const summaries = []
     for (const name of [...APARTMENTS]) {
       const config = configMap[name]
@@ -170,10 +181,12 @@ export async function GET() {
 
         const resultado = totalRevenue - totalExpenses
         const commission = totalRevenue * commPct
+        const blockedNights = blockedByAptMonth[name]?.[mi] || 0
         return {
           month: `${label}/26`, reservations, receitaTotal: fmtBRL(totalRevenue),
           expenses, despesaTotal: fmtBRL(totalExpenses), resultado: fmtBRL(resultado),
           managerCommission: fmtBRL(commission), managerName: 'Diego', repassar: fmtBRL(commission),
+          blockedNights,
           _raw: { revenue: totalRevenue, expenses: totalExpenses, result: resultado, commission, ownerPart: resultado - commission, commissionPct: commPct }
         }
       })
@@ -193,5 +206,5 @@ export async function GET() {
 }
 
 function emptyMonth(label: string) {
-  return { month: `${label}/26`, reservations: [], receitaTotal: 'R$ 0,00', expenses: [], despesaTotal: 'R$ 0,00', resultado: 'R$ 0,00', managerCommission: 'R$ 0,00', managerName: 'Diego', repassar: 'R$ 0,00', _raw: { revenue: 0, expenses: 0, result: 0, commission: 0, ownerPart: 0, commissionPct: 0 } }
+  return { month: `${label}/26`, reservations: [], receitaTotal: 'R$ 0,00', expenses: [], despesaTotal: 'R$ 0,00', resultado: 'R$ 0,00', managerCommission: 'R$ 0,00', managerName: 'Diego', repassar: 'R$ 0,00', blockedNights: 0, _raw: { revenue: 0, expenses: 0, result: 0, commission: 0, ownerPart: 0, commissionPct: 0 } }
 }

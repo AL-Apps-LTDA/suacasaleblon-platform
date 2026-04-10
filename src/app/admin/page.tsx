@@ -465,20 +465,22 @@ export default function AdminDashboard() {
   const aptCount = aptFilter === 'todos' ? (valid.length || APARTMENTS.length) : filteredValid.length
 
   const totals = useMemo(() => {
-    let rec = 0, desp = 0, res = 0, com = 0, own = 0, nights = 0
+    let rec = 0, desp = 0, res = 0, com = 0, own = 0, nights = 0, blocked = 0
     for (const a of filteredValid) {
       const f = filterMonths(a.months || [], filter, sel)
       rec += sumF(f, 'receitaTotal'); desp += sumF(f, 'despesaTotal'); res += sumF(f, 'resultado'); com += sumF(f, 'managerCommission'); own += f.reduce((s, m) => s + ownerPart(m), 0); nights += countNights(f)
+      blocked += f.reduce((s, m) => s + ((m as any).blockedNights || 0), 0)
     }
-    return { rec, desp, res, com, own, nights }
+    return { rec, desp, res, com, own, nights, blocked }
   }, [filteredValid, filter, sel])
 
   const avail = availableNights(filter, sel, aptCount)
   const occupancy = avail > 0 ? (totals.nights / avail) * 100 : 0
   const adr = totals.nights > 0 ? totals.rec / totals.nights : 0
   const revpar = avail > 0 ? totals.rec / avail : 0
-  // RevPAN: receita / noites disponíveis pra venda (sem bloqueios). Por enquanto = RevPAR até puxarmos bloqueios do Hospitable.
-  const revpan = avail > 0 ? totals.rec / avail : 0
+  // RevPAN: receita / noites disponíveis pra venda (descontando bloqueios do dono)
+  const availForSale = avail - totals.blocked
+  const revpan = availForSale > 0 ? totals.rec / availForSale : 0
 
   // Monthly chart data
   const chartData = useMemo(() => {
@@ -647,7 +649,7 @@ export default function AdminDashboard() {
           <MetricCard label="Tx. Ocupação" value={`${occupancy.toFixed(1)}%`} sub={`${totals.nights} de ${avail} noites`} icon={Hotel} color={occupancy > 60 ? 'text-emerald-400' : occupancy > 40 ? 'text-yellow-400' : 'text-red-400'} />
           <MetricCard label="ADR" value={fmtBRL(adr)} sub="Diária média" icon={BedDouble} color="text-[rgb(var(--adm-text))]" />
           <MetricCard label="RevPAR" value={fmtBRL(revpar)} sub="Receita / noites totais" icon={BarChart3} color="text-[rgb(var(--adm-text))]" />
-          <MetricCard label="RevPAN" value={fmtBRL(revpan)} sub="Receita / noites à venda" icon={Building2} color="text-[rgb(var(--adm-text))]" />
+          <MetricCard label="RevPAN" value={fmtBRL(revpan)} sub={totals.blocked > 0 ? `${availForSale} noites à venda (${totals.blocked} bloq.)` : `Receita / noites à venda`} icon={Building2} color="text-[rgb(var(--adm-text))]" />
         </div>
 
         {/* Resumo por Apt — logo após métricas */}

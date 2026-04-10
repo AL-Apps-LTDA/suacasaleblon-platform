@@ -78,6 +78,7 @@ export interface MonthData {
   managerCommission: string
   managerName: string
   repassar: string
+  blockedNights?: number
 }
 
 export interface ApartmentSummary {

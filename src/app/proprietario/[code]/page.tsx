@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, use } from 'react'
 import {
   Loader2, Lock, LogOut, Eye, EyeOff, ChevronLeft, ChevronRight,
   DollarSign, TrendingUp, Percent, BedDouble,
-  Hotel, BarChart3, Sun, Moon
+  Hotel, BarChart3, Building2, Sun, Moon
 } from 'lucide-react'
 import type { ApartmentSummary, MonthData } from '@/lib/types'
 import { parseBRL, fmtBRL, getMonthIndex, MONTHS_SHORT, MONTHS_FULL } from '@/lib/types'
@@ -145,7 +145,7 @@ function LoginScreen({ config, code, onLogin }: { config: { label: string; passw
 }
 
 // ─── KPI CARD ──────────────────────────────────────────
-function KPI({ label, value, icon: Icon, color, t }: { label: string; value: string; icon: any; color?: string; t: typeof LIGHT }) {
+function KPI({ label, value, icon: Icon, color, sub, t }: { label: string; value: string; icon: any; color?: string; sub?: string; t: typeof LIGHT }) {
   return (
     <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 16px', flex: '1 1 140px', minWidth: 140 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
@@ -153,6 +153,7 @@ function KPI({ label, value, icon: Icon, color, t }: { label: string; value: str
         <span style={{ fontSize: 10, fontWeight: 600, color: t.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
       </div>
       <div style={{ fontSize: 18, fontWeight: 700, color: color || t.text, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+      {sub && <div style={{ fontSize: 10, color: t.muted, marginTop: 2 }}>{sub}</div>}
     </div>
   )
 }
@@ -284,17 +285,21 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
   // ─── ALL HOOKS MUST BE ABOVE ANY EARLY RETURN ───────
   const months = apt ? filterMonths(apt.months || [], filter, sel) : []
   const totals = useMemo(() => {
-    if (!months.length) return { rec: 0, desp: 0, res: 0, nights: 0 }
+    if (!months.length) return { rec: 0, desp: 0, res: 0, nights: 0, blocked: 0 }
     const rec = sumF(months, 'receitaTotal')
     const desp = sumF(months, 'despesaTotal')
     const res = sumF(months, 'resultado')
     const nights = countNights(months)
-    return { rec, desp, res, nights }
+    const blocked = months.reduce((s, m) => s + ((m as any).blockedNights || 0), 0)
+    return { rec, desp, res, nights, blocked }
   }, [months])
 
   const avail = availableNights(filter, sel, year)
   const occupancy = avail > 0 ? (totals.nights / avail) * 100 : 0
   const adr = totals.nights > 0 ? totals.rec / totals.nights : 0
+  const revpar = avail > 0 ? totals.rec / avail : 0
+  const availForSale = avail - totals.blocked
+  const revpan = availForSale > 0 ? totals.rec / availForSale : 0
   const filterLabel = filter === 'all' ? `${year}` : filter === 'ytd' ? `YTD ${year}` : MONTHS_FULL[sel]
 
   function handleLogout() {
@@ -408,6 +413,8 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
             <KPI label="Noites Ocupadas" value={`${totals.nights} / ${avail}`} icon={BedDouble} t={t} />
             <KPI label="Ocupação" value={`${occupancy.toFixed(1)}%`} icon={Percent} color={occupancy > 70 ? t.green : occupancy > 40 ? t.accent : t.red} t={t} />
             <KPI label="Diária Média" value={fmtBRL(adr)} icon={Hotel} t={t} />
+            <KPI label="RevPAR" value={fmtBRL(revpar)} icon={BarChart3} sub="Receita / noites totais" t={t} />
+            <KPI label="RevPAN" value={fmtBRL(revpan)} icon={Building2} sub={totals.blocked > 0 ? `${availForSale} à venda (${totals.blocked} bloq.)` : 'Receita / noites à venda'} t={t} />
           </div>
 
           {/* Monthly breakdown — always open, 4 columns, no commission */}
