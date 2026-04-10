@@ -155,6 +155,7 @@ export default function ContadorPage() {
 
           {/* Table by apartment */}
           <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-[rgb(var(--adm-border))]">
@@ -190,6 +191,7 @@ export default function ContadorPage() {
                 </tr>
               </tbody>
             </table>
+            </div>
           </div>
 
           {/* Detailed view: individual transactions */}

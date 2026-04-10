@@ -369,6 +369,7 @@ export default function DespesasPage() {
         </div>
       ) : (
         <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-[rgb(var(--adm-border))]">
@@ -409,6 +410,7 @@ export default function DespesasPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
@@ -420,6 +422,7 @@ export default function DespesasPage() {
             <h3 className="text-sm font-semibold text-[rgb(var(--adm-text))]">Parcelas agendadas</h3>
             <span className="text-[10px] text-[rgb(var(--adm-muted))]">({pendingList.length} parcelas futuras)</span>
           </div>
+          <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-[rgb(var(--adm-border))]">
@@ -453,6 +456,7 @@ export default function DespesasPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>
