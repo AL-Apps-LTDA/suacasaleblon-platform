@@ -7,7 +7,8 @@ import { usePathname } from 'next/navigation'
 import { AdminThemeToggle } from '@/components/AdminThemeToggle'
 import { AdminPWAHead } from '@/components/AdminPWAHead'
 
-const ADMIN_PASSWORD = 'suacasa2026'
+const ADMIN_USER = 'Diego'
+const ADMIN_PASSWORD = '291'
 
 const navItems = [
   { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
@@ -29,12 +30,13 @@ const navItems = [
 ]
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
+  const [user, setUser] = useState('')
   const [pw, setPw] = useState('')
   const [error, setError] = useState(false)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (pw === ADMIN_PASSWORD) {
+    if (user === ADMIN_USER && pw === ADMIN_PASSWORD) {
       sessionStorage.setItem('admin_auth', 'true')
       onLogin()
     } else {
@@ -54,27 +56,36 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
           <p className="text-xs text-[rgb(var(--adm-muted))] mt-1">Sua Casa Leblon</p>
         </div>
         <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-2xl p-6">
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-[10px] text-[rgb(var(--adm-muted))] font-medium uppercase tracking-wider block mb-1.5">Usuário</label>
+              <input
+                type="text"
+                value={user}
+                onChange={e => setUser(e.target.value)}
+                placeholder="Digite o usuário"
+                autoFocus
+                className={`w-full bg-[rgb(var(--adm-elevated))] border rounded-xl px-4 py-3 text-sm text-[rgb(var(--adm-text))] focus:border-[rgb(var(--adm-accent))] focus:ring-1 focus:ring-[rgb(var(--adm-accent)/0.30)] focus:outline-none transition-all ${error ? 'border-red-500 shake' : 'border-[rgb(var(--adm-border))]'}`}
+              />
+            </div>
             <div>
               <label className="text-[10px] text-[rgb(var(--adm-muted))] font-medium uppercase tracking-wider block mb-1.5">Senha</label>
               <input
                 type="password"
                 value={pw}
                 onChange={e => setPw(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSubmit(e)}
                 placeholder="Digite a senha"
-                autoFocus
                 className={`w-full bg-[rgb(var(--adm-elevated))] border rounded-xl px-4 py-3 text-sm text-[rgb(var(--adm-text))] focus:border-[rgb(var(--adm-accent))] focus:ring-1 focus:ring-[rgb(var(--adm-accent)/0.30)] focus:outline-none transition-all ${error ? 'border-red-500 shake' : 'border-[rgb(var(--adm-border))]'}`}
               />
-              {error && <p className="text-xs text-red-400 mt-1.5">Senha incorreta</p>}
+              {error && <p className="text-xs text-red-400 mt-1.5">Usuário ou senha incorretos</p>}
             </div>
             <button
-              onClick={handleSubmit}
+              type="submit"
               className="w-full bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))] py-3 rounded-xl font-semibold text-sm hover:bg-[rgb(var(--adm-accent-hover))] transition-colors"
             >
               Entrar
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>

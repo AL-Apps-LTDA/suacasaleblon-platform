@@ -1,0 +1,25 @@
+Tipo,Hóspede,Check-in,Check-out,Noites,Payout (R$),Plataforma,Origem
+Reserva,Joao (pro-rata 5/7 noites),2026-02-27,2026-03-06,5,"2.114,50",airbnb,"Marinha Grande, Portugal"
+Reserva,Salomé,2026-03-06,2026-03-07,1,"449,78",airbnb,"Amsterdam, Netherlands"
+Reserva,Eliana,2026-03-07,2026-03-09,2,"723,79",airbnb,"Buenos Aires, Argentina"
+Reserva,Francisco,2026-03-09,2026-03-10,1,"421,20",airbnb,"Argentina"
+Reserva,Daniel,2026-03-10,2026-03-11,1,"327,15",airbnb,"Brasília"
+Reserva,Vitor,2026-03-11,2026-03-12,1,"356,59",airbnb,"São Paulo"
+Reserva,Petra,2026-03-12,2026-03-13,1,"488,25",airbnb,"Barcelona, Spain"
+Reserva,Dasha,2026-03-13,2026-03-14,1,"445,72",airbnb,
+Reserva,Julia,2026-03-14,2026-03-21,7,"2.387,61",airbnb,"Piracicaba"
+Reserva,André,2026-03-21,2026-03-22,1,"530,80",airbnb,"Belo Horizonte"
+Reserva,Laura,2026-03-22,2026-03-24,2,"624,87",airbnb,"Neuilly-sur-Seine, France"
+Reserva,Jacob,2026-03-24,2026-03-25,1,"405,64",airbnb,"Amsterdam, Netherlands"
+Reserva,Hospede,2026-03-25,2026-03-26,1,"350,00",manual,
+Reserva,Rebeca,2026-03-26,2026-03-28,2,"1.117,22",airbnb,
+Reserva,Fabrice,2026-03-28,2026-03-31,3,"1.122,16",airbnb,"Paris, France"
+Reserva,Mayra,2026-03-31,2026-04-01,1,"450,64",airbnb,"São Paulo"
+,,,,,,
+TOTAIS,,,,31,"12.315,92",,
+,,,,,,
+RESUMO,,,,,,
+Receita Bruta (Payout),,,,,"12.315,92",,
+Despesas,,,,,"0,00",,
+Comissão Sua Casa (50%),,,,,"6.157,96",,
+Repasse Proprietário,,,,,"6.157,96",,

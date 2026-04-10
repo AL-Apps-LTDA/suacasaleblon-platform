@@ -649,15 +649,7 @@ export default function AdminDashboard() {
           <MetricCard label="RevPAN" value={fmtBRL(revpan)} sub="Receita por apt (período)" icon={Building2} color="text-[rgb(var(--adm-text))]" />
         </div>
 
-        {/* Charts — Expanded */}
-        <DualBarChart revenueData={chartData} expenseData={expenseChartData} label={`Receita vs Despesa Mensal${aptFilter !== 'todos' ? ` — Apt ${aptFilter}` : ''}`} />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-          <AptBreakdownChart apts={filteredValid} filter={filter} sel={sel} />
-          <MiniChart data={commissionChart} label={`Comissão Mensal${aptFilter !== 'todos' ? ` — Apt ${aptFilter}` : ''}`} />
-          <MiniChart data={resultChart} label={`Resultado Mensal${aptFilter !== 'todos' ? ` — Apt ${aptFilter}` : ''}`} />
-        </div>
-
-        {/* Monthly breakdown table */}
+        {/* Resumo por Apt — logo após métricas */}
         {filteredValid.length > 0 && (
           <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-accent)/0.20)] rounded-xl p-4">
             <h3 className="text-sm text-[rgb(var(--adm-text))] flex items-center gap-2 mb-3 font-semibold"><Calendar className="h-4 w-4 text-[rgb(var(--adm-accent))]" />Resumo por Apt — {filterLabel}</h3>
@@ -692,6 +684,14 @@ export default function AdminDashboard() {
             </tbody></table></div>
           </div>
         )}
+
+        {/* Charts */}
+        <DualBarChart revenueData={chartData} expenseData={expenseChartData} label={`Receita vs Despesa Mensal${aptFilter !== 'todos' ? ` — Apt ${aptFilter}` : ''}`} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <AptBreakdownChart apts={filteredValid} filter={filter} sel={sel} />
+          <MiniChart data={commissionChart} label={`Comissão Mensal${aptFilter !== 'todos' ? ` — Apt ${aptFilter}` : ''}`} />
+          <MiniChart data={resultChart} label={`Resultado Mensal${aptFilter !== 'todos' ? ` — Apt ${aptFilter}` : ''}`} />
+        </div>
 
         {/* Operational costs */}
         {aptFilter === 'todos' && op?.expenses && op.expenses.length > 0 && (
