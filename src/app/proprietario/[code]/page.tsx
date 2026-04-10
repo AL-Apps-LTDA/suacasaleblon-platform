@@ -170,15 +170,15 @@ function MonthRow({ m, t, commPct }: { m: MonthData; t: typeof LIGHT; commPct: n
   return (
     <div style={{ borderBottom: `1px solid ${t.border}` }}>
       {/* Summary row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 4, padding: '12px 12px', alignItems: 'center' }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: t.text }}>{m.month}</span>
-        <span style={{ fontSize: 11, fontWeight: 500, color: t.green, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(rec)}</span>
-        <span style={{ fontSize: 11, fontWeight: 500, color: t.red, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(desp)}</span>
-        <span style={{ fontSize: 11, fontWeight: 700, color: res >= 0 ? t.green : t.red, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(res)}</span>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 2, padding: '10px 8px', alignItems: 'center' }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: t.text }}>{m.month}</span>
+        <span style={{ fontSize: 10, fontWeight: 500, color: t.green, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(rec)}</span>
+        <span style={{ fontSize: 10, fontWeight: 500, color: t.red, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(desp)}</span>
+        <span style={{ fontSize: 10, fontWeight: 700, color: res >= 0 ? t.green : t.red, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(res)}</span>
       </div>
 
       {/* Always-open details */}
-      <div style={{ padding: '0 12px 14px', background: t.elevated }}>
+      <div style={{ padding: '0 8px 12px', background: t.elevated }}>
         {/* Reservations */}
         {m.reservations.length > 0 && (
           <div style={{ marginBottom: 12 }}>
@@ -187,19 +187,19 @@ function MonthRow({ m, t, commPct }: { m: MonthData; t: typeof LIGHT; commPct: n
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, tableLayout: 'fixed' }}>
                 <thead>
                   <tr style={{ background: t.elevated }}>
-                    <th style={{ padding: '5px 6px', textAlign: 'left', fontWeight: 600, color: t.muted, width: '28%' }}>Hóspede</th>
-                    <th style={{ padding: '5px 6px', textAlign: 'center', fontWeight: 600, color: t.muted, width: '22%' }}>Check-in</th>
-                    <th style={{ padding: '5px 6px', textAlign: 'center', fontWeight: 600, color: t.muted, width: '22%' }}>Check-out</th>
-                    <th style={{ padding: '5px 6px', textAlign: 'right', fontWeight: 600, color: t.muted, width: '28%' }}>Receita</th>
+                    <th style={{ padding: '4px', textAlign: 'left', fontWeight: 600, color: t.muted, width: '30%' }}>Hóspede</th>
+                    <th style={{ padding: '4px', textAlign: 'center', fontWeight: 600, color: t.muted, width: '20%' }}>In</th>
+                    <th style={{ padding: '4px', textAlign: 'center', fontWeight: 600, color: t.muted, width: '20%' }}>Out</th>
+                    <th style={{ padding: '4px', textAlign: 'right', fontWeight: 600, color: t.muted, width: '30%' }}>Receita</th>
                   </tr>
                 </thead>
                 <tbody>
                   {m.reservations.map((r, i) => (
                     <tr key={i} style={{ borderTop: `1px solid ${t.border}` }}>
-                      <td style={{ padding: '5px 6px', color: t.text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.guest}</td>
-                      <td style={{ padding: '5px 6px', textAlign: 'center', color: t.muted }}>{fmtDate(r.checkin, getMonthIndex(m.month))}</td>
-                      <td style={{ padding: '5px 6px', textAlign: 'center', color: t.muted }}>{fmtDate(r.checkout, getMonthIndex(m.month))}</td>
-                      <td style={{ padding: '5px 6px', textAlign: 'right', color: t.green, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{r.revenue}</td>
+                      <td style={{ padding: '4px', color: t.text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.guest}</td>
+                      <td style={{ padding: '4px', textAlign: 'center', color: t.muted, fontSize: 9 }}>{fmtDate(r.checkin, getMonthIndex(m.month))}</td>
+                      <td style={{ padding: '4px', textAlign: 'center', color: t.muted, fontSize: 9 }}>{fmtDate(r.checkout, getMonthIndex(m.month))}</td>
+                      <td style={{ padding: '4px', textAlign: 'right', color: t.green, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{r.revenue}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -216,34 +216,34 @@ function MonthRow({ m, t, commPct }: { m: MonthData; t: typeof LIGHT; commPct: n
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, tableLayout: 'fixed' }}>
                 <thead>
                   <tr style={{ background: t.elevated }}>
-                    <th style={{ padding: '5px 6px', textAlign: 'left', fontWeight: 600, color: t.muted, width: '50%' }}>Descrição</th>
-                    <th style={{ padding: '5px 6px', textAlign: 'center', fontWeight: 600, color: t.muted, width: '25%' }}>Data</th>
-                    <th style={{ padding: '5px 6px', textAlign: 'right', fontWeight: 600, color: t.muted, width: '25%' }}>Valor</th>
+                    <th style={{ padding: '4px', textAlign: 'left', fontWeight: 600, color: t.muted, width: '48%' }}>Descrição</th>
+                    <th style={{ padding: '4px', textAlign: 'center', fontWeight: 600, color: t.muted, width: '22%' }}>Data</th>
+                    <th style={{ padding: '4px', textAlign: 'right', fontWeight: 600, color: t.muted, width: '30%' }}>Valor</th>
                   </tr>
                 </thead>
                 <tbody>
                   {commission > 0 && (
                     <tr style={{ borderTop: `1px solid ${t.border}`, background: `${t.accent}08` }}>
-                      <td style={{ padding: '5px 6px', color: t.accent, fontWeight: 600 }}>
+                      <td style={{ padding: '4px', color: t.accent, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         Comissão Sua Casa
-                        <span style={{ marginLeft: 4, fontSize: 8, fontWeight: 700, opacity: 0.7 }}>({(commPct * 100).toFixed(0)}%)</span>
+                        <span style={{ marginLeft: 3, fontSize: 8, fontWeight: 700, opacity: 0.7 }}>({(commPct * 100).toFixed(0)}%)</span>
                       </td>
-                      <td style={{ padding: '5px 6px', textAlign: 'center', color: t.muted }}>—</td>
-                      <td style={{ padding: '5px 6px', textAlign: 'right', color: t.red, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(commission)}</td>
+                      <td style={{ padding: '4px', textAlign: 'center', color: t.muted }}>—</td>
+                      <td style={{ padding: '4px', textAlign: 'right', color: t.red, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(commission)}</td>
                     </tr>
                   )}
                   {m.expenses.map((e, i) => (
                     <tr key={i} style={{ borderTop: `1px solid ${t.border}` }}>
-                      <td style={{ padding: '5px 6px', color: t.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {e.label}{e.obs ? ` \u2014 ${e.obs}` : ''}
+                      <td style={{ padding: '4px', color: t.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {e.label}{e.obs ? ` — ${e.obs}` : ''}
                         {e.total_installments && e.total_installments > 1 && (
-                          <span style={{ marginLeft: 4, display: 'inline-block', padding: '1px 4px', borderRadius: 3, fontSize: 8, fontWeight: 700, background: `${t.accent}20`, color: t.accent }}>
+                          <span style={{ marginLeft: 3, display: 'inline-block', padding: '1px 3px', borderRadius: 3, fontSize: 7, fontWeight: 700, background: `${t.accent}20`, color: t.accent }}>
                             {e.installment_num}/{e.total_installments}
                           </span>
                         )}
                       </td>
-                      <td style={{ padding: '5px 6px', textAlign: 'center', color: t.muted }}>{fmtDate(e.date, getMonthIndex(m.month))}</td>
-                      <td style={{ padding: '5px 6px', textAlign: 'right', color: t.red, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }} title={e.original_amount ? `Total: ${e.original_amount}` : undefined}>{e.value}</td>
+                      <td style={{ padding: '4px', textAlign: 'center', color: t.muted, fontSize: 9 }}>{fmtDate(e.date, getMonthIndex(m.month))}</td>
+                      <td style={{ padding: '4px', textAlign: 'right', color: t.red, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }} title={e.original_amount ? `Total: ${e.original_amount}` : undefined}>{e.value}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -437,8 +437,8 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
           <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
             {/* Table header */}
             <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 4,
-              padding: '10px 12px', background: t.elevated, borderBottom: `1px solid ${t.border}`,
+              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 2,
+              padding: '8px 8px', background: t.elevated, borderBottom: `1px solid ${t.border}`,
             }}>
               <span style={{ fontSize: 9, fontWeight: 700, color: t.muted, textTransform: 'uppercase' }}>Mês</span>
               <span style={{ fontSize: 9, fontWeight: 700, color: t.muted, textTransform: 'uppercase', textAlign: 'right' }}>Receita</span>
@@ -457,8 +457,8 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
             {/* Totals row */}
             {months.length > 0 && (
               <div style={{
-                display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 4,
-                padding: '14px 12px', background: t.accentBg, borderTop: `2px solid ${t.accent}`,
+                display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 2,
+                padding: '10px 8px', background: t.accentBg, borderTop: `2px solid ${t.accent}`,
               }}>
                 <span style={{ fontSize: 12, fontWeight: 800, color: t.accent }}>TOTAL</span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: t.green, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(totals.rec)}</span>
