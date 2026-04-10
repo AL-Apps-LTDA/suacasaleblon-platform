@@ -404,7 +404,7 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
 
           {/* Period label */}
           <h2 style={{ fontSize: 16, fontWeight: 700, color: t.text, marginBottom: 16 }}>
-            {config.label} \u2014 {filterLabel}
+            {config.label} — {filterLabel}
           </h2>
 
           {/* KPIs */}
