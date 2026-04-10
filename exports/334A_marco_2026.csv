@@ -1,0 +1,15 @@
+Tipo,Hóspede,Check-in,Check-out,Noites,Payout (R$),Plataforma,Origem
+Reserva,Ana Paula,2026-03-05,2026-03-06,1,"280,12",airbnb,"São Paulo"
+Reserva,Ariana,2026-03-06,2026-03-08,2,"722,99",airbnb,"São Paulo"
+Reserva,Tatiane,2026-03-11,2026-03-18,7,"1.831,21",airbnb,
+Reserva,Andreas,2026-03-20,2026-03-22,2,"669,02",airbnb,"San Diego, CA"
+Reserva,Fabiana Stella,2026-03-22,2026-03-25,3,"772,92",airbnb,
+Reserva,Rafaela,2026-03-29,2026-03-31,2,"531,62",airbnb,"Goiânia"
+,,,,,,
+TOTAIS,,,,17,"4.807,88",,
+,,,,,,
+RESUMO,,,,,,
+Receita Bruta (Payout),,,,,"4.807,88",,
+Despesas,,,,,"0,00",,
+Comissão Sua Casa (12%),,,,,"576,95",,
+Repasse Proprietário,,,,,"4.230,93",,

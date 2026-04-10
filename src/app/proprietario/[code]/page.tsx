@@ -412,7 +412,7 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
             <KPI label="Receita" value={fmtBRL(totals.rec)} icon={TrendingUp} color={t.green} t={t} />
             <KPI label="Despesas" value={fmtBRL(totals.desp)} icon={DollarSign} color={t.red} t={t} />
             <KPI label="Resultado" value={fmtBRL(totals.res)} icon={BarChart3} color={totals.res >= 0 ? t.green : t.red} t={t} />
-            <KPI label="Comissão Admin" value={fmtBRL(totals.com)} icon={UserCheck} color={t.accent} t={t} />
+            <KPI label="Comissão Sua Casa" value={fmtBRL(totals.com)} icon={UserCheck} color={t.accent} t={t} />
             <KPI label="Repasse Proprietário" value={fmtBRL(totals.repasse)} icon={DollarSign} t={t} />
             <KPI label="Noites Ocupadas" value={`${totals.nights} / ${avail}`} icon={BedDouble} t={t} />
             <KPI label="Ocupação" value={`${occupancy.toFixed(1)}%`} icon={Percent} color={occupancy > 70 ? t.green : occupancy > 40 ? t.accent : t.red} t={t} />

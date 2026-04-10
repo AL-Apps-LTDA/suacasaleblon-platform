@@ -118,7 +118,7 @@ export async function GET() {
         } else {
           const mEntries = proRata.filter(e => e.monthIdx === mi).filter(e => mi < currentMonth ? true : e.checkinDay <= currentDay).sort((a, b) => a.checkinDay - b.checkinDay)
           for (const e of mEntries) {
-            reservations.push({ checkin: e.checkinDay.toString(), checkout: e.checkoutDay.toString(), guest: e.guestName, revenue: fmtBRL(e.revenue), source: 'hospitable', guestOrigin: e.guestCountry })
+            reservations.push({ checkin: e.checkinDay.toString(), checkout: e.checkoutDay.toString(), guest: e.guestName, revenue: fmtBRL(e.revenue), source: 'hospitable', guestOrigin: e.guestCountry, platform: e.platform })
             totalRevenue += e.revenue
             for (const adj of e.adjustments) {
               reservations.push({ checkin: '', checkout: '', guest: `↳ ${e.guestName}`, revenue: fmtBRL(adj.amount), source: 'adjustment', guestOrigin: adj.label })

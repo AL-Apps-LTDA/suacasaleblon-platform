@@ -174,6 +174,7 @@ export interface ProRataEntry {
   revenue: number
   guestName: string
   guestCountry: string
+  platform: string
   isPartial: boolean
   adjustments: { amount: number; label: string }[]
 }

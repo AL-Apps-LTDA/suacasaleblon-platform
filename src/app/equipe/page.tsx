@@ -586,6 +586,13 @@ export default function EquipePage(){
   useEffect(()=>{
     const s=localStorage.getItem('equipe_auth'),tp=localStorage.getItem('equipe_theme'),u=localStorage.getItem('equipe_user')
     if(tp==='dark')setDark(true)
+    // Se veio do admin (já autenticado), pular login
+    const isAdmin=sessionStorage.getItem('admin_auth')==='true'
+    if(isAdmin&&!s){
+      const adminUser={id:'admin',name:'Diego',role:'admin',username:'admin'}
+      setUser(adminUser as any);setAuthed(true);setToken('admin');setLoading(false)
+      return
+    }
     if(s){setToken(s);setAuthed(true);if(u)try{setUser(JSON.parse(u))}catch{}}else{setLoading(false)}
   },[])
   useEffect(()=>{localStorage.setItem('equipe_theme',dark?'dark':'light')},[dark])

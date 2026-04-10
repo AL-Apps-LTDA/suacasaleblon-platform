@@ -1,0 +1,13 @@
+Tipo,Hóspede,Check-in,Check-out,Noites,Payout (R$),Plataforma,Origem
+Reserva,Carlos,2026-03-05,2026-03-09,4,"2.051,21",airbnb,"Santiago, Chile"
+Reserva,Roberto,2026-03-10,2026-03-14,4,"1.799,32",airbnb,
+Reserva,Adrian,2026-03-15,2026-03-24,9,"5.504,63",airbnb,"Buenos Aires, Argentina"
+Reserva,Marie Pierre,2026-03-24,2026-03-27,3,"1.390,39",airbnb,"Montigny-le-Tilleul, Belgium"
+,,,,,,
+TOTAIS,,,,20,"10.745,55",,
+,,,,,,
+RESUMO,,,,,,
+Receita Bruta (Payout),,,,,"10.745,55",,
+Despesas,,,,,"0,00",,
+Comissão Sua Casa (25%),,,,,"2.686,39",,
+Repasse Proprietário,,,,,"8.059,16",,

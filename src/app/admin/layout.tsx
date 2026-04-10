@@ -7,15 +7,16 @@ import { usePathname } from 'next/navigation'
 import { AdminThemeToggle } from '@/components/AdminThemeToggle'
 import { AdminPWAHead } from '@/components/AdminPWAHead'
 
-const ADMIN_PASSWORD = 'suacasa2026'
+const ADMIN_USER = 'diego'
+const ADMIN_PASSWORD = '2911'
 
 const navItems = [
   { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
   { name: 'Apartamentos', path: '/admin/apartamentos', icon: Building2 },
-  { name: 'Agenda', path: '/admin/agenda', icon: CalendarRange },
+  // { name: 'Agenda', path: '/admin/agenda', icon: CalendarRange }, // escondido — código mantido em app/admin/agenda/page.tsx
   { name: 'Despesas', path: '/admin/despesas', icon: DollarSign },
   { name: 'Equipe', path: '/admin/limpezas', icon: Sparkles },
-  { name: 'Agenda Búzios', path: '/admin/agenda-buzios', icon: Palmtree },
+  // { name: 'Agenda Búzios', path: '/admin/agenda-buzios', icon: Palmtree }, // escondido — código mantido
   { name: 'Reservas Diretas', path: '/admin/reservas-diretas', icon: CalendarDays },
   { name: 'Importar CSV', path: '/admin/importar', icon: Upload },
   { name: 'Relatórios', path: '/admin/relatorios', icon: FileText },
@@ -28,13 +29,15 @@ const navItems = [
   { name: 'Integrações', path: '/admin/integracoes', icon: Settings },
 ]
 
-function LoginScreen({ onLogin }: { onLogin: () => void }) {
+function LoginScreen({ onLogin, dark }: { onLogin: () => void; dark: boolean }) {
+  const [user, setUser] = useState('')
   const [pw, setPw] = useState('')
   const [error, setError] = useState(false)
+  const themeClass = `admin-theme${dark ? '' : ' admin-light'}`
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (pw === ADMIN_PASSWORD) {
+    if (user === ADMIN_USER && pw === ADMIN_PASSWORD) {
       sessionStorage.setItem('admin_auth', 'true')
       onLogin()
     } else {
@@ -44,7 +47,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   }
 
   return (
-    <div className="admin-theme min-h-screen bg-[rgb(var(--adm-bg))] flex items-center justify-center px-4">
+    <div className={`${themeClass} min-h-screen bg-[rgb(var(--adm-bg))] flex items-center justify-center px-4`}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-[rgb(var(--adm-accent)/0.10)] border border-[rgb(var(--adm-accent)/0.20)] flex items-center justify-center mx-auto mb-4">
@@ -54,27 +57,36 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
           <p className="text-xs text-[rgb(var(--adm-muted))] mt-1">Sua Casa Leblon</p>
         </div>
         <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-2xl p-6">
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-[10px] text-[rgb(var(--adm-muted))] font-medium uppercase tracking-wider block mb-1.5">Usuário</label>
+              <input
+                type="text"
+                value={user}
+                onChange={e => setUser(e.target.value)}
+                placeholder="Digite o usuário"
+                autoFocus
+                className={`w-full bg-[rgb(var(--adm-elevated))] border rounded-xl px-4 py-3 text-sm text-[rgb(var(--adm-text))] focus:border-[rgb(var(--adm-accent))] focus:ring-1 focus:ring-[rgb(var(--adm-accent)/0.30)] focus:outline-none transition-all ${error ? 'border-red-500 shake' : 'border-[rgb(var(--adm-border))]'}`}
+              />
+            </div>
             <div>
               <label className="text-[10px] text-[rgb(var(--adm-muted))] font-medium uppercase tracking-wider block mb-1.5">Senha</label>
               <input
                 type="password"
                 value={pw}
                 onChange={e => setPw(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSubmit(e)}
                 placeholder="Digite a senha"
-                autoFocus
                 className={`w-full bg-[rgb(var(--adm-elevated))] border rounded-xl px-4 py-3 text-sm text-[rgb(var(--adm-text))] focus:border-[rgb(var(--adm-accent))] focus:ring-1 focus:ring-[rgb(var(--adm-accent)/0.30)] focus:outline-none transition-all ${error ? 'border-red-500 shake' : 'border-[rgb(var(--adm-border))]'}`}
               />
-              {error && <p className="text-xs text-red-400 mt-1.5">Senha incorreta</p>}
+              {error && <p className="text-xs text-red-400 mt-1.5">Usuário ou senha incorretos</p>}
             </div>
             <button
-              onClick={handleSubmit}
+              type="submit"
               className="w-full bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))] py-3 rounded-xl font-semibold text-sm hover:bg-[rgb(var(--adm-accent-hover))] transition-colors"
             >
               Entrar
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -110,7 +122,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const themeClass = `admin-theme${dark ? '' : ' admin-light'}`
 
   if (checking) return <div className={`${themeClass} min-h-screen bg-[rgb(var(--adm-bg))]`} />
-  if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} />
+  if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} dark={dark} />
 
   return (
     <div className={`${themeClass} flex h-screen bg-[rgb(var(--adm-bg))] overflow-hidden`}>

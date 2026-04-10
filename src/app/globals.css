@@ -54,9 +54,9 @@ body {
 }
 
 .admin-theme.admin-light {
-  --adm-bg: 250 248 245;
-  --adm-surface: 255 255 255;
-  --adm-elevated: 243 239 232;
+  --adm-bg: 245 240 230;
+  --adm-surface: 250 246 238;
+  --adm-elevated: 240 235 224;
   --adm-border: 224 216 204;
   --adm-muted: 125 96 75;
   --adm-text: 46 34 28;
