@@ -242,3 +242,7 @@ CREATE TABLE IF NOT EXISTS pending_installments (
 
 CREATE INDEX IF NOT EXISTS idx_pending_month_year
   ON pending_installments(year, month);
+
+-- PIX info on apartments table (for proprietário repasse display)
+ALTER TABLE apartments ADD COLUMN IF NOT EXISTS pix_key TEXT;
+ALTER TABLE apartments ADD COLUMN IF NOT EXISTS pix_name TEXT;

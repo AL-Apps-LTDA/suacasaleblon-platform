@@ -13,7 +13,7 @@ function getSupabase() {
   )
 }
 
-interface AptConfig { code: string; commission_pct: number; owner_name: string | null; cleaning_fee: number | null }
+interface AptConfig { code: string; commission_pct: number; owner_name: string | null; cleaning_fee: number | null; pix_key: string | null; pix_name: string | null }
 
 export async function GET() {
   const supabase = getSupabase()
@@ -27,7 +27,7 @@ export async function GET() {
   try {
     // 1. Load apartment configs (commission rates, owner info)
     const { data: aptConfigs } = await supabase
-      .from('apartments').select('code, commission_pct, owner_name, cleaning_fee').eq('active', true)
+      .from('apartments').select('code, commission_pct, owner_name, cleaning_fee, pix_key, pix_name').eq('active', true)
     const configMap: Record<string, AptConfig> = {}
     for (const a of (aptConfigs || [])) configMap[a.code] = a
 
@@ -181,6 +181,7 @@ export async function GET() {
       summaries.push({
         name, hospitableId: PROPERTY_HOSPITABLE_MAP[name],
         ownerName: config?.owner_name || null, commissionPct: commPct,
+        pixKey: config?.pix_key || null, pixName: config?.pix_name || null,
         months, directReservations: aptDirect.map(r => ({ checkin: r.checkin, checkout: r.checkout, guest: r.guest_name, totalValue: fmtBRL(Number(r.total_value) - Number(r.stripe_fee || 0)), paid: r.payment_status, obs: r.notes || '' })),
       })
     }

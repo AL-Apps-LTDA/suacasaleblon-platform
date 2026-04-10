@@ -3,8 +3,8 @@
 import { useState, useMemo, useEffect, use } from 'react'
 import {
   Loader2, Lock, LogOut, Eye, EyeOff, ChevronLeft, ChevronRight,
-  ChevronDown, ChevronUp, DollarSign, TrendingUp, Percent, BedDouble,
-  Hotel, UserCheck, BarChart3, Sun, Moon
+  DollarSign, TrendingUp, Percent, BedDouble,
+  Hotel, BarChart3, Sun, Moon
 } from 'lucide-react'
 import type { ApartmentSummary, MonthData } from '@/lib/types'
 import { parseBRL, fmtBRL, getMonthIndex, MONTHS_SHORT, MONTHS_FULL } from '@/lib/types'
@@ -16,6 +16,8 @@ const OWNER_CONFIG: Record<string, { password: string; label: string }> = {
   '403': { password: 'prop403', label: 'Apartamento 403 — Leblon' },
   '303': { password: 'prop303', label: 'Apartamento 303 — Leblon' },
   '334A': { password: 'prop334A', label: 'Apartamento 334A — Leblon' },
+  'BZ01': { password: 'propBZ01', label: 'Casa BZ01 — Búzios' },
+  'BZ02': { password: 'propBZ02', label: 'Casa BZ02 — Búzios' },
 }
 
 // ─── HELPERS ───────────────────────────────────────────
@@ -25,10 +27,9 @@ function filterMonths(months: MonthData[], filter: string, sel: number): MonthDa
   if (filter === 'month') return months.filter(m => getMonthIndex(m.month) === sel)
   return months
 }
-function sumF(months: MonthData[], f: 'receitaTotal' | 'despesaTotal' | 'resultado' | 'managerCommission' | 'repassar') {
+function sumF(months: MonthData[], f: 'receitaTotal' | 'despesaTotal' | 'resultado') {
   return months.reduce((s, m) => s + parseBRL(m[f]), 0)
 }
-function ownerPart(m: MonthData) { return parseBRL(m.resultado) - parseBRL(m.repassar) }
 function countNights(months: MonthData[]): number {
   let nights = 0
   for (const m of months) {
@@ -156,100 +157,87 @@ function KPI({ label, value, icon: Icon, color, t }: { label: string; value: str
   )
 }
 
-// ─── MONTH ROW ─────────────────────────────────────────
-function MonthRow({ m, idx, t }: { m: MonthData; idx: number; t: typeof LIGHT }) {
-  const [open, setOpen] = useState(false)
+// ─── MONTH ROW (always open, no commission) ───────────
+function MonthRow({ m, t }: { m: MonthData; t: typeof LIGHT }) {
   const rec = parseBRL(m.receitaTotal)
   const desp = parseBRL(m.despesaTotal)
   const res = parseBRL(m.resultado)
-  const com = parseBRL(m.managerCommission)
-  const repasse = ownerPart(m)
 
   return (
     <div style={{ borderBottom: `1px solid ${t.border}` }}>
-      <div
-        onClick={() => setOpen(!open)}
-        style={{ display: 'grid', gridTemplateColumns: '1fr repeat(5, 1fr) 28px', gap: 8, padding: '12px 16px', cursor: 'pointer', alignItems: 'center', transition: 'background 0.15s' }}
-        onMouseEnter={e => (e.currentTarget.style.background = t.elevated)}
-        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-      >
-        <span style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{m.month}</span>
-        <span style={{ fontSize: 12, fontWeight: 500, color: t.green, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(rec)}</span>
-        <span style={{ fontSize: 12, fontWeight: 500, color: t.red, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(desp)}</span>
-        <span style={{ fontSize: 12, fontWeight: 600, color: res >= 0 ? t.green : t.red, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(res)}</span>
-        <span style={{ fontSize: 12, fontWeight: 500, color: t.accent, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(com)}</span>
-        <span style={{ fontSize: 12, fontWeight: 700, color: t.text, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(repasse)}</span>
-        {open ? <ChevronUp size={14} color={t.muted} /> : <ChevronDown size={14} color={t.muted} />}
+      {/* Summary row */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 4, padding: '12px 12px', alignItems: 'center' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: t.text }}>{m.month}</span>
+        <span style={{ fontSize: 11, fontWeight: 500, color: t.green, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(rec)}</span>
+        <span style={{ fontSize: 11, fontWeight: 500, color: t.red, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(desp)}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: res >= 0 ? t.green : t.red, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(res)}</span>
       </div>
 
-      {open && (
-        <div style={{ padding: '0 16px 16px', background: t.elevated }}>
-          {/* Reservations */}
-          {m.reservations.length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Reservas</p>
-              <div style={{ background: t.surface, borderRadius: 8, border: `1px solid ${t.border}`, overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-                  <thead>
-                    <tr style={{ background: t.elevated }}>
-                      <th style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 600, color: t.muted }}>Hóspede</th>
-                      <th style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 600, color: t.muted }}>Check-in</th>
-                      <th style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 600, color: t.muted }}>Check-out</th>
-                      <th style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 600, color: t.muted }}>Fonte</th>
-                      <th style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 600, color: t.muted }}>Receita</th>
+      {/* Always-open details */}
+      <div style={{ padding: '0 12px 14px', background: t.elevated }}>
+        {/* Reservations */}
+        {m.reservations.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <p style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Reservas</p>
+            <div style={{ background: t.surface, borderRadius: 8, border: `1px solid ${t.border}`, overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, tableLayout: 'fixed' }}>
+                <thead>
+                  <tr style={{ background: t.elevated }}>
+                    <th style={{ padding: '5px 6px', textAlign: 'left', fontWeight: 600, color: t.muted, width: '28%' }}>Hóspede</th>
+                    <th style={{ padding: '5px 6px', textAlign: 'center', fontWeight: 600, color: t.muted, width: '22%' }}>Check-in</th>
+                    <th style={{ padding: '5px 6px', textAlign: 'center', fontWeight: 600, color: t.muted, width: '22%' }}>Check-out</th>
+                    <th style={{ padding: '5px 6px', textAlign: 'right', fontWeight: 600, color: t.muted, width: '28%' }}>Receita</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {m.reservations.map((r, i) => (
+                    <tr key={i} style={{ borderTop: `1px solid ${t.border}` }}>
+                      <td style={{ padding: '5px 6px', color: t.text, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.guest}</td>
+                      <td style={{ padding: '5px 6px', textAlign: 'center', color: t.muted }}>{fmtDate(r.checkin, getMonthIndex(m.month))}</td>
+                      <td style={{ padding: '5px 6px', textAlign: 'center', color: t.muted }}>{fmtDate(r.checkout, getMonthIndex(m.month))}</td>
+                      <td style={{ padding: '5px 6px', textAlign: 'right', color: t.green, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{r.revenue}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {m.reservations.map((r, i) => (
-                      <tr key={i} style={{ borderTop: `1px solid ${t.border}` }}>
-                        <td style={{ padding: '6px 10px', color: t.text, fontWeight: 500 }}>{r.guest}</td>
-                        <td style={{ padding: '6px 10px', textAlign: 'center', color: t.muted }}>{fmtDate(r.checkin, getMonthIndex(m.month))}</td>
-                        <td style={{ padding: '6px 10px', textAlign: 'center', color: t.muted }}>{fmtDate(r.checkout, getMonthIndex(m.month))}</td>
-                        <td style={{ padding: '6px 10px', textAlign: 'center', color: t.accent, fontSize: 10 }}>{r.source || '\u2014'}</td>
-                        <td style={{ padding: '6px 10px', textAlign: 'right', color: t.green, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{r.revenue}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Expenses */}
-          {m.expenses.length > 0 && (
-            <div>
-              <p style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Despesas</p>
-              <div style={{ background: t.surface, borderRadius: 8, border: `1px solid ${t.border}`, overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-                  <thead>
-                    <tr style={{ background: t.elevated }}>
-                      <th style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 600, color: t.muted }}>Descrição</th>
-                      <th style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 600, color: t.muted }}>Data</th>
-                      <th style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 600, color: t.muted }}>Valor</th>
+        {/* Expenses */}
+        {m.expenses.length > 0 && (
+          <div>
+            <p style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Despesas</p>
+            <div style={{ background: t.surface, borderRadius: 8, border: `1px solid ${t.border}`, overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, tableLayout: 'fixed' }}>
+                <thead>
+                  <tr style={{ background: t.elevated }}>
+                    <th style={{ padding: '5px 6px', textAlign: 'left', fontWeight: 600, color: t.muted, width: '50%' }}>Descrição</th>
+                    <th style={{ padding: '5px 6px', textAlign: 'center', fontWeight: 600, color: t.muted, width: '25%' }}>Data</th>
+                    <th style={{ padding: '5px 6px', textAlign: 'right', fontWeight: 600, color: t.muted, width: '25%' }}>Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {m.expenses.map((e, i) => (
+                    <tr key={i} style={{ borderTop: `1px solid ${t.border}` }}>
+                      <td style={{ padding: '5px 6px', color: t.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {e.label}{e.obs ? ` \u2014 ${e.obs}` : ''}
+                        {e.total_installments && e.total_installments > 1 && (
+                          <span style={{ marginLeft: 4, display: 'inline-block', padding: '1px 4px', borderRadius: 3, fontSize: 8, fontWeight: 700, background: `${t.accent}20`, color: t.accent }}>
+                            {e.installment_num}/{e.total_installments}
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: '5px 6px', textAlign: 'center', color: t.muted }}>{fmtDate(e.date, getMonthIndex(m.month))}</td>
+                      <td style={{ padding: '5px 6px', textAlign: 'right', color: t.red, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }} title={e.original_amount ? `Total: ${e.original_amount}` : undefined}>{e.value}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {m.expenses.map((e, i) => (
-                      <tr key={i} style={{ borderTop: `1px solid ${t.border}` }}>
-                        <td style={{ padding: '6px 10px', color: t.text }}>
-                          {e.label}{e.obs ? ` \u2014 ${e.obs}` : ''}
-                          {e.total_installments && e.total_installments > 1 && (
-                            <span style={{ marginLeft: 6, display: 'inline-block', padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: `${t.accent}20`, color: t.accent }}>
-                              {e.installment_num}/{e.total_installments}
-                            </span>
-                          )}
-                        </td>
-                        <td style={{ padding: '6px 10px', textAlign: 'center', color: t.muted }}>{fmtDate(e.date, getMonthIndex(m.month))}</td>
-                        <td style={{ padding: '6px 10px', textAlign: 'right', color: t.red, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }} title={e.original_amount ? `Total: ${e.original_amount}` : undefined}>{e.value}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -296,14 +284,12 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
   // ─── ALL HOOKS MUST BE ABOVE ANY EARLY RETURN ───────
   const months = apt ? filterMonths(apt.months || [], filter, sel) : []
   const totals = useMemo(() => {
-    if (!months.length) return { rec: 0, desp: 0, res: 0, com: 0, repasse: 0, nights: 0 }
+    if (!months.length) return { rec: 0, desp: 0, res: 0, nights: 0 }
     const rec = sumF(months, 'receitaTotal')
     const desp = sumF(months, 'despesaTotal')
     const res = sumF(months, 'resultado')
-    const com = sumF(months, 'managerCommission')
-    const repasse = months.reduce((s, m) => s + ownerPart(m), 0)
     const nights = countNights(months)
-    return { rec, desp, res, com, repasse, nights }
+    return { rec, desp, res, nights }
   }, [months])
 
   const avail = availableNights(filter, sel, year)
@@ -367,10 +353,9 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
       ) : err ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: t.red, fontSize: 14 }}>{err}</div>
       ) : apt && (
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '20px 16px 60px' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', padding: '20px 12px 60px' }}>
           {/* Filters */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20, alignItems: 'center' }}>
-            {/* Year */}
             <select
               value={year}
               onChange={e => setYear(Number(e.target.value))}
@@ -383,7 +368,6 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
               <option value={2025}>2025</option>
             </select>
 
-            {/* Period buttons */}
             {(['all', 'ytd', 'month'] as const).map(f => (
               <button
                 key={f}
@@ -400,7 +384,6 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
               </button>
             ))}
 
-            {/* Month picker — always visible */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: t.elevated, borderRadius: 8, border: `1px solid ${t.border}`, padding: '4px 8px' }}>
               <button onClick={() => setSel(s => s > 0 ? s - 1 : 11)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'flex' }}>
                 <ChevronLeft size={14} color={t.muted} />
@@ -417,38 +400,33 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
             {config.label} — {filterLabel}
           </h2>
 
-          {/* KPIs */}
+          {/* KPIs — no commission */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
             <KPI label="Receita" value={fmtBRL(totals.rec)} icon={TrendingUp} color={t.green} t={t} />
             <KPI label="Despesas" value={fmtBRL(totals.desp)} icon={DollarSign} color={t.red} t={t} />
             <KPI label="Resultado" value={fmtBRL(totals.res)} icon={BarChart3} color={totals.res >= 0 ? t.green : t.red} t={t} />
-            <KPI label="Comissão Sua Casa" value={fmtBRL(totals.com)} icon={UserCheck} color={t.accent} t={t} />
-            <KPI label="Repasse Proprietário" value={fmtBRL(totals.repasse)} icon={DollarSign} t={t} />
             <KPI label="Noites Ocupadas" value={`${totals.nights} / ${avail}`} icon={BedDouble} t={t} />
             <KPI label="Ocupação" value={`${occupancy.toFixed(1)}%`} icon={Percent} color={occupancy > 70 ? t.green : occupancy > 40 ? t.accent : t.red} t={t} />
             <KPI label="Diária Média" value={fmtBRL(adr)} icon={Hotel} t={t} />
           </div>
 
-          {/* Monthly breakdown */}
+          {/* Monthly breakdown — always open, 4 columns, no commission */}
           <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
             {/* Table header */}
             <div style={{
-              display: 'grid', gridTemplateColumns: '1fr repeat(5, 1fr) 28px', gap: 8,
-              padding: '10px 16px', background: t.elevated, borderBottom: `1px solid ${t.border}`,
+              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 4,
+              padding: '10px 12px', background: t.elevated, borderBottom: `1px solid ${t.border}`,
             }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase' }}>Mês</span>
-              <span style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase', textAlign: 'right' }}>Receita</span>
-              <span style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase', textAlign: 'right' }}>Despesas</span>
-              <span style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase', textAlign: 'right' }}>Resultado</span>
-              <span style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase', textAlign: 'right' }}>Comissão</span>
-              <span style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase', textAlign: 'right' }}>Repasse</span>
-              <span />
+              <span style={{ fontSize: 9, fontWeight: 700, color: t.muted, textTransform: 'uppercase' }}>Mês</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: t.muted, textTransform: 'uppercase', textAlign: 'right' }}>Receita</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: t.muted, textTransform: 'uppercase', textAlign: 'right' }}>Despesas</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: t.muted, textTransform: 'uppercase', textAlign: 'right' }}>Resultado</span>
             </div>
 
             {months.length > 0 ? (
-              months.map((m, i) => <MonthRow key={m.month} m={m} idx={i} t={t} />)
+              months.map((m, i) => <MonthRow key={m.month} m={m} t={t} />)
             ) : (
-              <div style={{ padding: '40px 16px', textAlign: 'center', color: t.muted, fontSize: 13 }}>
+              <div style={{ padding: '40px 12px', textAlign: 'center', color: t.muted, fontSize: 13 }}>
                 Nenhum dado para o período selecionado
               </div>
             )}
@@ -456,23 +434,45 @@ export default function ProprietarioPage({ params }: { params: Promise<{ code: s
             {/* Totals row */}
             {months.length > 0 && (
               <div style={{
-                display: 'grid', gridTemplateColumns: '1fr repeat(5, 1fr) 28px', gap: 8,
-                padding: '14px 16px', background: t.accentBg, borderTop: `2px solid ${t.accent}`,
+                display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 4,
+                padding: '14px 12px', background: t.accentBg, borderTop: `2px solid ${t.accent}`,
               }}>
-                <span style={{ fontSize: 13, fontWeight: 800, color: t.accent }}>TOTAL</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: t.green, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(totals.rec)}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: t.red, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(totals.desp)}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: totals.res >= 0 ? t.green : t.red, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(totals.res)}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: t.accent, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(totals.com)}</span>
-                <span style={{ fontSize: 13, fontWeight: 800, color: t.text, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(totals.repasse)}</span>
-                <span />
+                <span style={{ fontSize: 12, fontWeight: 800, color: t.accent }}>TOTAL</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: t.green, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(totals.rec)}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: t.red, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(totals.desp)}</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: totals.res >= 0 ? t.green : t.red, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtBRL(totals.res)}</span>
               </div>
             )}
           </div>
 
+          {/* PIX info */}
+          {(apt.pixKey || apt.ownerName) && (
+            <div style={{ background: t.surface, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 16px', marginTop: 16 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: t.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Dados para repasse</p>
+              {apt.ownerName && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, color: t.muted }}>Titular</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: t.text }}>{apt.ownerName}</span>
+                </div>
+              )}
+              {apt.pixName && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, color: t.muted }}>Nome PIX</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: t.text }}>{apt.pixName}</span>
+                </div>
+              )}
+              {apt.pixKey && (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 12, color: t.muted }}>Chave PIX</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: t.accent, wordBreak: 'break-all' }}>{apt.pixKey}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Footer */}
           <div style={{ textAlign: 'center', marginTop: 40, paddingBottom: 20 }}>
-            <p style={{ fontSize: 10, color: t.muted, opacity: 0.5 }}>Sua Casa Leblon · Hospedagem Premium em Leblon, Rio de Janeiro</p>
+            <p style={{ fontSize: 10, color: t.muted, opacity: 0.5 }}>Sua Casa Leblon · Hospedagem Premium</p>
             <p style={{ fontSize: 9, color: t.muted, opacity: 0.35, marginTop: 4 }}>Relatório gerado automaticamente · Dados atualizados periodicamente</p>
           </div>
         </div>

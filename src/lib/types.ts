@@ -83,6 +83,10 @@ export interface MonthData {
 export interface ApartmentSummary {
   name: string
   hospitableId?: string
+  ownerName?: string | null
+  commissionPct?: number
+  pixKey?: string | null
+  pixName?: string | null
   months: MonthData[]
   directReservations: DirectReservation[]
   error?: string
