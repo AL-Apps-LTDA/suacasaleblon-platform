@@ -58,7 +58,7 @@ export async function GET() {
     const summaries = []
     for (const name of [...APARTMENTS]) {
       const config = configMap[name]
-      const commPct = config?.commission_pct ? Number(config.commission_pct) : 0
+      const commPct = config?.commission_pct != null ? Number(config.commission_pct) : 0
 
       // Per-apartment: use Hospitable API data, fallback to Supabase cache if empty for THIS apartment
       let aptRes = hospReservations.filter(r => r.apartmentName === name)

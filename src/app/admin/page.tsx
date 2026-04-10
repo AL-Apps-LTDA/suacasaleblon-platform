@@ -662,7 +662,7 @@ export default function AdminDashboard() {
                 return (
                   <tr key={a.name} className="border-b border-[rgb(var(--adm-border)/0.30)] hover:bg-[rgb(var(--adm-elevated)/0.50)]">
                     <td className="py-2 px-2 font-medium text-[rgb(var(--adm-text))]">Apt {a.name}</td>
-                    <td className="py-2 px-2 text-[rgb(var(--adm-muted))] text-xs">{pct ? `${(pct * 100).toFixed(0)}%` : '15%'}</td>
+                    <td className="py-2 px-2 text-[rgb(var(--adm-muted))] text-xs">{pct != null ? `${(pct * 100).toFixed(0)}%` : '—'}</td>
                     <td className="py-2 px-2 text-right font-mono text-emerald-400">{fmtBRL(r)}</td>
                     <td className="py-2 px-2 text-right font-mono text-red-400">{fmtBRL(d)}</td>
                     <td className="py-2 px-2 text-right font-mono text-[rgb(var(--adm-accent))]">{fmtBRL(c)}</td>
