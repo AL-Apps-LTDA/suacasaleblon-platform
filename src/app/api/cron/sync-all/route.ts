@@ -180,7 +180,37 @@ export async function GET(request: NextRequest) {
     results.cleanings = { error: err.message }
   }
 
-  // ─── 3. Log the sync ──────────────────────────────────────
+  // ─── 3. Promote Pending Installments ──────────────────────
+  try {
+    const brNowInst = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+    const currentMonth = brNowInst.getMonth() + 1
+    const currentYear = brNowInst.getFullYear()
+
+    const { data: due } = await supabase
+      .from('pending_installments')
+      .select('*')
+      .or(`year.lt.${currentYear},and(year.eq.${currentYear},month.lte.${currentMonth})`)
+
+    if (due && due.length > 0) {
+      const rows = due.map(d => ({
+        apartment_code: d.apartment_code, month: d.month, year: d.year,
+        label: d.label, amount: d.amount, category: d.category, notes: d.notes,
+        installment_group: d.installment_group, installment_num: d.installment_num,
+        total_installments: d.total_installments, original_amount: d.original_amount,
+        original_date: d.original_date,
+      }))
+      await supabase.from('expenses').insert(rows)
+      await supabase.from('pending_installments').delete().in('id', due.map(d => d.id))
+      results.installments = { promoted: due.length }
+    } else {
+      results.installments = { promoted: 0 }
+    }
+  } catch (err: any) {
+    errors.push(`Installments: ${err.message}`)
+    results.installments = { error: err.message }
+  }
+
+  // ─── 4. Log the sync ──────────────────────────────────────
   try {
     await supabase.from('sync_logs').insert({
       source: 'cron',

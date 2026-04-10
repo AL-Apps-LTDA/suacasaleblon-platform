@@ -207,3 +207,38 @@ CREATE INDEX IF NOT EXISTS idx_cleanings_apt ON cleanings(apartment_code);
 CREATE INDEX IF NOT EXISTS idx_direct_res_apt ON direct_reservations(apartment);
 CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
 CREATE INDEX IF NOT EXISTS idx_messages_chat ON messages(chat_id);
+
+-- =============================================
+-- Installment (Parcelamento) support for expenses
+-- =============================================
+
+-- Add installment tracking columns to expenses
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS installment_group TEXT;
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS installment_num INTEGER;
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS total_installments INTEGER;
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS original_amount NUMERIC;
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS original_date TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_expenses_installment_group
+  ON expenses(installment_group) WHERE installment_group IS NOT NULL;
+
+-- Pending installments (future parcels awaiting their month)
+CREATE TABLE IF NOT EXISTS pending_installments (
+  id SERIAL PRIMARY KEY,
+  installment_group TEXT NOT NULL,
+  apartment_code TEXT NOT NULL,
+  month INTEGER NOT NULL,
+  year INTEGER NOT NULL,
+  label TEXT NOT NULL,
+  amount NUMERIC NOT NULL,
+  category TEXT NOT NULL,
+  notes TEXT DEFAULT '',
+  installment_num INTEGER NOT NULL,
+  total_installments INTEGER NOT NULL,
+  original_amount NUMERIC NOT NULL,
+  original_date TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pending_month_year
+  ON pending_installments(year, month);
