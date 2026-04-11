@@ -54,6 +54,13 @@ Atualizado em: Abril 2026
 - Marluce pode lançar R$0 quando cabível
 - Niedja lança sempre valor real
 
+### ⚠️ REGRA CRÍTICA: /giro e /equipe são COMPLETAMENTE SEPARADOS
+- `/giro` (SaaS) → `src/app/giro/page.tsx` + ChatTab, ContactsTab, CustosTab
+- `/equipe` (interno) → `src/app/equipe/page.tsx`
+- **NUNCA misturar código entre os dois.** Apesar de parecerem similares (ambos têm quadradinhos, limpezas, temas), são sistemas independentes com lógica, dados e público distintos.
+- Alterações em /giro NÃO devem afetar /equipe e vice-versa.
+- Na dúvida, pergunte ao Diego antes de mexer.
+
 ---
 
 ## 🤖 AGENTE IA (IMPLEMENTADO EM ABRIL 2026)
