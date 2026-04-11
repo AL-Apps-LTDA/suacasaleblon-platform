@@ -571,8 +571,8 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-[rgb(var(--adm-text))]">Dashboard</h1>
-          <p className="text-xs text-[rgb(var(--adm-muted))] mt-0.5">Sua Casa Leblon — Gestão Completa • {filterLabel}</p>
+          <h1 className="text-xl font-bold tracking-tight text-[rgb(var(--adm-text))]">Sua Casa Leblon</h1>
+          <p className="text-xs text-[rgb(var(--adm-muted))] mt-0.5">Gestão Completa</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={triggerSync} disabled={syncing} className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${syncing ? 'bg-[rgb(var(--adm-accent)/0.20)] text-[rgb(var(--adm-accent))]' : 'bg-[rgb(var(--adm-accent))] text-[rgb(var(--adm-accent-fg))] hover:bg-[rgb(var(--adm-accent-hover))]'}`}>
@@ -580,6 +580,20 @@ export default function AdminDashboard() {
           </button>
           {lastSync && <span className="text-[9px] text-[rgb(var(--adm-muted))]">Último: {lastSync}</span>}
         </div>
+      </div>
+
+      {/* Agent placeholder */}
+      <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl px-4 py-3 flex items-center gap-3">
+        <div className="w-7 h-7 rounded-lg bg-[rgb(var(--adm-accent)/0.12)] border border-[rgb(var(--adm-accent)/0.20)] flex items-center justify-center shrink-0">
+          <Briefcase className="h-3.5 w-3.5 text-[rgb(var(--adm-accent))]" />
+        </div>
+        <input
+          type="text"
+          disabled
+          placeholder="Assistente IA — configure a API key para ativar"
+          className="flex-1 bg-transparent text-sm text-[rgb(var(--adm-muted))] placeholder:text-[rgb(var(--adm-muted)/0.50)] outline-none cursor-not-allowed"
+        />
+        <span className="text-[9px] text-[rgb(var(--adm-muted)/0.40)] shrink-0 hidden sm:block">Em breve</span>
       </div>
 
       {/* Tabs */}
@@ -687,14 +701,6 @@ export default function AdminDashboard() {
             </tbody></table></div>
           </div>
         )}
-
-        {/* Charts */}
-        <DualBarChart revenueData={chartData} expenseData={expenseChartData} label={`Receita vs Despesa Mensal${aptFilter !== 'todos' ? ` — Apt ${aptFilter}` : ''}`} />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-          <AptBreakdownChart apts={filteredValid} filter={filter} sel={sel} />
-          <MiniChart data={commissionChart} label={`Comissão Mensal${aptFilter !== 'todos' ? ` — Apt ${aptFilter}` : ''}`} />
-          <MiniChart data={resultChart} label={`Resultado Mensal${aptFilter !== 'todos' ? ` — Apt ${aptFilter}` : ''}`} />
-        </div>
 
         {/* Operational costs */}
         {aptFilter === 'todos' && op?.expenses && op.expenses.length > 0 && (
