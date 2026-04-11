@@ -2,6 +2,14 @@
   "crons": [
     {
       "path": "/api/cron/sync-all",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/agent/briefing",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/agent/limpezas-alerta",
       "schedule": "0 12 * * *"
     }
   ]
