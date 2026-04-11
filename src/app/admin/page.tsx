@@ -7,7 +7,9 @@ import {
   Calendar, Users, DollarSign, Briefcase, UserCheck, ExternalLink,
   BarChart3, Hotel, Percent, BedDouble, Search
 } from 'lucide-react'
+import { AgentChat } from '@/components/AgentChat'
 import type { ApartmentSummary, MonthData, BizExpense } from '@/lib/types'
+
 import { parseBRL, fmtBRL, getMonthIndex, MONTHS_SHORT, MONTHS_FULL, APARTMENTS } from '@/lib/types'
 
 // Format a date value: "2026-03-05" → "05/03/2026", or day number "5" + month context → "05/03/2026"
@@ -582,19 +584,8 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Agent placeholder */}
-      <div className="bg-[rgb(var(--adm-surface))] border border-[rgb(var(--adm-border))] rounded-xl px-4 py-3 flex items-center gap-3">
-        <div className="w-7 h-7 rounded-lg bg-[rgb(var(--adm-accent)/0.12)] border border-[rgb(var(--adm-accent)/0.20)] flex items-center justify-center shrink-0">
-          <Briefcase className="h-3.5 w-3.5 text-[rgb(var(--adm-accent))]" />
-        </div>
-        <input
-          type="text"
-          disabled
-          placeholder="Assistente IA — configure a API key para ativar"
-          className="flex-1 bg-transparent text-sm text-[rgb(var(--adm-muted))] placeholder:text-[rgb(var(--adm-muted)/0.50)] outline-none cursor-not-allowed"
-        />
-        <span className="text-[9px] text-[rgb(var(--adm-muted)/0.40)] shrink-0 hidden sm:block">Em breve</span>
-      </div>
+      {/* Agent Chat */}
+      <AgentChat />
 
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-[rgb(var(--adm-border))]">
