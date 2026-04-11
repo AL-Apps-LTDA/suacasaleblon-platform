@@ -60,36 +60,28 @@ Atualizado em: Abril 2026
 
 ### Componente
 - `src/components/AgentChat.tsx` — chat no topo do dashboard
-- 5 modos: Consulta / Despesa / Agendar / Relatório / Código
+- Modo único com Anthropic tool_use (sem modos separados)
+- Upload de foto (base64, preview)
 - Voz (Web Speech API, PT-BR)
 - Seletor Haiku ↔ Sonnet
 
 ### Rotas
-- `POST /api/agent` — chat principal com contexto Supabase
+- `POST /api/agent` — chat principal com tool_use + Supabase (max 10 iterações)
 - `GET /api/agent/briefing` — cron 9h BRT, email diário
 - `GET /api/agent/limpezas-alerta` — cron 9h BRT, status limpezas
-- `POST /api/agent/code` — modo código: abre branch, gera diff
-- `POST /api/agent/code/confirm` — merge aprovado pelo Diego
-- `POST /api/agent/code/cancel` — cancela e deleta branch
+
+### Ferramentas (tool_use)
+- **Leitura:** consultar_reservas, consultar_despesas, consultar_limpezas, consultar_apartamentos, consultar_contatos
+- **Escrita (com confirmação):** registrar_despesa, atualizar_registro
+- **Exclusão (confirmação dupla):** deletar_registro
+- **Utilidade:** gerar_prompt_claude_code
 
 ### Variáveis de ambiente necessárias
 - `ANTHROPIC_API_KEY` — Anthropic API
-- `GITHUB_TOKEN` — fine-grained token (Contents + PRs R/W)
 - `CRON_SECRET` — protege endpoints de cron
 - `RESEND_API_KEY` — emails
 - `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`
 - `STRIPE_SECRET_KEY` + `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-
-### Fluxo modo Código (CRÍTICO)
-1. Diego descreve alteração no chat
-2. Agente abre branch `agent/code-{timestamp}`
-3. Claude Sonnet escreve o código
-4. Diff colorido aparece no chat (verde = novo, vermelho = removido)
-5. Diego revisa com os olhos
-6. "Confirmar" → merge na main → branch deletada → deploy automático
-7. "Cancelar" → branch deletada → nada muda
-
-**Regra de ouro:** nunca age na main diretamente. Sempre branch → diff → aprovação.
 
 ---
 
@@ -109,7 +101,6 @@ Atualizado em: Abril 2026
 - **NUNCA** commitar direto na main — sempre branch → merge
 - Deploy só acontece quando push chega na main pelo GitHub
 - `git commit --allow-empty` recupera deploy se necessário
-- Rogue deploys identificados por `actor: "claude"` + `gitDirty: "1"`
 
 ---
 
@@ -136,7 +127,7 @@ Atualizado em: Abril 2026
 - [ ] Avaliações/reviews — monitor + sugestão de resposta
 - [ ] WhatsApp integrado ao agente (Agente Comms)
 - [ ] Briefing diário — Diego recebe às 9h (IMPLEMENTADO, validar amanhã)
-- [ ] Agente com poder de código — IMPLEMENTADO, testar
+- [ ] Agente tool_use — IMPLEMENTADO, testar (substituiu modo código)
 
 ### Backlog
 - [ ] Relatório proprietário pág 2 com extratos OTAs
@@ -155,7 +146,7 @@ Atualizado em: Abril 2026
 - **Foco:** studios e 1-bedrooms (decisão estratégica, não mudar)
 - **Agenda Búzios** só na versão do Diego, não no SaaS
 - **Prospecção:** 1 mensagem/dia, alta qualidade, não volume
-- **Agente IA:** modelo único com modos, não 3 agentes separados
+- **Agente IA:** modelo único com tool_use nativo da Anthropic, sem modos separados
 
 ---
 
