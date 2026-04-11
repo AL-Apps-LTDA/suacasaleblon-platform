@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || ''
-const MODEL = 'claude-haiku-4-5'
+
+const MODELS: Record<string, string> = {
+  haiku: 'claude-haiku-4-5',
+  sonnet: 'claude-sonnet-4-6',
+}
 
 // ─── Busca contexto atual do Supabase ────────────────────────────────────────
 async function fetchContext() {
@@ -110,6 +114,8 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json()
   const messages: { role: string; content: string }[] = body.messages || []
+  const modelKey: string = body.model || 'haiku'
+  const model = MODELS[modelKey] || MODELS.haiku
 
   if (!messages.length) {
     return NextResponse.json({ error: 'Nenhuma mensagem enviada.' }, { status: 400 })
@@ -126,7 +132,7 @@ export async function POST(req: NextRequest) {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: MODEL,
+      model,
       max_tokens: 1024,
       system: systemPrompt,
       messages,
